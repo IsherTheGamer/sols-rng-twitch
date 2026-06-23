@@ -16,6 +16,7 @@ import { text, error, parseQuery } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const state = await getChannelState(channelId, channelName);
   const { channelId, channelName, user, isMod } = getChannelContext(req);
   const query = parseQuery(req);
   const parts = query.split(/\s+/).filter(Boolean);
