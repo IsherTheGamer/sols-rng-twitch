@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "cooldownTiers": [
+    { "maxLuck": 99999, "seconds": 1800 },
+    { "maxLuck": 449999, "seconds": 3600 },
+    { "maxLuck": null, "seconds": 5400 }
+  ],
+  "potions": [
+    {
+      "id": "heavenly",
+      "name": "Heavenly Potion",
+      "aliases": ["heavenly", "heavenly potion"],
+      "luck": 150000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "bound",
+      "name": "Potion of Bound",
+      "aliases": ["bound", "potion of bound", "bound potion"],
+      "luck": 50000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "godlike",
+      "name": "Godlike Potion",
+      "aliases": ["godlike", "godlike potion"],
+      "luck": 400000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "oblivion",
+      "name": "Oblivion Potion",
+      "aliases": ["oblivion", "oblivion potion"],
+      "luck": 600000,
+      "clearsBuffs": true,
+      "exclusiveAuras": [
+        { "auraId": "memory", "rarity": 100 },
+        { "auraId": "oblivion_aura", "rarity": 2000 }
+      ]
+    },
+    {
+      "id": "pump_kings_blood",
+      "name": "Pump King's Blood",
+      "aliases": ["pumpkin blood", "pump king's blood", "pump kings blood", "pumpkin blood potion"],
+      "luck": 700000,
+      "clearsBuffs": true,
+      "requiresEvent": "halloween_2025",
+      "exclusiveAuras": []
+    },
+    {
+      "id": "dune",
+      "name": "Potion of the Dune",
+      "aliases": ["dune", "potion of the dune", "dune potion"],
+      "luck": 250000,
+      "exclusiveAuras": [
+        { "auraId": "dune_exclusive", "rarity": 50000 }
+      ]
+    },
+    {
+      "id": "red_fragment_i",
+      "name": "Red Moon Potion I",
+      "aliases": ["red fragment", "red fragment potion", "red moon potion i", "red moon i"],
+      "luck": 100000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "red_fragment_ii",
+      "name": "Red Moon Potion II",
+      "aliases": ["red fragment ii", "red moon potion ii", "red moon ii", "red fragment 2"],
+      "luck": 200000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "void_heart",
+      "name": "Void Heart",
+      "aliases": ["void heart", "voidheart"],
+      "luck": 350000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "popping",
+      "name": "Popping Potion",
+      "aliases": ["popping", "popping potion", "pop potion"],
+      "luck": 75000,
+      "exclusiveAuras": []
+    }
+  ]
+}

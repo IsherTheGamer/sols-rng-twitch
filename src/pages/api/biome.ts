@@ -1,0 +1,29 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getChannelContext } from "@/lib/nightbot";
+import { getChannelState, setChannelState } from "@/lib/state";
+import {
+  applyBiomeChange,
+  getBiomeStatus,
+} from "@/lib/biome-engine";
+import { findBiome } from "@/lib/data";
+import { text, error, parseQuery } from "@/lib/api-helpers";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { channelId, channelName, isMod } = getChannelContext(req);
+  const action = req.query.action;
+
+  const state = await getChannelState(channelId, channelName);
+
+  if (action === "change") {
+    if (!isMod) return error(res, "Mod only.");
+    const query = parseQuery(req);
+    const biome = findBiome(query);
+    if (!biome) return error(res, `Unknown biome: ${query}`);
+    applyBiomeChange(state, biome.id);
+    await setChannelState(state);
+    const b = biome;
+    return text(res, `Biome forced to ${b.name}. ${getBiomeStatus(state)}`);
+  }
+
+  return text(res, getBiomeStatus(state));
+}

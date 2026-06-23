@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "devices": [
+    {
+      "id": "strange_controller",
+      "name": "Strange Controller",
+      "aliases": ["strange controller", "controller", "strange"],
+      "usesNaturalRates": true,
+      "cyberspaceChance": 5000,
+      "userCooldownSeconds": 1200,
+      "serverCooldownSeconds": 1200
+    },
+    {
+      "id": "biome_randomizer",
+      "name": "Biome Randomizer",
+      "aliases": ["biome randomizer", "randomizer", "br"],
+      "usesNaturalRates": false,
+      "equalWeightPool": true,
+      "glitchedNativeRate": true,
+      "cyberspaceChance": 5000,
+      "userCooldownSeconds": 2100,
+      "serverCooldownSeconds": 1200
+    }
+  ]
+}

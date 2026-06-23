@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "luckMultiplier": 1.2,
+  "durationSeconds": 3600,
+  "devBiomes": [
+    {
+      "id": "hyperspace_realm",
+      "aliases": ["hyperspace", "hyperspace realm", "the hyperspace realm"]
+    },
+    {
+      "id": "abnormality",
+      "aliases": ["abnormality"]
+    },
+    {
+      "id": "nulls_existence",
+      "aliases": ["null's existence", "nulls existence", "the null's existence"]
+    },
+    {
+      "id": "citadel_of_orders",
+      "aliases": ["citadel", "citadel of orders", "the citadel of orders"]
+    },
+    {
+      "id": "red_full_moon",
+      "aliases": ["red full moon", "赤い満月", "akai mangetsu"]
+    }
+  ]
+}
