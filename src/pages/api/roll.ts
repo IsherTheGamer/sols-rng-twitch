@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { processBiomeTick } from "@/lib/biome-engine";
 import { getChannelContext } from "@/lib/nightbot";
 import {
-  getChannelState,
-  setChannelState,
   cooldownKey,
   formatRemaining,
 } from "@/lib/state";
@@ -15,23 +12,11 @@ import {
 } from "@/lib/cooldowns";
 import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
+import { withTick } from "@/lib/run-with-tick";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId, channelName, user, isMod } = getChannelContext(req);
 
-  // 1. Load state
-  const state = await getChannelState(channelId, channelName);
-
-  // 2. Tick biome FIRST
-  const now = Date.now();
-  const elapsed = now - state.lastTickAt;
-
-  const tick = await processBiomeTick(state, elapsed);
-  await setChannelState(tick.state);
-
-  const updatedState = tick.state;
-
-  // 3. Parse roll amount (FIXED - no undefined "parts")
   const parts = (req.query.args as string)?.split(" ") ?? [];
   const amount = parts.length ? parseInt(parts[0], 10) : 1;
 
@@ -39,10 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return error(res, "Multi-roll is mod-only. Use !roll");
   }
 
-  const rollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
-  const displayCount = amount > 1 ? Math.min(amount, 5) : 1;
-
-  // 4. Cooldown (only for normal rolls)
   if (!isMod && amount <= 1) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
     const cd = await checkCooldown(key, ROLL_COOLDOWN_MS);
@@ -54,28 +35,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await applyCooldown(key, ROLL_COOLDOWN_MS);
   }
 
-  // 5. IMPORTANT: use updatedState (NOT re-fetching again)
-  const ctx = { state: updatedState, luck: 1 };
-
-  // 6. Roll logic
-  if (rollCount === 1) {
-    const result = rollOnce(ctx);
-    const name = user?.displayName ?? user?.name ?? "Player";
-    return text(res, formatRollResult(name, result.aura.name, result.effectiveRarity));
-  }
-
-  const results = rollMultiple(ctx, rollCount);
-  const top = topRarest(results, displayCount);
-  const name = user?.displayName ?? user?.name ?? "Player";
-
-  const msg = `${name} rolled ${rollCount}x — top ${displayCount}: ${formatMultiRoll(
-    top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity }))
-  )}`;
+  const rollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
+  const displayCount = amount > 1 ? Math.min(amount, 5) : 1;
 
   return withTick(channelId, channelName, async (state) => {
-  const ctx = { state, luck: 1 };
+    const ctx = { state, luck: 1 };
+    const name = user?.displayName ?? user?.name ?? "Player";
 
-  const result = rollOnce(ctx);
-  return text(res, result.aura.name);
-});
+    if (rollCount === 1) {
+      const result = rollOnce(ctx);
+      return text(res, formatRollResult(name, result.aura.name, result.effectiveRarity));
+    }
+
+    const results = rollMultiple(ctx, rollCount);
+    const top = topRarest(results, displayCount);
+
+    const msg = `${name} rolled ${rollCount}x — top ${displayCount}: ${formatMultiRoll(
+      top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity }))
+    )}`;
+
+    return text(res, msg);
+  });
 }
