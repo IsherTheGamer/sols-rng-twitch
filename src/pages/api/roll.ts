@@ -13,21 +13,26 @@ import {
   checkCooldown,
   ROLL_COOLDOWN_MS,
 } from "@/lib/cooldowns";
-import { text, error, parseQuery } from "@/lib/api-helpers";
+import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-const { channelId, channelName, user, isMod } = getChannelContext(req);
+  const { channelId, channelName, user, isMod } = getChannelContext(req);
 
-const state = await getChannelState(channelId, channelName);
+  // 1. Load state
+  const state = await getChannelState(channelId, channelName);
 
-const now = Date.now();
-const elapsed = now - state.lastTickAt;
+  // 2. Tick biome FIRST
+  const now = Date.now();
+  const elapsed = now - state.lastTickAt;
 
-const tick = await processBiomeTick(state, elapsed);
-await setChannelState(tick.state);
+  const tick = await processBiomeTick(state, elapsed);
+  await setChannelState(tick.state);
 
-const updatedState = tick.state;
+  const updatedState = tick.state;
+
+  // 3. Parse roll amount (FIXED - no undefined "parts")
+  const parts = (req.query.args as string)?.split(" ") ?? [];
   const amount = parts.length ? parseInt(parts[0], 10) : 1;
 
   if (amount > 1 && !isMod) {
@@ -37,18 +42,22 @@ const updatedState = tick.state;
   const rollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
   const displayCount = amount > 1 ? Math.min(amount, 5) : 1;
 
+  // 4. Cooldown (only for normal rolls)
   if (!isMod && amount <= 1) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
     const cd = await checkCooldown(key, ROLL_COOLDOWN_MS);
+
     if (!cd.allowed) {
       return text(res, `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`);
     }
+
     await applyCooldown(key, ROLL_COOLDOWN_MS);
   }
 
-  const state = await getChannelState(channelId, channelName);
-  const ctx = { state, luck: 1 };
+  // 5. IMPORTANT: use updatedState (NOT re-fetching again)
+  const ctx = { state: updatedState, luck: 1 };
 
+  // 6. Roll logic
   if (rollCount === 1) {
     const result = rollOnce(ctx);
     const name = user?.displayName ?? user?.name ?? "Player";
@@ -58,8 +67,10 @@ const updatedState = tick.state;
   const results = rollMultiple(ctx, rollCount);
   const top = topRarest(results, displayCount);
   const name = user?.displayName ?? user?.name ?? "Player";
+
   const msg = `${name} rolled ${rollCount}x — top ${displayCount}: ${formatMultiRoll(
     top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity }))
   )}`;
+
   return text(res, msg);
 }
