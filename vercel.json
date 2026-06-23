@@ -1,8 +1,2 @@
 {
-  "crons": [
-    {
-      "path": "/api/biome-tick",
-      "schedule": "* * * * *"
-    }
-  ]
 }
