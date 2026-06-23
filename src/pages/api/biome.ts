@@ -1,47 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
-import { getChannelState, setChannelState } from "@/lib/state";
-import {
-  applyBiomeChange,
-  getBiomeStatus,
-} from "@/lib/biome-engine";
+import { applyBiomeChange, getBiomeStatus } from "@/lib/biome-engine";
 import { findBiome } from "@/lib/data";
 import { text, error, parseQuery } from "@/lib/api-helpers";
+import { withTick } from "@/lib/run-with-tick";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId, channelName, isMod } = getChannelContext(req);
   const action = req.query.action;
 
-  const state = await getChannelState(channelId, channelName);
+  return withTick(channelId, channelName, async (state) => {
+    if (action === "change") {
+      if (!isMod) return error(res, "Mod only.");
 
-  if (action === "change") {
-    if (!isMod) return error(res, "Mod only.");
+      const query = parseQuery(req);
+      const biome = findBiome(query);
 
-    const query = parseQuery(req);
-    const biome = findBiome(query);
+      if (!biome) return error(res, `Unknown biome: ${query}`);
 
-    if (!biome) {
-      return error(res, `Unknown biome: ${query}`);
+      applyBiomeChange(state, biome.id);
+
+      return text(
+        res,
+        `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`
+      );
     }
 
-    applyBiomeChange(state, biome.id);
-    await setChannelState(state);
-
-    return text(
-      res,
-      `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`
-    );
-  }
-
-  return res.json({
-  biome: state.biomeId,
-  timeOfDay: state.timeOfDay,
-  biomeExpiresAt: state.biomeExpiresAt,
-  timeExpiresAt: state.timeExpiresAt,
-  now: Date.now(),
-  lastTickAt: state.lastTickAt
-});
+    return text(res, getBiomeStatus(state));
+  });
 }
