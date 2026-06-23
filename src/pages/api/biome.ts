@@ -44,3 +44,4 @@ export default async function handler(
   now: Date.now(),
   lastTickAt: state.lastTickAt
 });
+}
