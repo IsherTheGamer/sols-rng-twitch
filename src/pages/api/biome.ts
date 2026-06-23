@@ -4,6 +4,7 @@ import { getChannelState, setChannelState } from "@/lib/state";
 import {
   applyBiomeChange,
   getBiomeStatus,
+  processBiomeTick,
 } from "@/lib/biome-engine";
 import { findBiome } from "@/lib/data";
 import { text, error, parseQuery } from "@/lib/api-helpers";
