@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { processBiomeTick } from "@/lib/biome-engine";
 import { getChannelContext } from "@/lib/nightbot";
 import {
   getChannelState,
