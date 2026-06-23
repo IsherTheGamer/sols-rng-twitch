@@ -36,5 +36,11 @@ export default async function handler(
     );
   }
 
-  return text(res, getBiomeStatus(state));
-}
+  return res.json({
+  biome: state.biomeId,
+  timeOfDay: state.timeOfDay,
+  biomeExpiresAt: state.biomeExpiresAt,
+  timeExpiresAt: state.timeExpiresAt,
+  now: Date.now(),
+  lastTickAt: state.lastTickAt
+});
