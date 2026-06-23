@@ -72,5 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity }))
   )}`;
 
-  return text(res, msg);
+  return withTick(channelId, channelName, async (state) => {
+  const ctx = { state, luck: 1 };
+
+  const result = rollOnce(ctx);
+  return text(res, result.aura.name);
+});
 }
