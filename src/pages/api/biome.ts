@@ -9,15 +9,25 @@ import {
 import { findBiome } from "@/lib/data";
 import { text, error, parseQuery } from "@/lib/api-helpers";
 
-import type { NextApiRequest, NextApiResponse } from "next";
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { channelId, channelName, isMod } = getChannelContext(req);
+  const action = req.query.action;
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).send("OK");
-}
+  const state = await getChannelState(channelId, channelName);
 
-  /* 🔥 SINGLE SOURCE OF TRUTH TICK */
+  if (action === "change") {
+    if (!isMod) return error(res, "Mod only.");
+    const query = parseQuery(req);
+    const biome = findBiome(query);
+    if (!biome) return error(res, `Unknown biome: ${query}`);
+
+    applyBiomeChange(state, biome.id);
+    await setChannelState(state);
+
+    return text(res, `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`);
+  }
+
   const result = await processBiomeTick(state, Date.now() - state.lastTickAt);
-
   await setChannelState(result.state);
 
   return text(res, getBiomeStatus(result.state));
