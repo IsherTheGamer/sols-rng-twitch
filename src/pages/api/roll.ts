@@ -17,14 +17,17 @@ import { text, error, parseQuery } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { channelId, channelName, user, isMod } = getChannelContext(req);
-  const now = Date.now();
+const { channelId, channelName, user, isMod } = getChannelContext(req);
+
+const state = await getChannelState(channelId, channelName);
+
+const now = Date.now();
 const elapsed = now - state.lastTickAt;
 
 const tick = await processBiomeTick(state, elapsed);
 await setChannelState(tick.state);
-  const query = parseQuery(req);
-  const parts = query.split(/\s+/).filter(Boolean);
+
+const updatedState = tick.state;
   const amount = parts.length ? parseInt(parts[0], 10) : 1;
 
   if (amount > 1 && !isMod) {
