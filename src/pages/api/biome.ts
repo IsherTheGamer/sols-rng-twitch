@@ -25,5 +25,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return text(res, `Biome forced to ${b.name}. ${getBiomeStatus(state)}`);
   }
 
-  return text(res, getBiomeStatus(state));
+  const now = Date.now();
+const elapsed = now - state.lastTickAt;
+
+const result = await processBiomeTick(state, elapsed);
+await setChannelState(result.state);
+
+return text(res, getBiomeStatus(result.state));
 }
