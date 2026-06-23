@@ -15,8 +15,8 @@ function isDevActive(state: ChannelState): boolean {
   return state.activeDevBiome && state.devExpiresAt > Date.now();
 }
 
-function isEventActive(state: ChannelState, eventId: string): boolean {
-  return state.activeEvents.includes(eventId);
+function isDevActive(state: ChannelState): boolean {
+  return !!state.activeDevBiome && state.devExpiresAt > Date.now();
 }
 
 function getActiveBiomeIds(state: ChannelState): Set<string> {
