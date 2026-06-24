@@ -12,19 +12,28 @@ export default async function handler(
   const { channelId, channelName, isMod } = getChannelContext(req);
   const action = req.query.action;
 
-  // 1. Load state
-  const state = await getChannelState(channelId, channelName);
+  // 1. LOAD STATE
+  let state = await getChannelState(channelId, channelName);
 
-  // 2. Always advance time FIRST (fixes desync + stuck 0s)
+  // 2. ALWAYS FORCE REAL-TIME TICK UPDATE (KEY FIX)
   const now = Date.now();
   const elapsed = Math.max(1, now - state.lastTickAt);
 
   const tick = await processBiomeTick(state, elapsed);
-  await setChannelState(tick.state);
+  state = tick.state;
 
-  const updated = tick.state;
+  await setChannelState(state);
 
-  // 3. Admin force change
+  // 3. FORCE BIOME RECOVERY CHECK (IMPORTANT FIX)
+  // If biome is "stuck expired", force re-roll
+  if (state.biomeExpiresAt <= now) {
+    const fallback = await processBiomeTick(state, 1);
+
+    state = fallback.state;
+    await setChannelState(state);
+  }
+
+  // 4. ADMIN FORCE CHANGE
   if (action === "change") {
     if (!isMod) return error(res, "Mod only.");
 
@@ -35,16 +44,17 @@ export default async function handler(
       return error(res, `Unknown biome: ${query}`);
     }
 
-    updated.biomeId = biome.id;
-    updated.biomeExpiresAt = Date.now() + 120000;
-    await setChannelState(updated);
+    state.biomeId = biome.id;
+    state.biomeExpiresAt = Date.now() + 120000;
+
+    await setChannelState(state);
 
     return text(
       res,
-      `Biome forced to ${biome.name}. ${getBiomeStatus(updated)}`
+      `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`
     );
   }
 
-  // 4. Always return fresh computed status
-  return text(res, getBiomeStatus(updated));
+  // 5. RETURN FRESH STATUS EVERY TIME
+  return text(res, getBiomeStatus(state));
 }
