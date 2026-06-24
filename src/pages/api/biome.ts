@@ -15,13 +15,21 @@ export default async function handler(
   // 1. LOAD STATE
   let state = await getChannelState(channelId, channelName);
 
+  const now = Date.now();
+
+// 🔥 HARD DESYNC FIX
+if (!state.lastTickAt || state.lastTickAt > now + 60000) {
+  state.lastTickAt = now;
+}
+  
   // 2. ALWAYS FORCE REAL-TIME TICK UPDATE (KEY FIX)
   const now = Date.now();
   const elapsed = Math.max(1, now - state.lastTickAt);
 
   const tick = await processBiomeTick(state, elapsed);
   state = tick.state;
-
+state.lastTickAt = now;
+  
   await setChannelState(state);
 
   // 3. FORCE BIOME RECOVERY CHECK (IMPORTANT FIX)
