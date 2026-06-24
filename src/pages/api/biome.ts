@@ -26,6 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
     }
 
-    return text(res, getBiomeStatus(state));
-  });
+    return res.json({
+  biome: state.biomeId,
+  time: state.timeOfDay,
+  remaining: Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
+});
 }
