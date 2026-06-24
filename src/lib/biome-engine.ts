@@ -268,15 +268,22 @@ export function rollDeviceBiome(
   // extreme rare override
   if (rollInt(5000) === 1) return "cyberspace";
 
-  if (useNaturalRates) {
-    const glitched = tryGlitchedOnChange();
-    if (glitched) return glitched;
-    return rollNaturalBiome();
-  }
-
   const glitched = tryGlitchedOnChange();
   if (glitched) return glitched;
 
-  const pool = RANDOMIZER_POOL.filter((id) => biomeMap.has(id));
+  // Strange Controller
+  if (useNaturalRates) {
+    const pool = NORMAL_POOL_WEIGHTS
+      .map((w) => w.id)
+      .filter((id) => id !== "normal" && biomeMap.has(id));
+
+    return pickEqual(pool);
+  }
+
+  // Biome Randomizer
+  const pool = RANDOMIZER_POOL.filter(
+    (id) => id !== "normal" && biomeMap.has(id)
+  );
+
   return pickEqual(pool);
 }
