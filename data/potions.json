@@ -106,6 +106,13 @@
       "exclusiveAuras": []
     },
     {
+      "id": "overpowered_potion",
+      "name": "Potion Of Sol",
+      "aliases": ["Sol","sol","overpowered"],
+      "luck": 10000000,
+      "exclusiveAuras": []
+    },
+    {
       "id": "popping",
       "name": "Popping Potion",
       "aliases": ["popping", "popping potion", "pop potion"],
