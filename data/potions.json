@@ -78,10 +78,38 @@
       "exclusiveAuras": []
     },
     {
+      "id": "axis_potion",
+      "name": "Potion Of Time",
+      "aliases": ["time", "axis","potion of time","axis potion"],
+      "luck": 530000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "xyz_potion",
+      "name": "Potion Of Dimension",
+      "aliases": ["dimension", "xyz","potion of dimension","xyz potion"],
+      "luck": 540000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "word_potion",
+      "name": "Potion Of Justice",
+      "aliases": ["justice", "word","potion of justice","word potion"],
+      "luck": 535000,
+      "exclusiveAuras": []
+    },
+    {
+      "id": "chaos_potion",
+      "name": "Potion Of Chaos",
+      "aliases": ["chaos","potion of chaos","chaos potion"],
+      "luck": 535000,
+      "exclusiveAuras": []
+    },
+    {
       "id": "popping",
       "name": "Popping Potion",
       "aliases": ["popping", "popping potion", "pop potion"],
-      "luck": 75000,
+      "luck": 15000,
       "exclusiveAuras": []
     }
   ]
