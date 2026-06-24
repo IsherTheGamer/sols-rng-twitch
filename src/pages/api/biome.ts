@@ -20,15 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       applyBiomeChange(state, biome.id);
 
-      return text(
-        res,
-        `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`
-      );
-    }
-
-    return res.json({
+      return res.json({
   biome: state.biomeId,
   time: state.timeOfDay,
   remaining: Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
 });
-}
+    }
+  }
+                  }
