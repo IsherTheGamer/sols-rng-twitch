@@ -1,36 +1,50 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
-import { applyBiomeChange } from "@/lib/biome-engine";
+import { getChannelState, setChannelState } from "@/lib/state";
+import { processBiomeTick, getBiomeStatus } from "@/lib/biome-engine";
+import { text, error, parseQuery } from "@/lib/api-helpers";
 import { findBiome } from "@/lib/data";
-import { error, parseQuery } from "@/lib/api-helpers";
-import { withTick } from "@/lib/run-with-tick";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { channelId, channelName, isMod } = getChannelContext(req);
   const action = req.query.action;
 
-  return withTick(channelId, channelName, async (state) => {
+  // 1. Load state
+  const state = await getChannelState(channelId, channelName);
 
-    // ❗ ONLY CHANGE ACTION
-    if (action === "change") {
-      if (!isMod) return error(res, "Mod only.");
+  // 2. Always advance time FIRST (fixes desync + stuck 0s)
+  const now = Date.now();
+  const elapsed = Math.max(1, now - state.lastTickAt);
 
-      const query = parseQuery(req);
-      const biome = findBiome(query);
+  const tick = await processBiomeTick(state, elapsed);
+  await setChannelState(tick.state);
 
-      if (!biome) return error(res, `Unknown biome: ${query}`);
+  const updated = tick.state;
 
-      applyBiomeChange(state, biome.id);
+  // 3. Admin force change
+  if (action === "change") {
+    if (!isMod) return error(res, "Mod only.");
+
+    const query = parseQuery(req);
+    const biome = findBiome(query);
+
+    if (!biome) {
+      return error(res, `Unknown biome: ${query}`);
     }
 
-    return res
-  .status(200)
-  .setHeader("Content-Type", "text/plain")
-  .send(
-    `Biome: ${state.biomeId} | ${state.timeOfDay} | ${Math.max(
-      0,
-      Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
-    )}s`
-  );
-  });
+    updated.biomeId = biome.id;
+    updated.biomeExpiresAt = Date.now() + 120000;
+    await setChannelState(updated);
+
+    return text(
+      res,
+      `Biome forced to ${biome.name}. ${getBiomeStatus(updated)}`
+    );
+  }
+
+  // 4. Always return fresh computed status
+  return text(res, getBiomeStatus(updated));
 }
