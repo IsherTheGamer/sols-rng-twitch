@@ -53,20 +53,15 @@ function tryGlitchedOnChange(): string | null {
 }
 
 function rollNaturalBiome(): string {
-  const candidates: Array<{ id: string; chance: number }> = [];
+  const pool = NORMAL_POOL_WEIGHTS
+    .map((w) => w.id)
+    .filter((id) => id !== "normal" && biomeMap.has(id));
 
-  for (const w of NORMAL_POOL_WEIGHTS) {
-    const b = biomeMap.get(w.id);
-    if (!b?.spawnPerSecond) continue;
-
-    if (rollInt(b.spawnPerSecond) === 1) {
-      candidates.push({ id: w.id, chance: 1 / b.spawnPerSecond });
-    }
+  if (pool.length === 0) {
+    return "normal";
   }
 
-  if (candidates.length === 0) return "normal";
-
-  return pickWeighted(candidates, (c) => c.chance).id;
+  return pickEqual(pool);
 }
 
 function rollEventBiomeOverride(state: ChannelState): string | null {
