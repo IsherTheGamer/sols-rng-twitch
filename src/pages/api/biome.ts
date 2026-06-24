@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
-import { applyBiomeChange, getBiomeStatus } from "@/lib/biome-engine";
+import { applyBiomeChange } from "@/lib/biome-engine";
 import { findBiome } from "@/lib/data";
-import { text, error, parseQuery } from "@/lib/api-helpers";
+import { error, parseQuery } from "@/lib/api-helpers";
 import { withTick } from "@/lib/run-with-tick";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,6 +10,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const action = req.query.action;
 
   return withTick(channelId, channelName, async (state) => {
+
+    // ❗ ONLY CHANGE ACTION
     if (action === "change") {
       if (!isMod) return error(res, "Mod only.");
 
@@ -19,12 +21,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!biome) return error(res, `Unknown biome: ${query}`);
 
       applyBiomeChange(state, biome.id);
-
-      return res.json({
-  biome: state.biomeId,
-  time: state.timeOfDay,
-  remaining: Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
-});
     }
-  }
+
+    // ✅ ALWAYS RETURN CLEAN JSON (for Mix It Up / bot use)
+    return res.json({
+      biome: state.biomeId,
+      time: state.timeOfDay,
+      remaining: Math.max(
+        0,
+        Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
+      ),
+    });
+  });
+}
                   }
