@@ -3,7 +3,6 @@ import { getChannelContext } from "@/lib/nightbot";
 import { getChannelState, setChannelState } from "@/lib/state";
 import { findDevBiome, biomeMap } from "@/lib/data";
 import devEventsData from "../../../data/dev-events.json";
-import { applyBiomeChange } from "@/lib/biome-engine";
 import { text, error, parseQuery } from "@/lib/api-helpers";
 
 const DEV_DURATION = (devEventsData.durationSeconds as number) ?? 3600;
@@ -27,7 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   state.activeDevBiome = dev.id;
   state.devExpiresAt = Date.now() + DEV_DURATION * 1000;
-  applyBiomeChange(state, dev.id);
+  state.biomeId = dev.id;
+state.biomeExpiresAt = Date.now() + 3600 * 1000;
   await setChannelState(state);
 
   const b = biomeMap.get(dev.id);
