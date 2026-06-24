@@ -23,14 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       applyBiomeChange(state, biome.id);
     }
 
-    // ✅ ALWAYS RETURN CLEAN JSON (for Mix It Up / bot use)
-    return res.json({
-      biome: state.biomeId,
-      time: state.timeOfDay,
-      remaining: Math.max(
-        0,
-        Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
-      ),
-    });
+    return text(
+  res,
+  `Biome:${state.biomeId} | ${state.timeOfDay} | ${Math.max(
+    0,
+    Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
+  )}s`
+);
   });
 }
