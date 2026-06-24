@@ -23,12 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       applyBiomeChange(state, biome.id);
     }
 
-    return text(
-  res,
-  `Biome:${state.biomeId} | ${state.timeOfDay} | ${Math.max(
-    0,
-    Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
-  )}s`
-);
+    return res
+  .status(200)
+  .setHeader("Content-Type", "text/plain")
+  .send(
+    `Biome: ${state.biomeId} | ${state.timeOfDay} | ${Math.max(
+      0,
+      Math.ceil((state.biomeExpiresAt - Date.now()) / 1000)
+    )}s`
+  );
   });
 }
