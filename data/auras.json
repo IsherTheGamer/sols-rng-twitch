@@ -4403,6 +4403,7 @@
       ],
       "time": null
     },
+    
     {
       "id": "neferkhaf",
       "name": "Neferkhaf",
@@ -4425,8 +4426,8 @@
       "name": "Eden",
       "rarity": 999999999,
       "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
+      "biome": "limbo",
+      "biomeLock": true,
       "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
@@ -4470,6 +4471,109 @@
       "event": "april_fools_2026",
       "unobtainable": false,
       "deleted": true,
+      "tags": [],
+      "time": null
+    },
+    
+    // ADDDED MANUALLY
+    
+    {
+      "id": "another_realm",
+      "name": "ANOTHER REALM",
+      "rarity": 2945160000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "xyz_potion",
+        "rarity": 5454
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "mastermind",
+      "name": "MASTERMIND ",
+      "rarity": 2837090000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "axis_potion",
+        "rarity": 5353
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "edict",
+      "name": "EDICT",
+      "rarity": 2862250000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "axis_potion",
+        "rarity": 5350
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "red_full_moon_aura",
+      "name": "RED FULL MOON",
+      "rarity": 2344496400,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "chaos_potion",
+        "rarity": 4842
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "abomination_aura",
+      "name": "ABOMINATION",
+      "rarity": 2343528000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "chaos_potion",
+        "rarity": 4840
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
       "tags": [],
       "time": null
     }
