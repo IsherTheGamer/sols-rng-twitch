@@ -188,9 +188,9 @@ function simulateSeconds(state: ChannelState, seconds: number): TickResult {
       let next = rollNextBiome(state, atMs);
 
       // HARD SAFETY: never allow stuck state
-     if (!next) {
-  next = "normal";
-}
+       if (!next) {
+        next = prev;
+      }
 
       state.biomeId = next;
       setBiomeDuration(state, next, atMs);
