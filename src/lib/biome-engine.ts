@@ -260,3 +260,23 @@ export function getBiomeStatus(state: ChannelState): string {
     state.timeOfDay
   );
 }
+export function rollDeviceBiome(
+  state: ChannelState,
+  deviceId: string,
+  useNaturalRates: boolean
+): string {
+  // extreme rare override
+  if (rollInt(5000) === 1) return "cyberspace";
+
+  if (useNaturalRates) {
+    const glitched = tryGlitchedOnChange();
+    if (glitched) return glitched;
+    return rollNaturalBiome();
+  }
+
+  const glitched = tryGlitchedOnChange();
+  if (glitched) return glitched;
+
+  const pool = RANDOMIZER_POOL.filter((id) => biomeMap.has(id));
+  return pickEqual(pool);
+}
