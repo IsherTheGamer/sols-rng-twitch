@@ -26,15 +26,21 @@ function isDevActive(state: ChannelState): boolean {
   return state.activeDevBiome !== null && state.devExpiresAt > Date.now();
 }
 
+/* ----------------------------
+   BIOME ROLLS
+---------------------------- */
+
 function tryRareSpawnPerSecond(state: ChannelState, atMs: number): string | null {
   const isNormalish =
     state.biomeId === "normal" || state.biomeExpiresAt <= atMs;
+
   if (!isNormalish) return null;
 
   const dream = biomeMap.get("dreamspace")!;
   if (dream.spawnPerSecond && rollInt(dream.spawnPerSecond) === 1) {
     return "dreamspace";
   }
+
   return null;
 }
 
@@ -46,22 +52,20 @@ function tryGlitchedOnChange(): string | null {
   return null;
 }
 
-function trySingularityOnStarfall(): boolean {
-  return rollInt(100) === 1;
-}
-
-function rollNaturalBiome(state: ChannelState): string {
+function rollNaturalBiome(): string {
   const candidates: Array<{ id: string; chance: number }> = [];
 
   for (const w of NORMAL_POOL_WEIGHTS) {
     const b = biomeMap.get(w.id);
     if (!b?.spawnPerSecond) continue;
+
     if (rollInt(b.spawnPerSecond) === 1) {
       candidates.push({ id: w.id, chance: 1 / b.spawnPerSecond });
     }
   }
 
   if (candidates.length === 0) return "normal";
+
   return pickWeighted(candidates, (c) => c.chance).id;
 }
 
@@ -70,6 +74,7 @@ function rollEventBiomeOverride(state: ChannelState): string | null {
     for (const id of ["graveyard", "pumpkin_moon"]) {
       const b = biomeMap.get(id);
       if (!b?.nightChance) continue;
+
       if (state.activeEvents.some((e) => e.includes("halloween"))) {
         if (rollInt(b.nightChance) === 1) return id;
       }
@@ -78,6 +83,7 @@ function rollEventBiomeOverride(state: ChannelState): string | null {
 
   if (state.timeOfDay === "daytime") {
     const blazing = biomeMap.get("blazing_sun");
+
     if (
       blazing?.dayChance &&
       state.activeEvents.some((e) => e.includes("summer")) &&
@@ -91,6 +97,7 @@ function rollEventBiomeOverride(state: ChannelState): string | null {
     if (eventId.includes("easter")) return "eggland";
     if (eventId.includes("christmas")) {
       const aurora = biomeMap.get("aurora");
+
       if (
         aurora?.spawnPerSecond &&
         state.biomeId === "snowy" &&
@@ -104,63 +111,32 @@ function rollEventBiomeOverride(state: ChannelState): string | null {
   return null;
 }
 
-function canOverride(current: string, next: string): boolean {
-  const protectedBiomes = ["glitched", "dreamspace", "cyberspace", "singularity"];
-  if (protectedBiomes.includes(current)) return false;
-  const nextDef = biomeMap.get(next);
-  if (nextDef?.overridesExcept) {
-    return !nextDef.overridesExcept.includes(current);
-  }
-  return true;
-}
+/* ----------------------------
+   BIOME DURATION
+---------------------------- */
 
-function setBiomeDuration(state: ChannelState, biomeId: string, atMs = Date.now()): void {
+function setBiomeDuration(state: ChannelState, biomeId: string, atMs: number) {
   const b = getBiome(biomeId);
+
+  const base = Math.max(Date.now(), atMs);
+
   if (b.durationUntilNightEnd && state.timeOfDay === "nighttime") {
     state.biomeExpiresAt = state.timeExpiresAt;
   } else if (b.durationUntilNight && state.timeOfDay === "daytime") {
     state.biomeExpiresAt = state.timeExpiresAt;
   } else if (b.durationSeconds) {
-    state.biomeExpiresAt = atMs + b.durationSeconds * 1000;
+    state.biomeExpiresAt = base + b.durationSeconds * 1000;
   } else {
-    state.biomeExpiresAt = atMs + 120000;
+    state.biomeExpiresAt = base + 120000;
   }
 }
 
-export function applyBiomeChange(state: ChannelState, biomeId: string): ChannelState {
-  state.biomeId = biomeId;
-  setBiomeDuration(state, biomeId);
+/* ----------------------------
+   CORE BIOME TRANSITION
+---------------------------- */
 
-  if (biomeId === "starfall" && trySingularityOnStarfall()) {
-    state.biomeId = "singularity";
-    setBiomeDuration(state, "singularity");
-  }
-
-  return state;
-}
-
-export function rollDeviceBiome(
-  state: ChannelState,
-  deviceId: string,
-  useNaturalRates: boolean
-): string {
-  if (rollInt(5000) === 1) return "cyberspace";
-
-  if (useNaturalRates) {
-    const glitched = tryGlitchedOnChange();
-    if (glitched) return glitched;
-    return rollNaturalBiome(state);
-  }
-
-  const glitched = tryGlitchedOnChange();
-  if (glitched) return glitched;
-
-  const pool = RANDOMIZER_POOL.filter((id) => biomeMap.has(id));
-  return pickEqual(pool);
-}
-
-function tryRollNextBiome(state: ChannelState, atMs: number): string | null {
-  if (isDevActive(state) && state.devExpiresAt > atMs) {
+function rollNextBiome(state: ChannelState, atMs: number): string {
+  if (isDevActive(state)) {
     return state.activeDevBiome!;
   }
 
@@ -168,70 +144,75 @@ function tryRollNextBiome(state: ChannelState, atMs: number): string | null {
   if (rare) return rare;
 
   const eventOverride = rollEventBiomeOverride(state);
-  if (eventOverride && canOverride(state.biomeId, eventOverride)) {
-    return eventOverride;
-  }
+  if (eventOverride) return eventOverride;
 
   const glitched = tryGlitchedOnChange();
   if (glitched) return glitched;
 
-  return rollNaturalBiome(state);
+  return rollNaturalBiome();
 }
 
-export function simulateSeconds(state: ChannelState, seconds: number): TickResult {
+/* ----------------------------
+   SIMULATION LOOP
+---------------------------- */
+
+function simulateSeconds(state: ChannelState, seconds: number): TickResult {
   let biomeChanged = false;
   let changeMessage: string | null = null;
+
   const startTick = state.lastTickAt;
 
   for (let s = 0; s < seconds; s++) {
     const atMs = startTick + (s + 1) * 1000;
 
+    /* TIME CYCLE */
     while (state.timeExpiresAt <= atMs) {
-      state.timeOfDay = state.timeOfDay === "daytime" ? "nighttime" : "daytime";
+      state.timeOfDay =
+        state.timeOfDay === "daytime" ? "nighttime" : "daytime";
+
       state.timeExpiresAt += TIME_CYCLE_SECONDS * 1000;
     }
 
+    /* DEV BIOME EXPIRE */
     if (state.devExpiresAt > 0 && state.devExpiresAt <= atMs) {
       state.activeDevBiome = null;
       state.devExpiresAt = 0;
     }
 
-    const biomeExpired = state.biomeExpiresAt <= atMs;
-    const isNormal = state.biomeId === "normal";
+    const expired = state.biomeExpiresAt <= atMs;
 
-    if (biomeExpired || isNormal) {
-      const nextBiome = tryRollNextBiome(state, atMs);
-      if (nextBiome && nextBiome !== state.biomeId) {
-        const prevId = state.biomeId;
-        state.biomeId = nextBiome;
-        setBiomeDuration(state, nextBiome, atMs);
-        if (nextBiome === "starfall" && trySingularityOnStarfall()) {
-          state.biomeId = "singularity";
-          setBiomeDuration(state, "singularity", atMs);
-        }
-        if (prevId !== state.biomeId) {
-          biomeChanged = true;
-          const b = getBiome(state.biomeId);
-          changeMessage = b.chatSpawn ?? `[${b.name}] has spawned.`;
-        }
-      } else if (biomeExpired && state.biomeId !== "normal") {
-        state.biomeId = "normal";
-        setBiomeDuration(state, "normal", atMs);
-        biomeChanged = true;
-        changeMessage = "[Normal]: The world returns to calm.";
+    /* 🔥 FIXED CORE LOGIC */
+    if (expired) {
+      const prev = state.biomeId;
+
+      let next = rollNextBiome(state, atMs);
+
+      // HARD SAFETY: never allow stuck state
+      if (!next || next === prev) {
+        next = "normal";
       }
+
+      state.biomeId = next;
+      setBiomeDuration(state, next, atMs);
+
+      biomeChanged = true;
+
+      const b = getBiome(next);
+      changeMessage = b.chatSpawn ?? `[${b.name}] has spawned.`;
     }
   }
 
   state.lastTickAt = startTick + seconds * 1000;
 
   let statusMessage: string | null = null;
+
   const now = Date.now();
   if (
     state.lastStatusAt === 0 ||
     now - state.lastStatusAt >= STATUS_INTERVAL_SECONDS * 1000
   ) {
     state.lastStatusAt = now;
+
     const b = getBiome(state.biomeId);
     statusMessage = formatBiomeStatus(
       b.name,
@@ -243,13 +224,22 @@ export function simulateSeconds(state: ChannelState, seconds: number): TickResul
   return { state, biomeChanged, changeMessage, statusMessage };
 }
 
-export async function processBiomeTick(state: ChannelState, elapsedMs: number): Promise<TickResult> {
+/* ----------------------------
+   EXTERNAL API
+---------------------------- */
+
+export async function processBiomeTick(
+  state: ChannelState,
+  elapsedMs: number
+): Promise<TickResult> {
   const seconds = Math.max(1, Math.min(120, Math.floor(elapsedMs / 1000)));
+
   const result = simulateSeconds(state, seconds);
 
   if (result.changeMessage) {
     await sendNightbotMessage(result.changeMessage);
   }
+
   if (result.statusMessage) {
     await sendNightbotMessage(result.statusMessage);
   }
@@ -257,8 +247,13 @@ export async function processBiomeTick(state: ChannelState, elapsedMs: number): 
   return result;
 }
 
+/* ----------------------------
+   STATUS
+---------------------------- */
+
 export function getBiomeStatus(state: ChannelState): string {
   const b = getBiome(state.biomeId);
+
   return formatBiomeStatus(
     b.name,
     formatRemaining(state.biomeExpiresAt),
