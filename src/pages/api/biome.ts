@@ -17,27 +17,29 @@ export default async function handler(
 
   const now = Date.now();
 
-// 🔥 HARD DESYNC FIX
-if (!state.lastTickAt || state.lastTickAt > now + 60000) {
-  state.lastTickAt = now;
-}
-  
-  // 2. ALWAYS FORCE REAL-TIME TICK UPDATE (KEY FIX)
-  const now = Date.now();
+  // 🔥 HARD DESYNC FIX (prevents frozen / corrupted timestamps)
+  if (!state.lastTickAt || state.lastTickAt > now + 60000) {
+    state.lastTickAt = now;
+  }
+
+  // 2. REAL TIME TICK
   const elapsed = Math.max(1, now - state.lastTickAt);
 
   const tick = await processBiomeTick(state, elapsed);
   state = tick.state;
-state.lastTickAt = now;
-  
+
+  // IMPORTANT: sync time pointer AFTER tick
+  state.lastTickAt = now;
+
   await setChannelState(state);
 
-  // 3. FORCE BIOME RECOVERY CHECK (IMPORTANT FIX)
-  // If biome is "stuck expired", force re-roll
+  // 3. FORCE BIOME RECOVERY CHECK
   if (state.biomeExpiresAt <= now) {
     const fallback = await processBiomeTick(state, 1);
 
     state = fallback.state;
+    state.lastTickAt = now;
+
     await setChannelState(state);
   }
 
@@ -63,6 +65,6 @@ state.lastTickAt = now;
     );
   }
 
-  // 5. RETURN FRESH STATUS EVERY TIME
+  // 5. RETURN STATUS
   return text(res, getBiomeStatus(state));
 }
