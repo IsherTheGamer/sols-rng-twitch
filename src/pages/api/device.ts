@@ -61,7 +61,7 @@ export default async function handler(
     const devBiome = biomeMap.get(state.activeDevBiome!);
 
     if (devBiome?.blocksDevices) {
-      return error(res, "You're in a wrong dimension.");
+      return error(res, "You're in a unchangable biome.");
     }
   }
 
