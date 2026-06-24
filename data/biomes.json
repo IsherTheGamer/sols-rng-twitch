@@ -1,7 +1,7 @@
 {
   "version": "eon-1-21",
   "timeCycleSeconds": 150,
-  "statusIntervalSeconds": 120,
+  "statusIntervalSeconds": 60,
   "biomes": [
     {
       "id": "normal",
