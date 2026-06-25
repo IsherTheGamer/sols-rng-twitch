@@ -4524,9 +4524,7 @@
       "noBreakthrough": false,
       "potion": {
         "id": "word_potion",
-        "rarity": 5350,
-        "id": "overpowered_potion",
-        "rarity": 12
+        "rarity": 5350
       },
       "devBiome": null,
       "luckImmune": true,
