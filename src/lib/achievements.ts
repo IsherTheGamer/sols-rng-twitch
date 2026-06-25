@@ -1,410 +1,517 @@
-{
-  "version": "eon-1-21",
-  "timeCycleSeconds": 150,
-  "statusIntervalSeconds": 120,
-  "biomes": [
-    {
-      "id": "normal",
-      "name": "Normal",
-      "pool": "normal",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 30,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": null,
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "windy",
-      "name": "WINDY",
-      "pool": "normal",
-      "spawnPerSecond": 500,
-      "spawnOnChange": null,
-      "durationSeconds": 60,
-      "breakthroughMultiplier": 3,
-      "chatSpawn": "[Windy]: A refreshing and cool wind passes through the world..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "snowy",
-      "name": "SNOWY",
-      "pool": "normal",
-      "spawnPerSecond": 600,
-      "spawnOnChange": null,
-      "durationSeconds": 60,
-      "breakthroughMultiplier": 3,
-      "chatSpawn": "[Snowy]: White snow and cold begin to cover the surroundings..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "rainy",
-      "name": "RAINY",
-      "pool": "normal",
-      "spawnPerSecond": 750,
-      "spawnOnChange": null,
-      "durationSeconds": 60,
-      "breakthroughMultiplier": 4,
-      "chatSpawn": "[Rainy]: Strong winds and showers sweep through the world..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "sandstorm",
-      "name": "SANDSTORM",
-      "pool": "normal",
-      "spawnPerSecond": 3000,
-      "spawnOnChange": null,
-      "durationSeconds": 360,
-      "breakthroughMultiplier": 4,
-      "chatSpawn": "[Sand Storm]: A harsh Sand Storm blocks your path...",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "hell",
-      "name": "HELL",
-      "pool": "normal",
-      "spawnPerSecond": 6666,
-      "spawnOnChange": null,
-      "durationSeconds": 666,
-      "breakthroughMultiplier": 6,
-      "chatSpawn": "[Hell]: A strong and violent energy of chaos overtakes the world..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "starfall",
-      "name": "STARFALL",
-      "pool": "normal",
-      "spawnPerSecond": 7500,
-      "spawnOnChange": null,
-      "durationSeconds": 540,
-      "breakthroughMultiplier": 5,
-      "chatSpawn": "[Starfall]: Beautiful and dreamy starlight pours into the world..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "singularityChanceOnSpawn": 100
-    },
-    {
-      "id": "heaven",
-      "name": "HEAVEN",
-      "pool": "normal",
-      "spawnPerSecond": 7777,
-      "spawnOnChange": null,
-      "durationSeconds": 240,
-      "breakthroughMultiplier": 5,
-      "chatSpawn": "[Heaven]: A hand of angel leads you into divine place...",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "corruption",
-      "name": "CORRUPTION",
-      "pool": "normal",
-      "spawnPerSecond": 9000,
-      "spawnOnChange": null,
-      "durationSeconds": 480,
-      "breakthroughMultiplier": 5,
-      "chatSpawn": "[Corruption]: Poisonous pollution spreads throughout the world..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "null",
-      "name": "NULL",
-      "pool": "normal",
-      "spawnPerSecond": 10100,
-      "spawnOnChange": null,
-      "durationSeconds": 78,
-      "breakthroughMultiplier": 1000,
-      "chatSpawn": "[Null]: It's too dark here..",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false
-    },
-    {
-      "id": "glitched",
-      "name": "GLITCHED",
-      "pool": "rare",
-      "spawnPerSecond": null,
-      "spawnOnChange": 30000,
-      "durationSeconds": 164,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Manager]: Unexpected error occurred. [Code 404]",
-      "chatEnd": "[Manager]: [Code 404] has resolved.",
-      "blocksDevices": false,
-      "nativeRarityOverride": true,
-      "isRareBiome": true,
-      "excludesRareBiomeAuras": true
-    },
-    {
-      "id": "dreamspace",
-      "name": "DREAMSPACE",
-      "pool": "rare",
-      "spawnPerSecond": 3500000,
-      "spawnOnChange": null,
-      "durationSeconds": 192,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Dreamspace]: You begin to feel sleepy...",
-      "chatEnd": "[Dreamspace]: Waking up...",
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": true,
-      "requiresNormalBiome": true
-    },
-    {
-      "id": "cyberspace",
-      "name": "CYBERSPACE",
-      "pool": "special",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "deviceChance": 5000,
-      "durationSeconds": 720,
-      "breakthroughMultiplier": 2,
-      "chatSpawn": "[Cyberspace]: Signal_Received | From: Island_SOL",
-      "chatEnd": "[Cyberspace]: Signal Lost.",
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": true,
-      "deviceOnly": true
-    },
-    {
-      "id": "singularity",
-      "name": "SINGULARITY",
-      "pool": "special",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 1200,
-      "breakthroughMultiplier": 5,
-      "chatSpawn": "[Singularity]: The Singularity pulls in everything, including you...",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": true,
-      "replacesStarfall": true
-    },
-    {
-      "id": "graveyard",
-      "name": "GRAVEYARD",
-      "pool": "event",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "nightChance": 3,
-      "durationUntilNightEnd": true,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Graveyard]: Nameless ghosts past by you...",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "overridesExcept": ["glitched", "dreamspace"]
-    },
-    {
-      "id": "pumpkin_moon",
-      "name": "PUMPKIN MOON",
-      "pool": "event",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "nightChance": 3,
-      "durationUntilNightEnd": true,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Pumpkin Moon]: An evil and eerie energy has taken over the world!",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "overridesExcept": ["glitched", "dreamspace"]
-    },
-    {
-      "id": "blazing_sun",
-      "name": "BLAZING SUN",
-      "pool": "event",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "dayChance": 4,
-      "durationUntilNight": true,
-      "breakthroughMultiplier": 2,
-      "chatSpawn": "[Blazing Sun]: The hot sunlight begins to shine on you.",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "overridesExcept": ["glitched", "dreamspace"]
-    },
-    {
-      "id": "blood_rain",
-      "name": "BLOOD RAIN",
-      "pool": "event",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 600,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Blood Rain]: Drops of blood begin to fall from the sky...",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "manualOnly": true
-    },
-    {
-      "id": "aurora",
-      "name": "AURORA",
-      "pool": "event",
-      "spawnPerSecond": 50000,
-      "spawnOnChange": null,
-      "durationSeconds": 300,
-      "breakthroughMultiplier": 2,
-      "chatSpawn": "[Aurora]: An aurora begins to appear in the sky...",
-      "chatEnd": "[Aurora]: The aurora dissapears...",
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "requiresSnowy": true
-    },
-    {
-      "id": "eggland",
-      "name": "EGGLAND",
-      "pool": "event",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": null,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[Eggland]: Easter vibes fill the island!",
-      "chatEnd": null,
-      "blocksDevices": false,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "replacesNormal": true
-    },
-    {
-      "id": "hyperspace_realm",
-      "name": "THE HYPERSPACE REALM",
-      "pool": "dev",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 3600,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[ THE HYPERSPACE REALM ] has manifested...",
-      "chatEnd": "[ THE HYPERSPACE REALM ] has collapsed.",
-      "blocksDevices": true,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "devOnly": true
-    },
-    {
-      "id": "abnormality",
-      "name": "ABNORMALITY",
-      "pool": "dev",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 3600,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[ ABNORMALITY ] has manifested...",
-      "chatEnd": "[ ABNORMALITY ] has collapsed.",
-      "blocksDevices": true,
-      "nativeRarityOverride": true,
-      "isRareBiome": false,
-      "devOnly": true
-    },
-    {
-      "id": "nulls_existence",
-      "name": "THE NULL'S EXISTENCE",
-      "pool": "dev",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 3600,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "THE NULL'S EXISTENCE has manifested...",
-      "chatEnd": "THE NULL'S EXISTENCE has collapsed.",
-      "blocksDevices": true,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "devOnly": true
-    },
-    {
-      "id": "citadel_of_orders",
-      "name": "THE CITADEL OF ORDERS",
-      "pool": "dev",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 3600,
-      "breakthroughMultiplier": 2,
-      "chatSpawn": "THE CITADEL OF ORDERS has manifested...",
-      "chatEnd": "THE CITADEL OF ORDERS has collapsed.",
-      "blocksDevices": true,
-      "nativeRarityOverride": false,
-      "isRareBiome": false,
-      "devOnly": true
-    },
-    {
-      "id": "red_full_moon",
-      "name": "赤い満月",
-      "pool": "dev",
-      "spawnPerSecond": null,
-      "spawnOnChange": null,
-      "durationSeconds": 3600,
-      "breakthroughMultiplier": 1,
-      "chatSpawn": "[ 赤い満月 ] has risen...",
-      "chatEnd": "[ 赤い満月 ] has set.",
-      "blocksDevices": true,
-      "nativeRarityOverride": true,
-      "isRareBiome": false,
-      "devOnly": true
+import type { AuraDef } from "../types/data";
+
+export type AchievementCondition =
+  | {
+      type: "biome_count";
+      biomeId: string;
+      count: number;
     }
-  ],
-  "time": {
-    "day": {
-      "id": "daytime",
-      "name": "DAYTIME",
-      "breakthroughMultiplier": 10
-    },
-    "night": {
-      "id": "nighttime",
-      "name": "NIGHTTIME",
-      "breakthroughMultiplier": 10
+  | {
+      type: "rainy_streak";
+      count: number;
     }
+  | {
+      type: "all_biomes";
+      biomeIds: string[];
+    }
+  | {
+      type: "aura_tier_count";
+      tierId: string;
+      count: number;
+    }
+  | {
+      type: "aura_count";
+      auraId: string;
+      count: number;
+    };
+
+export interface AchievementReward {
+  flatLuck?: number;
+  finalLuckMultiplier?: number;
+  cooldownReductionSeconds?: number;
+  extraRolls?: number;
+}
+
+export interface AchievementDef {
+  id: string;
+  name: string;
+  condition: AchievementCondition;
+  reward: AchievementReward;
+  message: string;
+}
+
+export interface GlobalAchievementState {
+  unlocked: string[];
+  biomeCounts: Record<string, number>;
+  seenBiomes: string[];
+  auraTierCounts: Record<string, number>;
+  auraCounts: Record<string, number>;
+  rainyStreak: number;
+  maxRainyStreak: number;
+  lastBiomeTrackKey: string | null;
+}
+
+export interface AchievementBonuses {
+  flatLuck: number;
+  finalLuckMultiplier: number;
+  cooldownReductionSeconds: number;
+  extraRolls: number;
+}
+
+export const NORMAL_BIOMES = [
+  "windy",
+  "snowy",
+  "rainy",
+  "sandstorm",
+  "hell",
+  "starfall",
+  "heaven",
+  "corruption",
+  "null",
+];
+
+export const RARE_BIOMES = [
+  "glitched",
+  "dreamspace",
+  "cyberspace",
+  "singularity",
+];
+
+export const EVENT_BIOMES = [
+  "graveyard",
+  "pumpkin_moon",
+  "blazing_sun",
+  "blood_rain",
+  "aurora",
+  "eggland",
+];
+
+export const NON_EVENT_DEV_BIOMES = [
+  ...NORMAL_BIOMES,
+  ...RARE_BIOMES,
+];
+
+export const AURA_TIER_IDS = [
+  "basic",
+  "epic",
+  "unique",
+  "legendary",
+  "mythic",
+  "exalted",
+  "glorious",
+  "transcendent",
+  "dimensional",
+  "challenged",
+  "challenged+",
+  "event_100m",
+  "event_500m",
+  "dev-exclusive",
+  "illusionary",
+];
+
+export const ACHIEVEMENTS: AchievementDef[] = [
+  {
+    id: "biome_glitched_1",
+    name: "Code 404",
+    condition: { type: "biome_count", biomeId: "glitched", count: 1 },
+    reward: { extraRolls: 1 },
+    message: "ACH Code 404! +1 bonus roll",
   },
-  "normalPoolWeights": [
-    { "id": "windy", "weight": 1 },
-    { "id": "snowy", "weight": 1 },
-    { "id": "rainy", "weight": 1 },
-    { "id": "sandstorm", "weight": 1 },
-    { "id": "hell", "weight": 1 },
-    { "id": "starfall", "weight": 1 },
-    { "id": "heaven", "weight": 1 },
-    { "id": "corruption", "weight": 1 },
-    { "id": "null", "weight": 1 }
-  ],
-  "randomizerPool": [
-    "windy",
-    "snowy",
-    "rainy",
-    "sandstorm",
-    "hell",
-    "starfall",
-    "heaven",
-    "corruption"
-  ]
+  {
+    id: "biome_dreamspace_1",
+    name: "Lucid Dreamer",
+    condition: { type: "biome_count", biomeId: "dreamspace", count: 1 },
+    reward: { cooldownReductionSeconds: 1 },
+    message: "ACH Lucid Dreamer! -1s roll cooldown",
+  },
+  {
+    id: "biome_cyberspace_1",
+    name: "Signal Received",
+    condition: { type: "biome_count", biomeId: "cyberspace", count: 1 },
+    reward: { finalLuckMultiplier: 1.01 },
+    message: "ACH Signal Received! 1.01x final luck",
+  },
+  {
+    id: "biome_singularity_1",
+    name: "Gravity Collapse",
+    condition: { type: "biome_count", biomeId: "singularity", count: 1 },
+    reward: { finalLuckMultiplier: 1.01 },
+    message: "ACH Gravity Collapse! 1.01x final luck",
+  },
+  {
+    id: "biome_null_1",
+    name: "Into The Null",
+    condition: { type: "biome_count", biomeId: "null", count: 1 },
+    reward: { flatLuck: 0.5 },
+    message: "ACH Into The Null! +0.5 luck",
+  },
+  {
+    id: "biome_null_10",
+    name: "Null Dweller",
+    condition: { type: "biome_count", biomeId: "null", count: 10 },
+    reward: { flatLuck: 2 },
+    message: "ACH Null Dweller! +2 luck",
+  },
+  {
+    id: "biome_all_non_event_dev",
+    name: "World Explorer",
+    condition: {
+      type: "all_biomes",
+      biomeIds: NON_EVENT_DEV_BIOMES,
+    },
+    reward: { finalLuckMultiplier: 1.05 },
+    message: "ACH World Explorer! 1.05x final luck",
+  },
+  {
+    id: "biome_rainy_streak_5",
+    name: "Rain Chain",
+    condition: { type: "rainy_streak", count: 5 },
+    reward: { flatLuck: 1 },
+    message: "ACH Rain Chain! +1 luck",
+  },
+
+  {
+    id: "aura_basic_1000",
+    name: "Basic Collector",
+    condition: { type: "aura_tier_count", tierId: "basic", count: 1000 },
+    reward: { flatLuck: 0.5 },
+    message: "ACH Basic Collector! +0.5 luck",
+  },
+  {
+    id: "aura_epic_1000",
+    name: "Epic Collector",
+    condition: { type: "aura_tier_count", tierId: "epic", count: 1000 },
+    reward: { flatLuck: 0.5 },
+    message: "ACH Epic Collector! +0.5 luck",
+  },
+  {
+    id: "aura_unique_1000",
+    name: "Unique Collector",
+    condition: { type: "aura_tier_count", tierId: "unique", count: 1000 },
+    reward: { flatLuck: 1 },
+    message: "ACH Unique Collector! +1 luck",
+  },
+  {
+    id: "aura_legendary_1000",
+    name: "Legendary Collector",
+    condition: { type: "aura_tier_count", tierId: "legendary", count: 1000 },
+    reward: { flatLuck: 1.2 },
+    message: "ACH Legendary Collector! +1.2 luck",
+  },
+  {
+    id: "aura_mythic_1000",
+    name: "Mythic Collector",
+    condition: { type: "aura_tier_count", tierId: "mythic", count: 1000 },
+    reward: { flatLuck: 1.6 },
+    message: "ACH Mythic Collector! +1.6 luck",
+  },
+  {
+    id: "aura_exalted_1000",
+    name: "Exalted Collector",
+    condition: { type: "aura_tier_count", tierId: "exalted", count: 1000 },
+    reward: { flatLuck: 2 },
+    message: "ACH Exalted Collector! +2 luck",
+  },
+  {
+    id: "aura_glorious_500",
+    name: "Glorious Collector",
+    condition: { type: "aura_tier_count", tierId: "glorious", count: 500 },
+    reward: { finalLuckMultiplier: 1.01 },
+    message: "ACH Glorious Collector! 1.01x final luck",
+  },
+  {
+    id: "aura_transcendent_250",
+    name: "Transcendent Collector",
+    condition: { type: "aura_tier_count", tierId: "transcendent", count: 250 },
+    reward: { finalLuckMultiplier: 1.03 },
+    message: "ACH Transcendent Collector! 1.03x final luck",
+  },
+  {
+    id: "aura_dimensional_20",
+    name: "Dimensional Breaker",
+    condition: { type: "aura_tier_count", tierId: "dimensional", count: 20 },
+    reward: { finalLuckMultiplier: 1.05 },
+    message: "ACH Dimensional Breaker! 1.05x final luck",
+  },
+  {
+    id: "aura_challenged_350",
+    name: "Challenge Accepted",
+    condition: { type: "aura_tier_count", tierId: "challenged", count: 350 },
+    reward: { finalLuckMultiplier: 1.02 },
+    message: "ACH Challenge Accepted! 1.02x final luck",
+  },
+  {
+    id: "aura_challenged_plus_50",
+    name: "Challenge Master",
+    condition: { type: "aura_tier_count", tierId: "challenged+", count: 50 },
+    reward: { finalLuckMultiplier: 1.05 },
+    message: "ACH Challenge Master! 1.05x final luck",
+  },
+  {
+    id: "aura_event_100m_500",
+    name: "Event Hunter",
+    condition: { type: "aura_tier_count", tierId: "event_100m", count: 500 },
+    reward: { flatLuck: 1.5 },
+    message: "ACH Event Hunter! +1.5 luck",
+  },
+  {
+    id: "aura_event_500m_1000",
+    name: "Event Legend",
+    condition: { type: "aura_tier_count", tierId: "event_500m", count: 1000 },
+    reward: { finalLuckMultiplier: 1.05 },
+    message: "ACH Event Legend! 1.05x final luck",
+  },
+  {
+    id: "aura_dev_1",
+    name: "Developer Touch",
+    condition: { type: "aura_tier_count", tierId: "dev-exclusive", count: 1 },
+    reward: { finalLuckMultiplier: 1.05 },
+    message: "ACH Developer Touch! 1.05x final luck",
+  },
+  {
+    id: "aura_dev_5",
+    name: "Developer Blessed",
+    condition: { type: "aura_tier_count", tierId: "dev-exclusive", count: 5 },
+    reward: { finalLuckMultiplier: 1.1, flatLuck: 2 },
+    message: "ACH Developer Blessed! 1.1x final luck +2 luck",
+  },
+  {
+    id: "aura_illusionary_1",
+    name: "Illusionary",
+    condition: { type: "aura_count", auraId: "illusionary", count: 1 },
+    reward: { flatLuck: 2, finalLuckMultiplier: 1.01 },
+    message: "ACH Illusionary! +2 luck +1.01x final luck",
+  },
+];
+
+export function createDefaultAchievementState(): GlobalAchievementState {
+  const auraTierCounts: Record<string, number> = {};
+  for (const id of AURA_TIER_IDS) auraTierCounts[id] = 0;
+
+  const biomeCounts: Record<string, number> = {};
+  for (const id of [...NORMAL_BIOMES, ...RARE_BIOMES, ...EVENT_BIOMES]) {
+    biomeCounts[id] = 0;
+  }
+
+  return {
+    unlocked: [],
+    biomeCounts,
+    seenBiomes: [],
+    auraTierCounts,
+    auraCounts: {},
+    rainyStreak: 0,
+    maxRainyStreak: 0,
+    lastBiomeTrackKey: null,
+  };
+}
+
+export function normalizeAchievementState(
+  input: Partial<GlobalAchievementState> | null | undefined
+): GlobalAchievementState {
+  const base = createDefaultAchievementState();
+
+  if (!input) return base;
+
+  return {
+    unlocked: Array.isArray(input.unlocked) ? input.unlocked : [],
+    biomeCounts: {
+      ...base.biomeCounts,
+      ...(input.biomeCounts ?? {}),
+    },
+    seenBiomes: Array.isArray(input.seenBiomes) ? input.seenBiomes : [],
+    auraTierCounts: {
+      ...base.auraTierCounts,
+      ...(input.auraTierCounts ?? {}),
+    },
+    auraCounts: {
+      ...(input.auraCounts ?? {}),
+    },
+    rainyStreak: input.rainyStreak ?? 0,
+    maxRainyStreak: input.maxRainyStreak ?? 0,
+    lastBiomeTrackKey: input.lastBiomeTrackKey ?? null,
+  };
+}
+
+export function getAuraTierIds(aura: AuraDef): string[] {
+  const tags = (aura.tags ?? []).map((tag) => tag.toLowerCase().trim());
+  const ids: string[] = [];
+
+  const isEventAura = !!aura.event;
+  const isDevExclusive =
+    tags.includes("dev-exclusive") || aura.devBiome != null;
+
+  if (!isEventAura && !isDevExclusive) {
+    const rarity = aura.rarity;
+
+    if (rarity >= 1 && rarity <= 999) ids.push("basic");
+    else if (rarity >= 1000 && rarity <= 9999) ids.push("epic");
+    else if (rarity >= 10000 && rarity <= 99999) ids.push("unique");
+    else if (rarity >= 100000 && rarity <= 999999) ids.push("legendary");
+    else if (rarity >= 1000000 && rarity <= 9999999) ids.push("mythic");
+    else if (rarity >= 10000000 && rarity <= 99999998) ids.push("exalted");
+    else if (rarity >= 99999999 && rarity <= 999999999) ids.push("glorious");
+    else if (rarity >= 1000000000 && rarity <= 7499999999) {
+      ids.push("transcendent");
+    } else if (rarity >= 7500000000) {
+      ids.push("dimensional");
+    }
+  }
+
+  if (tags.includes("dimensional")) ids.push("dimensional");
+  if (tags.includes("challenged")) ids.push("challenged");
+  if (tags.includes("challenged+")) ids.push("challenged+");
+
+  if (isEventAura && aura.rarity >= 100000000) ids.push("event_100m");
+  if (isEventAura && aura.rarity >= 500000000) ids.push("event_500m");
+
+  if (isDevExclusive) ids.push("dev-exclusive");
+
+  if (aura.id === "illusionary") ids.push("illusionary");
+
+  return Array.from(new Set(ids));
+}
+
+export function applyAuraRollToAchievements(
+  state: GlobalAchievementState,
+  aura: AuraDef
+): void {
+  state.auraCounts[aura.id] = (state.auraCounts[aura.id] ?? 0) + 1;
+
+  const tierIds = getAuraTierIds(aura);
+  for (const tierId of tierIds) {
+    state.auraTierCounts[tierId] =
+      (state.auraTierCounts[tierId] ?? 0) + 1;
+  }
+}
+
+export function applyBiomeVisitToAchievements(
+  state: GlobalAchievementState,
+  biomeId: string,
+  biomeExpiresAt?: number
+): boolean {
+  if (!biomeId || biomeId === "normal") return false;
+
+  const trackKey = `${biomeId}:${biomeExpiresAt ?? 0}`;
+
+  if (state.lastBiomeTrackKey === trackKey) {
+    return false;
+  }
+
+  state.lastBiomeTrackKey = trackKey;
+  state.biomeCounts[biomeId] = (state.biomeCounts[biomeId] ?? 0) + 1;
+
+  if (!state.seenBiomes.includes(biomeId)) {
+    state.seenBiomes.push(biomeId);
+  }
+
+  if (biomeId === "rainy") {
+    state.rainyStreak += 1;
+  } else {
+    state.rainyStreak = 0;
+  }
+
+  if (state.rainyStreak > state.maxRainyStreak) {
+    state.maxRainyStreak = state.rainyStreak;
+  }
+
+  return true;
+}
+
+function isConditionMet(
+  state: GlobalAchievementState,
+  condition: AchievementCondition
+): boolean {
+  if (condition.type === "biome_count") {
+    return (state.biomeCounts[condition.biomeId] ?? 0) >= condition.count;
+  }
+
+  if (condition.type === "rainy_streak") {
+    return state.maxRainyStreak >= condition.count;
+  }
+
+  if (condition.type === "all_biomes") {
+    return condition.biomeIds.every((id) => state.seenBiomes.includes(id));
+  }
+
+  if (condition.type === "aura_tier_count") {
+    return (state.auraTierCounts[condition.tierId] ?? 0) >= condition.count;
+  }
+
+  if (condition.type === "aura_count") {
+    return (state.auraCounts[condition.auraId] ?? 0) >= condition.count;
+  }
+
+  return false;
+}
+
+export function unlockAvailableAchievements(
+  state: GlobalAchievementState
+): AchievementDef[] {
+  const unlockedNow: AchievementDef[] = [];
+  const unlockedSet = new Set(state.unlocked);
+
+  for (const achievement of ACHIEVEMENTS) {
+    if (unlockedSet.has(achievement.id)) continue;
+
+    if (isConditionMet(state, achievement.condition)) {
+      unlockedSet.add(achievement.id);
+      state.unlocked.push(achievement.id);
+      unlockedNow.push(achievement);
+    }
+  }
+
+  return unlockedNow;
+}
+
+export function calculateAchievementBonuses(
+  state: GlobalAchievementState
+): AchievementBonuses {
+  let flatLuck = 0;
+  let finalLuckMultiplier = 1;
+  let cooldownReductionSeconds = 0;
+  let extraRolls = 0;
+
+  const unlockedSet = new Set(state.unlocked);
+
+  for (const achievement of ACHIEVEMENTS) {
+    if (!unlockedSet.has(achievement.id)) continue;
+
+    flatLuck += achievement.reward.flatLuck ?? 0;
+    finalLuckMultiplier *= achievement.reward.finalLuckMultiplier ?? 1;
+    cooldownReductionSeconds +=
+      achievement.reward.cooldownReductionSeconds ?? 0;
+    extraRolls += achievement.reward.extraRolls ?? 0;
+  }
+
+  return {
+    flatLuck,
+    finalLuckMultiplier,
+    cooldownReductionSeconds,
+    extraRolls,
+  };
+}
+
+export function formatAchievementUnlocks(
+  achievements: AchievementDef[]
+): string {
+  if (achievements.length === 0) return "";
+
+  if (achievements.length === 1) {
+    return achievements[0].message;
+  }
+
+  return `${achievements[0].message} (+${achievements.length - 1} more)`;
+}
+
+export function getAchievementProgressLine(
+  state: GlobalAchievementState
+): string {
+  const unlocked = state.unlocked.length;
+  const total = ACHIEVEMENTS.length;
+
+  const basic = state.auraTierCounts.basic ?? 0;
+  const epic = state.auraTierCounts.epic ?? 0;
+  const mythic = state.auraTierCounts.mythic ?? 0;
+
+  return `ACH ${unlocked}/${total} | Basic ${basic}/1000 | Epic ${epic}/1000 | Mythic ${mythic}/1000`;
 }
