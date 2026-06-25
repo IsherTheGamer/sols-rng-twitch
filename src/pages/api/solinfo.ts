@@ -16,15 +16,20 @@ const INFO = [
 ];
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const chunk = Number(req.query.chunk ?? 1);
+  // ✅ FIX: read Nightbot args properly
+  const raw = (req.query.args as string) ?? "1";
+  const chunk = Math.max(1, parseInt(raw, 10) || 1);
 
-  // how many commands per message (safe for Nightbot)
   const PER_PAGE = 3;
 
   const start = (chunk - 1) * PER_PAGE;
   const page = INFO.slice(start, start + PER_PAGE);
 
-  const next = start + PER_PAGE < INFO.length ? ` | next: !solinfo ${chunk + 1}` : "";
+  const hasNext = start + PER_PAGE < INFO.length;
 
-  return text(res, page.join(" | ") + next);
+  const nextText = hasNext
+    ? ` | next: !solinfo ${chunk + 1}`
+    : "";
+
+  return text(res, page.join(" | ") + nextText);
 }
