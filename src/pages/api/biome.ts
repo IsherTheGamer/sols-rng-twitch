@@ -4,6 +4,8 @@ import { getChannelState, setChannelState } from "@/lib/state";
 import { processBiomeTick, getBiomeStatus } from "@/lib/biome-engine";
 import { text, error, parseQuery } from "@/lib/api-helpers";
 import { findBiome } from "@/lib/data";
+import { recordBiomeVisit } from "@/lib/global-stats";
+import { formatAchievementUnlocks } from "@/lib/achievements";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,28 +14,22 @@ export default async function handler(
   const { channelId, channelName, isMod } = getChannelContext(req);
   const action = req.query.action;
 
-  // 1. LOAD STATE
   let state = await getChannelState(channelId, channelName);
 
   const now = Date.now();
 
-  // 🔥 HARD DESYNC FIX (prevents frozen / corrupted timestamps)
   if (!state.lastTickAt || state.lastTickAt > now + 60000) {
     state.lastTickAt = now;
   }
 
-  // 2. REAL TIME TICK
   const elapsed = Math.max(1, now - state.lastTickAt);
 
   const tick = await processBiomeTick(state, elapsed);
   state = tick.state;
-
-  // IMPORTANT: sync time pointer AFTER tick
   state.lastTickAt = now;
 
   await setChannelState(state);
 
-  // 3. FORCE BIOME RECOVERY CHECK
   if (state.biomeExpiresAt <= now) {
     const fallback = await processBiomeTick(state, 1);
 
@@ -43,7 +39,6 @@ export default async function handler(
     await setChannelState(state);
   }
 
-  // 4. ADMIN FORCE CHANGE
   if (action === "change") {
     if (!isMod) return error(res, "Mod only.");
 
@@ -55,16 +50,32 @@ export default async function handler(
     }
 
     state.biomeId = biome.id;
-    state.biomeExpiresAt = Date.now() + 120000;
+    state.biomeExpiresAt =
+      Date.now() + (biome.durationSeconds ?? 120) * 1000;
 
     await setChannelState(state);
 
+    const unlocked = await recordBiomeVisit(
+      state.biomeId,
+      state.biomeExpiresAt
+    );
+
+    const unlockText = formatAchievementUnlocks(unlocked);
+    const suffix = unlockText ? ` | ${unlockText}` : "";
+
     return text(
       res,
-      `Biome forced to ${biome.name}. ${getBiomeStatus(state)}`
+      `Biome forced to ${biome.name}. ${getBiomeStatus(state)}${suffix}`
     );
   }
 
-  // 5. RETURN STATUS
-  return text(res, getBiomeStatus(state));
+  const unlocked = await recordBiomeVisit(
+    state.biomeId,
+    state.biomeExpiresAt
+  );
+
+  const unlockText = formatAchievementUnlocks(unlocked);
+  const suffix = unlockText ? ` | ${unlockText}` : "";
+
+  return text(res, `${getBiomeStatus(state)}${suffix}`);
 }
