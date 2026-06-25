@@ -61,56 +61,79 @@
       "name": "Red Moon Potion I",
       "aliases": ["red fragment", "red fragment potion", "red moon potion i", "red moon i"],
       "luck": 100000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "fragments_of_the_red_crimson_moon_1", "rarity": 1000 }
+      ]
     },
     {
       "id": "red_fragment_ii",
       "name": "Red Moon Potion II",
       "aliases": ["red fragment ii", "red moon potion ii", "red moon ii", "red fragment 2"],
       "luck": 200000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "fragments_of_the_red_crimson_moon_2", "rarity": 100 }
+      ]
     },
     {
       "id": "void_heart",
       "name": "Void Heart",
       "aliases": ["void heart", "voidheart"],
       "luck": 350000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "eden", "rarity": 250 }
+      ]
     },
     {
       "id": "axis_potion",
       "name": "Potion Of Time",
       "aliases": ["time", "axis","potion of time","axis potion"],
       "luck": 530000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "mastermind", "rarity": 5353 }
+      ]
     },
     {
       "id": "xyz_potion",
       "name": "Potion Of Dimension",
       "aliases": ["dimension", "xyz","potion of dimension","xyz potion"],
       "luck": 540000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "another_realm", "rarity": 5454 }
+      ]
     },
     {
       "id": "word_potion",
       "name": "Potion Of Justice",
       "aliases": ["justice", "word","potion of justice","word potion"],
       "luck": 535000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "edict", "rarity": 5350 }
+      ]
     },
     {
       "id": "chaos_potion",
       "name": "Potion Of Chaos",
       "aliases": ["chaos","potion of chaos","chaos potion"],
       "luck": 535000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "red_full_moon_aura", "rarity": 4842 },
+        { "auraId": "abomination_aura", "rarity": 4840 }
+      ]
     },
     {
       "id": "overpowered_potion",
       "name": "Potion Of Sol",
       "aliases": ["Sol","sol","overpowered"],
       "luck": 10000000,
-      "exclusiveAuras": []
+      "exclusiveAuras": [
+        { "auraId": "red_full_moon_aura", "rarity": 20 },
+        { "auraId": "fragments_of_the_red_crimson_moon_2", "rarity": 30 },
+        { "auraId": "oblivion_aura", "rarity": 10 },
+        { "auraId": "red_full_moon_aura", "rarity": 16 },
+        { "auraId": "edict", "rarity": 12 },
+        { "auraId": "mastermind", "rarity": 14 },
+        { "auraId": "another_realm", "rarity": 13 },
+      ]
     },
     {
       "id": "popping",
