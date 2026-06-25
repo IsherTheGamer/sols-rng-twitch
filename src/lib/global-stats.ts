@@ -1,16 +1,24 @@
 import { Redis } from "@upstash/redis";
 import type { AuraDef } from "../types/data";
 import {
-  type GlobalAchievementState,
-  type AchievementBonuses,
+  ACHIEVEMENTS,
+  ACHIEVEMENT_CATEGORIES,
+  NORMAL_BIOMES,
+  RARE_BIOMES,
+  EVENT_BIOMES,
+  AURA_TIER_IDS,
   type AchievementDef,
+  type AchievementState,
+  createDefaultAchievementState,
   normalizeAchievementState,
-  applyAuraRollToAchievements,
-  applyBiomeVisitToAchievements,
+  recordAuraRollInState,
+  recordBiomeVisitInState,
   unlockAvailableAchievements,
   calculateAchievementBonuses,
-  createDefaultAchievementState,
-  getAchievementProgressLine,
+  formatReward,
+  getAchievementProgress,
+  getAchievementTarget,
+  normalizeAchievementCategory,
 } from "./achievements";
 
 let redis: Redis | null = null;
@@ -91,18 +99,18 @@ export function getNextLuckMilestone(globalRolls: number): {
   };
 }
 
-export async function getAchievementState(): Promise<GlobalAchievementState> {
+export async function getAchievementState(): Promise<AchievementState> {
   const r = getRedis();
 
   if (!r) return createDefaultAchievementState();
 
-  const data = await r.get<GlobalAchievementState>(ACHIEVEMENT_STATE_KEY);
+  const data = await r.get<AchievementState>(ACHIEVEMENT_STATE_KEY);
 
   return normalizeAchievementState(data);
 }
 
 export async function setAchievementState(
-  state: GlobalAchievementState
+  state: AchievementState
 ): Promise<void> {
   const r = getRedis();
 
@@ -117,7 +125,7 @@ export async function recordAuraRolls(
   const state = await getAchievementState();
 
   for (const roll of rolls) {
-    applyAuraRollToAchievements(state, roll.aura);
+    recordAuraRollInState(state, roll.aura);
   }
 
   const unlocked = unlockAvailableAchievements(state);
@@ -133,7 +141,7 @@ export async function recordBiomeVisit(
 ): Promise<AchievementDef[]> {
   const state = await getAchievementState();
 
-  const changed = applyBiomeVisitToAchievements(
+  const changed = recordBiomeVisitInState(
     state,
     biomeId,
     biomeExpiresAt
@@ -148,12 +156,147 @@ export async function recordBiomeVisit(
   return unlocked;
 }
 
-export async function getAchievementBonuses(): Promise<AchievementBonuses> {
+export async function getAchievementBonuses() {
   const state = await getAchievementState();
   return calculateAchievementBonuses(state);
 }
 
-export async function getAchievementProgress(): Promise<string> {
+function parsePage(raw: string | undefined, fallback = 1): number {
+  const n = parseInt(raw ?? "", 10);
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return n;
+}
+
+export async function getAchievementMenuLine(
+  categoryRaw?: string,
+  pageRaw?: string
+): Promise<string> {
   const state = await getAchievementState();
-  return getAchievementProgressLine(state);
+
+  if (!categoryRaw) {
+    const cats = ACHIEVEMENT_CATEGORIES.map((c) => c.id).join(", ");
+    return `Achievements: ${cats} | Use !achievements tiers 1`;
+  }
+
+  const category = normalizeAchievementCategory(categoryRaw);
+
+  if (!category) {
+    const cats = ACHIEVEMENT_CATEGORIES.map((c) => c.id).join(", ");
+    return `Unknown category. Use: ${cats}`;
+  }
+
+  const list = ACHIEVEMENTS.filter((a) => a.category === category);
+
+  if (list.length === 0) {
+    return `No achievements in ${category}.`;
+  }
+
+  const page = parsePage(pageRaw, 1);
+  const index = page - 1;
+  const totalPages = list.length;
+
+  if (index < 0 || index >= list.length) {
+    return `No page ${page}. Use !achievements ${category} 1-${totalPages}`;
+  }
+
+  const achievement = list[index];
+  const progress = getAchievementProgress(state, achievement);
+  const target = getAchievementTarget(achievement);
+  const done = progress >= target;
+  const left = Math.max(0, target - progress);
+  const reward = formatReward(achievement.reward);
+
+  const progressText = done ? "DONE" : `${progress}/${target}`;
+  const nextText = done ? "Unlocked" : `Next ${left}`;
+
+  return `ACH ${category} ${page}/${totalPages}: ${achievement.name} | ${progressText} | Reward ${reward} | ${nextText}`;
+}
+
+function formatCounterEntries(
+  label: string,
+  entries: Array<[string, number]>,
+  pageRaw?: string
+): string {
+  const perPage = 4;
+  const page = parsePage(pageRaw, 1);
+  const totalPages = Math.max(1, Math.ceil(entries.length / perPage));
+
+  if (page > totalPages) {
+    return `No page ${page}. Use !counter ${label} 1-${totalPages}`;
+  }
+
+  const start = (page - 1) * perPage;
+  const pageEntries = entries.slice(start, start + perPage);
+
+  const body = pageEntries
+    .map(([name, value]) => `${name} ${value}`)
+    .join(" | ");
+
+  return `Counter ${label} ${page}/${totalPages}: ${body}`;
+}
+
+export async function getCounterMenuLine(
+  categoryRaw?: string,
+  pageRaw?: string
+): Promise<string> {
+  const state = await getAchievementState();
+  const bonuses = calculateAchievementBonuses(state);
+
+  if (!categoryRaw) {
+    return "Counters: totals, tiers, biomes, rare, events | Use !counter tiers 1";
+  }
+
+  const category = categoryRaw.toLowerCase().trim();
+
+  if (category === "total" || category === "totals") {
+    return `Totals: rolls ${state.totalAuraRolls} | biomes ${state.totalBiomeVisits} | ACH ${state.unlocked.length}/${ACHIEVEMENTS.length} | +Luck ${bonuses.flatLuck}`;
+  }
+
+  if (category === "tier" || category === "tiers" || category === "aura") {
+    const entries = AURA_TIER_IDS.map((id) => [
+      id,
+      state.auraTierCounts[id] ?? 0,
+    ] as [string, number]);
+
+    return formatCounterEntries("tiers", entries, pageRaw);
+  }
+
+  if (category === "biome" || category === "biomes") {
+    const entries = NORMAL_BIOMES.map((id) => [
+      id,
+      state.biomeCounts[id] ?? 0,
+    ] as [string, number]);
+
+    return formatCounterEntries("biomes", entries, pageRaw);
+  }
+
+  if (category === "rare") {
+    const entries = RARE_BIOMES.map((id) => [
+      id,
+      state.biomeCounts[id] ?? 0,
+    ] as [string, number]);
+
+    return formatCounterEntries("rare", entries, pageRaw);
+  }
+
+  if (category === "event" || category === "events") {
+    const entries: Array<[string, number]> = [
+      ...EVENT_BIOMES.map((id) => [
+        id,
+        state.biomeCounts[id] ?? 0,
+      ] as [string, number]),
+      ["event_100m", state.auraTierCounts.event_100m ?? 0],
+      ["event_500m", state.auraTierCounts.event_500m ?? 0],
+      ["dev-exclusive", state.auraTierCounts["dev-exclusive"] ?? 0],
+      ["illusionary", state.auraCounts.illusionary ?? 0],
+    ];
+
+    return formatCounterEntries("events", entries, pageRaw);
+  }
+
+  if (category === "rain" || category === "rainy") {
+    return `Rain counters: current ${state.rainyStreak} | best ${state.maxRainyStreak} | rainy ${state.biomeCounts.rainy ?? 0}`;
+  }
+
+  return "Unknown counter. Use: totals, tiers, biomes, rare, events";
 }
