@@ -312,8 +312,8 @@ add("eden", "Eden", 250, { potion: { id: "void_heart", rarity: 250 }, luckImmune
 add("abomination_aura", "ABOMINATION", 4840, { potion: { id: "chaos_potion", rarity: 4840 }, luckImmune: true });
 add("red_full_moon_aura", "FULL RED MOON", 4842, { potion: { id: "chaos_potion", rarity: 4842 }, luckImmune: true });
 add("edict", "EDICT", 5350, { potion: { id: "word_potion", rarity: 5350 }, luckImmune: true });
-add("memory", "mastermind", 5353, { potion: { id: "axis_potion", rarity: 5353 }, luckImmune: true });
-add("memory", "another_realm", 5454, { potion: { id: "xyz_potion", rarity: 5454 }, luckImmune: true });
+add("mastermind", "MASTERMIND", 5353, { potion: { id: "axis_potion", rarity: 5353 }, luckImmune: true });
+add("another_realm", "ANOTHER REALM", 5454, { potion: { id: "xyz_potion", rarity: 5454 }, luckImmune: true });
 
 // op potions
 add("oblivion_aura", "OBLIVION", 10, { potion: { id: "overpowered_potion", rarity: 10 }, luckImmune: true });
