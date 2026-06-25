@@ -67,7 +67,7 @@ export default async function handler(
     return text(
       res,
       `${device.name} used — biome unchanged (${
-        biomeMap.get(state.biomeId)?.name
+        biomeMap.get(state.biomeId)?.name ?? state.biomeId
       }).`
     );
   }
