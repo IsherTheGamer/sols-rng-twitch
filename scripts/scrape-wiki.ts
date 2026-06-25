@@ -283,8 +283,8 @@ add("sailor_admiral", "-SAILOR - ADMIRAL", 540000000, { biome: "rainy", nativeRa
 add("elude", "Elude", 555555555, { biome: "limbo", biomeLock: true });
 
 // --- Transcendent / higher ---
-add("nyctophobia", "N̥Y̰C̷T̠O͂Ò͈̩̀P͕̹̝̣̘̍H͋O̯̐̎̋B̢Ȋ̡̦̀̀̒Ǎ̝͚", 999999999, { tags: ["transcendent"] });
-add("pixelation", "▣ PIXELATION ▣", 1500000000, { tags: ["transcendent"] });
+add("nyctophobia", "N̥Y̰C̷T̠O͂Ò͈̩̀P͕̹̝̣̘̍H͋O̯̐̎̋B̢Ȋ̡̦̀̀̒Ǎ̝͚", 1011111010, { tags: ["transcendent"] });
+add("pixelation", "▣ PIXELATION ▣", 1073741824, { tags: ["transcendent"] });
 add("luminosity", "[ LUMINOSITY ]", 1200000000, { tags: ["transcendent"] });
 add("breakthrough_aura", "BREAKTHROUGH", 1999999999, { tags: ["transcendent"], biome: "null", biomeLock: true, noBreakthrough: true });
 add("equinox", "『EQUINOX』", 2500000000, { tags: ["transcendent"] });
@@ -306,6 +306,15 @@ add("monarch", "MONARCH", 3000000000, { biome: "corruption", biomeLock: true, no
 // --- Potion exclusives ---
 add("memory", "Memory", 100, { potion: { id: "oblivion", rarity: 100 }, luckImmune: true });
 add("oblivion_aura", "OBLIVION", 2000, { potion: { id: "oblivion", rarity: 2000 }, luckImmune: true });
+add("fragments_of_the_red_crimson_moon_1", "Fagments Of The Crimson Moon", 1000, { potion: { id: "red_fragment_i", rarity: 1000 }, luckImmune: true });
+add("fragments_of_the_red_crimson_moon_2", "Fagments Of The Crimson Moon", 100, { potion: { id: "red_fragment_ii", rarity: 100 }, luckImmune: true });
+add("eden", "Eden", 250, { potion: { id: "void_heart", rarity: 250 }, luckImmune: true, tags: ["challenged+"] });
+add("abomination_aura", "ABOMINATION", 4840, { potion: { id: "chaos_potion", rarity: 4840 }, luckImmune: true });
+add("red_full_moon_aura", "FULL RED MOON", 4842, { potion: { id: "chaos_potion", rarity: 4842 }, luckImmune: true });
+add("edict", "EDICT", 5350, { potion: { id: "word_potion", rarity: 5350 }, luckImmune: true });
+add("memory", "mastermind", 5353, { potion: { id: "axis_potion", rarity: 5353 }, luckImmune: true });
+add("memory", "another_realm", 5454, { potion: { id: "xyz_potion", rarity: 5454 }, luckImmune: true });
+
 
 // --- Dev biome auras ---
 add("prowler", "Prowler", 540000, { devBiome: "hyperspace_realm", biomeLock: true, noBreakthrough: true });
@@ -333,7 +342,7 @@ add("starfish_rider", "Starfish Rider", 250000, { event: "summer_2024", nativeRa
 // --- Unobtainable / dev exclusive (included for RollOP) ---
 add("sol_dev", "Sol", 1, { unobtainable: true, tags: ["dev-exclusive"] });
 add("neferkhaf", "Neferkhaf", 10000000, { unobtainable: true, luckImmune: true });
-add("eden", "Eden", 999999999, { unobtainable: true, tags: ["challenged+"] });
+
 
 // --- Deleted / removed (for RollOP reference) ---
 add("defined", "Defined", 2222000, { deleted: true, biome: "null", nativeRarity: 2222 });
