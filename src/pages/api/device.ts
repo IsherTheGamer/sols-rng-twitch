@@ -8,6 +8,8 @@ import {
 import { findDevice, biomeMap } from "@/lib/data";
 import { rollDeviceBiome } from "@/lib/biome-engine";
 import { text, error, parseQuery } from "@/lib/api-helpers";
+import { recordBiomeVisit } from "@/lib/global-stats";
+import { formatAchievementUnlocks } from "@/lib/achievements";
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,34 +27,24 @@ export default async function handler(
   const state = await getChannelState(channelId, channelName);
   const now = Date.now();
 
-  /* ----------------------------
-     SERVER COOLDOWN
-  ---------------------------- */
   if (state.deviceServerCooldownUntil > now) {
     return text(
       res,
-      `Server device cooldown: ${formatRemaining(state.deviceServerCooldownUntil)}`
+      `Server device cooldown: ${formatRemaining(
+        state.deviceServerCooldownUntil
+      )}`
     );
   }
 
-  /* ----------------------------
-     USER COOLDOWN
-  ---------------------------- */
   const userCd =
     device.id === "strange_controller"
       ? state.strangeControllerCooldownUntil
       : state.biomeRandomizerCooldownUntil;
 
   if (userCd > now) {
-    return text(
-      res,
-      `Device cooldown: ${formatRemaining(userCd)}`
-    );
+    return text(res, `Device cooldown: ${formatRemaining(userCd)}`);
   }
 
-  /* ----------------------------
-     DEV BIOME BLOCK CHECK
-  ---------------------------- */
   const activeDev =
     state.activeDevBiome !== null &&
     state.devExpiresAt > now;
@@ -65,35 +57,27 @@ export default async function handler(
     }
   }
 
-  /* ----------------------------
-     ROLL NEXT BIOME
-  ---------------------------- */
   const nextId = rollDeviceBiome(
     state,
     device.id,
     device.usesNaturalRates ?? false
   );
 
-  /* ----------------------------
-     NO CHANGE CASE
-  ---------------------------- */
   if (nextId === state.biomeId) {
     return text(
       res,
-      `${device.name} used — biome unchanged (${biomeMap.get(state.biomeId)?.name}).`
+      `${device.name} used — biome unchanged (${
+        biomeMap.get(state.biomeId)?.name
+      }).`
     );
   }
 
-  /* ----------------------------
-     APPLY CHANGE (INLINE FIX)
-     (no applyBiomeChange dependency)
-  ---------------------------- */
-  state.biomeId = nextId;
-  state.biomeExpiresAt = Date.now() + 120000;
+  const biome = biomeMap.get(nextId);
 
-  /* ----------------------------
-     COOLDOWNS
-  ---------------------------- */
+  state.biomeId = nextId;
+  state.biomeExpiresAt =
+    Date.now() + (biome?.durationSeconds ?? 120) * 1000;
+
   state.deviceServerCooldownUntil =
     now + device.serverCooldownSeconds * 1000;
 
@@ -107,13 +91,18 @@ export default async function handler(
 
   await setChannelState(state);
 
-  /* ----------------------------
-     RESPONSE
-  ---------------------------- */
-  const b = biomeMap.get(nextId);
+  const unlocked = await recordBiomeVisit(
+    state.biomeId,
+    state.biomeExpiresAt
+  );
+
+  const unlockText = formatAchievementUnlocks(unlocked);
+  const suffix = unlockText ? ` | ${unlockText}` : "";
 
   return text(
     res,
-    `${device.name} activated! Biome: ${b?.name ?? nextId}. ${b?.chatSpawn ?? ""}`
+    `${device.name} activated! Biome: ${
+      biome?.name ?? nextId
+    }. ${biome?.chatSpawn ?? ""}${suffix}`
   );
 }
