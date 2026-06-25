@@ -125,15 +125,7 @@
       "name": "Potion Of Sol",
       "aliases": ["Sol","sol","overpowered"],
       "luck": 10000000,
-      "exclusiveAuras": [
-        { "auraId": "red_full_moon_aura", "rarity": 20 },
-        { "auraId": "fragments_of_the_red_crimson_moon_2", "rarity": 30 },
-        { "auraId": "oblivion_aura", "rarity": 10 },
-        { "auraId": "abomination_aura", "rarity": 16 },
-        { "auraId": "edict", "rarity": 12 },
-        { "auraId": "mastermind", "rarity": 14 },
-        { "auraId": "another_realm", "rarity": 13 }
-      ]
+      "exclusiveAuras": []
     },
     {
       "id": "popping",
