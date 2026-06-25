@@ -15,21 +15,51 @@ const INFO = [
   "!solinfo — Command list",
 ];
 
+const MAX_CHARS = 100;
+
+// build pages based on character limit
+function buildPages() {
+  const pages: string[] = [];
+  let current: string[] = [];
+  let length = 0;
+
+  for (const item of INFO) {
+    const addLen = item.length + 3; // " | "
+
+    if (length + addLen > MAX_CHARS && current.length > 0) {
+      pages.push(current.join(" | "));
+      current = [];
+      length = 0;
+    }
+
+    current.push(item);
+    length += addLen;
+  }
+
+  if (current.length) {
+    pages.push(current.join(" | "));
+  }
+
+  return pages;
+}
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // ✅ FIX: read Nightbot args properly
+  const pages = buildPages();
+
   const raw = (req.query.args as string) ?? "1";
-  const chunk = Math.max(1, parseInt(raw, 10) || 1);
+  const page = Math.max(1, parseInt(raw, 10) || 1);
 
-  const PER_PAGE = 3;
+  const index = page - 1;
 
-  const start = (chunk - 1) * PER_PAGE;
-  const page = INFO.slice(start, start + PER_PAGE);
+  if (index < 0 || index >= pages.length) {
+    return text(
+      res,
+      `No page ${page}. Use !solinfo 1-${pages.length}`
+    );
+  }
 
-  const hasNext = start + PER_PAGE < INFO.length;
+  const nextHint =
+    index + 1 < pages.length ? ` | next: !solinfo ${page + 1}` : "";
 
-  const nextText = hasNext
-    ? ` | next: !solinfo ${chunk + 1}`
-    : "";
-
-  return text(res, page.join(" | ") + nextText);
+  return text(res, pages[index] + nextHint);
 }
