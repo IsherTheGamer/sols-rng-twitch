@@ -4524,7 +4524,9 @@
       "noBreakthrough": false,
       "potion": {
         "id": "word_potion",
-        "rarity": 5350
+        "rarity": 5350,
+        "id": "overpowered_potion",
+        "rarity": 12
       },
       "devBiome": null,
       "luckImmune": true,
@@ -4583,7 +4585,7 @@
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": {
-        "id": "ref_fragment_ii",
+        "id": "red_fragment_ii",
         "rarity": 100
       },
       "devBiome": null,
