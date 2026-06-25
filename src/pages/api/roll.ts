@@ -1,11 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { addGlobalRolls, getGlobalLuck } from "@/lib/global-stats";
+import {
+  addGlobalRolls,
+  getGlobalLuck,
+  getAchievementBonuses,
+  recordAuraRolls,
+} from "@/lib/global-stats";
+import { formatAchievementUnlocks } from "@/lib/achievements";
 import { getChannelContext } from "@/lib/nightbot";
 import {
   cooldownKey,
   formatRemaining,
 } from "@/lib/state";
-import { rollOnce, rollMultiple, topRarest } from "@/lib/roll-engine";
+import { rollMultiple, topRarest } from "@/lib/roll-engine";
 import {
   applyCooldown,
   checkCooldown,
@@ -15,7 +21,10 @@ import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { channelId, channelName, user, isMod } = getChannelContext(req);
 
   const parts = (req.query.args as string)?.split(" ") ?? [];
@@ -25,39 +34,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return error(res, "Multi-roll is mod-only. Use !roll");
   }
 
+  const achievementBonuses = await getAchievementBonuses();
+
+  const cooldownMs = Math.max(
+    1000,
+    ROLL_COOLDOWN_MS -
+      achievementBonuses.cooldownReductionSeconds * 1000
+  );
+
   if (!isMod && amount <= 1) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
-    const cd = await checkCooldown(key, ROLL_COOLDOWN_MS);
+    const cd = await checkCooldown(key, cooldownMs);
 
     if (!cd.allowed) {
-      return text(res, `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`);
+      return text(
+        res,
+        `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`
+      );
     }
 
-    await applyCooldown(key, ROLL_COOLDOWN_MS);
+    await applyCooldown(key, cooldownMs);
   }
 
-  const rollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
+  const baseRollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
+  const bonusRolls = Math.floor(achievementBonuses.extraRolls);
+  const rollCount = baseRollCount + bonusRolls;
   const displayCount = amount > 1 ? Math.min(amount, 5) : 1;
 
-  // ✅ increase global counter properly
   const globalRolls = await addGlobalRolls(rollCount);
-  const luck = getGlobalLuck(globalRolls);
+  const baseLuck = getGlobalLuck(globalRolls);
+
+  const luck =
+    (baseLuck + achievementBonuses.flatLuck) *
+    achievementBonuses.finalLuckMultiplier;
 
   return withTick(channelId, channelName, async (state) => {
     const ctx = { state, luck };
     const name = user?.displayName ?? user?.name ?? "Player";
 
-    if (rollCount === 1) {
-      const result = rollOnce(ctx);
+    const results = rollMultiple(ctx, rollCount);
+    const top = topRarest(results, displayCount);
+    const unlocked = await recordAuraRolls(results);
+
+    const unlockText = formatAchievementUnlocks(unlocked);
+    const achievementSuffix = unlockText ? ` | ${unlockText}` : "";
+
+    if (displayCount === 1) {
+      const best = top[0];
+      const rollNote = rollCount > 1 ? ` (${rollCount}x)` : "";
 
       return text(
         res,
-        formatRollResult(name, result.aura.name, result.effectiveRarity)
+        `${formatRollResult(
+          name,
+          best.aura.name,
+          best.effectiveRarity
+        )}${rollNote}${achievementSuffix}`
       );
     }
-
-    const results = rollMultiple(ctx, rollCount);
-    const top = topRarest(results, displayCount);
 
     const msg =
       `${name} rolled ${rollCount}x — top ${displayCount}: ` +
@@ -68,6 +102,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }))
       );
 
-    return text(res, msg);
+    return text(res, `${msg}${achievementSuffix}`);
   });
 }
