@@ -4523,7 +4523,7 @@
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": {
-        "id": "axis_potion",
+        "id": "word_potion",
         "rarity": 5350
       },
       "devBiome": null,
@@ -4545,6 +4545,46 @@
       "potion": {
         "id": "chaos_potion",
         "rarity": 4842
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "fragments_of_the_red_crimson_moon_1",
+      "name": "Fragments Of The Crimson Moon",
+      "rarity": 1000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "red_fragment_i",
+        "rarity": 1000
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [],
+      "time": null
+    },
+    {
+      "id": "fragments_of_the_red_crimson_moon_2",
+      "name": "Fragments Of The Crimson Moon",
+      "rarity": 100,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "ref_fragment_ii",
+        "rarity": 100
       },
       "devBiome": null,
       "luckImmune": true,
