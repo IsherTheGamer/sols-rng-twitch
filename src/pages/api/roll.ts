@@ -21,14 +21,26 @@ import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
 
+function parseAmount(rawArgs: string | undefined): number {
+  const raw = (rawArgs ?? "").trim();
+
+  if (!raw) return 1;
+
+  const first = raw.split(/\s+/)[0];
+  const amount = parseInt(first, 10);
+
+  if (!Number.isFinite(amount) || amount < 1) return 1;
+
+  return amount;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const { channelId, channelName, user, isMod } = getChannelContext(req);
 
-  const parts = (req.query.args as string)?.split(" ") ?? [];
-  const amount = parts.length ? parseInt(parts[0], 10) : 1;
+  const amount = parseAmount(req.query.args as string | undefined);
 
   if (amount > 1 && !isMod) {
     return error(res, "Multi-roll is mod-only. Use !roll");
@@ -74,10 +86,10 @@ export default async function handler(
 
     const results = rollMultiple(ctx, rollCount);
     const top = topRarest(results, displayCount);
-    const unlocked = await recordAuraRolls(results);
 
+    const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
-    const achievementSuffix = unlockText ? ` | ${unlockText}` : "";
+    const suffix = unlockText ? ` | ${unlockText}` : "";
 
     if (displayCount === 1) {
       const best = top[0];
@@ -89,7 +101,7 @@ export default async function handler(
           name,
           best.aura.name,
           best.effectiveRarity
-        )}${rollNote}${achievementSuffix}`
+        )}${rollNote}${suffix}`
       );
     }
 
@@ -102,6 +114,6 @@ export default async function handler(
         }))
       );
 
-    return text(res, `${msg}${achievementSuffix}`);
+    return text(res, `${msg}${suffix}`);
   });
 }
