@@ -1,19 +1,50 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { Redis } from "@upstash/redis";
+import type { ChannelState } from "@/types/data";
 import { setChannelState } from "@/lib/state";
+import { createDefaultAchievementState } from "@/lib/achievements";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const state = {
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis) return redis;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) return null;
+
+  redis = new Redis({ url, token });
+  return redis;
+}
+
+function getResetKey(): string | null {
+  return process.env.RESET_SECRET ?? process.env.CRON_SECRET ?? null;
+}
+
+function verifyReset(req: NextApiRequest): boolean {
+  const requiredKey = getResetKey();
+
+  // If you forgot to set RESET_SECRET or CRON_SECRET, block reset for safety.
+  if (!requiredKey) return false;
+
+  const providedKey = req.query.key;
+
+  return providedKey === requiredKey;
+}
+
+function createDefaultChannelState(): ChannelState {
+  const now = Date.now();
+
+  return {
     channelId: process.env.DEFAULT_CHANNEL_ID ?? "default",
     channelName: "default",
 
     biomeId: "normal",
-    biomeExpiresAt: Date.now() + 120000,
+    biomeExpiresAt: now + 30000,
 
     timeOfDay: "daytime",
-    timeExpiresAt: Date.now() + 150000,
+    timeExpiresAt: now + 150000,
 
     activeEvents: [],
     activeDevBiome: null,
@@ -21,14 +52,93 @@ export default async function handler(
     bloodRainExpiresAt: 0,
 
     lastStatusAt: 0,
-    lastTickAt: Date.now(),
+    lastTickAt: now,
 
     deviceServerCooldownUntil: 0,
     strangeControllerCooldownUntil: 0,
     biomeRandomizerCooldownUntil: 0,
   };
+}
 
-  await setChannelState(state as any);
+async function resetBiomeData(): Promise<void> {
+  const state = createDefaultChannelState();
+  await setChannelState(state);
+}
 
-  res.status(200).send("reset ok");
+async function resetAchievementData(): Promise<void> {
+  const r = getRedis();
+
+  if (!r) return;
+
+  await r.set("global:achievement-state", createDefaultAchievementState());
+}
+
+async function resetRollData(): Promise<void> {
+  const r = getRedis();
+
+  if (!r) return;
+
+  await r.set("global:rolls", 0);
+}
+
+async function resetCooldownData(): Promise<void> {
+  const r = getRedis();
+
+  if (!r) return;
+
+  const channelId = process.env.DEFAULT_CHANNEL_ID ?? "default";
+
+  const keys = [
+    `cd:roll:${channelId}`,
+    `cd:pop:${channelId}`,
+    `cd:device:${channelId}`,
+  ];
+
+  await r.del(...keys);
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (!verifyReset(req)) {
+    return res.status(401).send("Unauthorized reset.");
+  }
+
+  const type = ((req.query.type as string) ?? "full")
+    .toLowerCase()
+    .trim();
+
+  if (type === "biome" || type === "biomes") {
+    await resetBiomeData();
+    return res.status(200).send("reset biome ok");
+  }
+
+  if (type === "achievement" || type === "achievements") {
+    await resetAchievementData();
+    return res.status(200).send("reset achievements ok");
+  }
+
+  if (type === "roll" || type === "rolls") {
+    await resetRollData();
+    return res.status(200).send("reset rolls ok");
+  }
+
+  if (type === "cooldown" || type === "cooldowns") {
+    await resetCooldownData();
+    return res.status(200).send("reset cooldowns ok");
+  }
+
+  if (type === "full" || type === "all") {
+    await resetBiomeData();
+    await resetAchievementData();
+    await resetRollData();
+    await resetCooldownData();
+
+    return res.status(200).send("reset full ok");
+  }
+
+  return res
+    .status(400)
+    .send("Unknown reset type. Use: full, biome, achievements, rolls, cooldowns");
 }
