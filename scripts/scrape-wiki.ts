@@ -315,15 +315,6 @@ add("edict", "EDICT", 5350, { potion: { id: "word_potion", rarity: 5350 }, luckI
 add("mastermind", "MASTERMIND", 5353, { potion: { id: "axis_potion", rarity: 5353 }, luckImmune: true });
 add("another_realm", "ANOTHER REALM", 5454, { potion: { id: "xyz_potion", rarity: 5454 }, luckImmune: true });
 
-// op potions
-add("oblivion_aura", "OBLIVION", 10, { potion: { id: "overpowered_potion", rarity: 10 }, luckImmune: true });
-add("fragments_of_the_red_crimson_moon_2", "Fagments Of The Crimson Moon", 30, { potion: { id: "overpowered_potion", rarity: 30 }, luckImmune: true });
-add("abomination_aura", "ABOMINATION", 16, { potion: { id: "overpowered_potion", rarity: 16 }, luckImmune: true });
-add("red_full_moon_aura", "FULL RED MOON", 20, { potion: { id: "overpowered_potion", rarity: 20 }, luckImmune: true });
-add("edict", "EDICT", 12, { potion: { id: "overpowered_potion", rarity: 12 }, luckImmune: true });
-add("mastermind", "MASTERMIND", 14, { potion: { id: "overpowered_potion", rarity: 14 }, luckImmune: true });
-add("another_realm", "ANOTHER REALM", 13, { potion: { id: "overpowered_potion", rarity: 13 }, luckImmune: true });
-
 // --- Dev biome auras ---
 add("prowler", "Prowler", 540000, { devBiome: "hyperspace_realm", biomeLock: true, noBreakthrough: true });
 add("clockwork", "CLOCKWORK", 530000, { devBiome: "nulls_existence", biomeLock: true, noBreakthrough: true });
