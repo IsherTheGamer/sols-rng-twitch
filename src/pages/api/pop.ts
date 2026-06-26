@@ -2,11 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
 import {
   getChannelState,
-  setChannelState,
   cooldownKey,
   formatRemaining,
 } from "@/lib/state";
-import { rollOnce, rollMultiple } from "@/lib/roll-engine";
+import { rollOnce } from "@/lib/roll-engine";
 import {
   findPotion,
   DEV_LUCK_MULTIPLIER,
@@ -19,8 +18,20 @@ import {
 } from "@/lib/cooldowns";
 import { text, error, parseQuery } from "@/lib/api-helpers";
 import { formatPopResult } from "@/lib/format";
+import {
+  getViewerProfile,
+  isBroadcasterUser,
+  recordViewerRolls,
+} from "@/lib/profile";
+import {
+  getPotionRestriction,
+  validatePotionRestriction,
+} from "@/lib/potion-restrictions";
 
-function isDevActive(state: { activeDevBiome: string | null; devExpiresAt: number }) {
+function isDevActive(state: {
+  activeDevBiome: string | null;
+  devExpiresAt: number;
+}) {
   return state.activeDevBiome && state.devExpiresAt > Date.now();
 }
 
@@ -29,7 +40,14 @@ async function handlePop(
   res: NextApiResponse,
   maxPops: number
 ) {
-  const { channelId, channelName, user, isMod } = getChannelContext(req);
+  const {
+    channel,
+    channelId,
+    channelName,
+    user,
+    isMod,
+  } = getChannelContext(req);
+
   const query = parseQuery(req);
   const parts = query.split(/\s+/).filter(Boolean);
 
@@ -38,6 +56,7 @@ async function handlePop(
 
   if (maxPops > 1 && parts.length >= 2) {
     const maybeCount = parseInt(parts[parts.length - 1], 10);
+
     if (!isNaN(maybeCount) && maybeCount > 0) {
       popCount = Math.min(maybeCount, maxPops);
       potionQuery = parts.slice(0, -1).join(" ");
@@ -45,32 +64,75 @@ async function handlePop(
   }
 
   const potion = findPotion(potionQuery);
+
   if (!potion) {
     const list = potions.map((p) => p.name).join(", ");
     return error(res, `Unknown potion. Try: ${list}`);
   }
 
   const state = await getChannelState(channelId, channelName);
+  const broadcaster = isBroadcasterUser(user, channel);
 
-  if (potion.requiresEvent && !state.activeEvents.includes(potion.requiresEvent)) {
-    return error(res, `${potion.name} only works during ${potion.requiresEvent} event.`);
+  if (
+    potion.requiresEvent &&
+    !broadcaster &&
+    !state.activeEvents.includes(potion.requiresEvent)
+  ) {
+    return error(
+      res,
+      `${potion.name} only works during ${potion.requiresEvent} event.`
+    );
+  }
+
+  const profile = await getViewerProfile(channelId, user);
+  const fallbackCooldown = getPotionCooldownSeconds(potion.luck);
+  const restriction = getPotionRestriction(potion, fallbackCooldown);
+
+  if (!broadcaster) {
+    const restrictionError = validatePotionRestriction({
+      potion,
+      profile,
+      restriction,
+      isMod,
+    });
+
+    if (restrictionError) {
+      return error(res, restrictionError);
+    }
+
+    const key = cooldownKey(
+      `pop:${potion.id}`,
+      channelId,
+      user?.providerId ?? "anon"
+    );
+
+    const cd = await checkCooldown(
+      key,
+      restriction.cooldownSeconds * 1000
+    );
+
+    if (!cd.allowed) {
+      return text(
+        res,
+        `${potion.name} cooldown: ${formatRemaining(
+          Date.now() + cd.remainingMs
+        )}`
+      );
+    }
+
+    await applyCooldown(key, restriction.cooldownSeconds * 1000);
   }
 
   const luckMult = isDevActive(state) ? DEV_LUCK_MULTIPLIER : 1;
   const effectiveLuck = Math.floor(potion.luck * luckMult);
-  const cdSeconds = getPotionCooldownSeconds(potion.luck);
-
-  if (!isMod || maxPops === 1) {
-    const key = cooldownKey("pop", channelId, user?.providerId ?? "anon");
-    const cd = await checkCooldown(key, cdSeconds * 1000);
-    if (!cd.allowed) {
-      return text(res, `Potion cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`);
-    }
-    await applyCooldown(key, cdSeconds * 1000);
-  }
-
   const displayName = user?.displayName ?? user?.name ?? "Player";
-  const results: string[] = [];
+
+  const results: Array<{
+    aura: ReturnType<typeof rollOnce>["aura"];
+    effectiveRarity: number;
+  }> = [];
+
+  const messages: string[] = [];
 
   for (let i = 0; i < popCount; i++) {
     const ctx = {
@@ -81,20 +143,36 @@ async function handlePop(
 
     const result = rollOnce(ctx);
 
-    results.push(
-      formatPopResult(displayName, potion.name, result.aura.name, result.effectiveRarity)
+    results.push(result);
+
+    messages.push(
+      formatPopResult(
+        displayName,
+        potion.name,
+        result.aura.name,
+        result.effectiveRarity
+      )
     );
   }
 
-  return text(res, results.join(" | "));
+  await recordViewerRolls(channelId, user, results, "potion");
+
+  return text(res, messages.join(" | "));
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const isOp = req.url?.includes("popop") || req.query.op === "1";
+
   if (isOp) {
     const { isMod } = getChannelContext(req);
+
     if (!isMod) return error(res, "Mod only.");
-    return handlePop(req, res, 5);
+
+    return handlePop(req, res, 4);
   }
+
   return handlePop(req, res, 1);
 }
