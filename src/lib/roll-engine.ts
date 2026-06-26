@@ -11,6 +11,16 @@ export interface RollContext {
   includeUnobtainable?: boolean;
 }
 
+export interface RollHitResult {
+  aura: AuraDef;
+  effectiveRarity: number;
+}
+
+export interface DetailedRollResult extends RollHitResult {
+  hits: RollHitResult[];
+  missed: RollHitResult[];
+}
+
 interface PotionExclusiveRoll {
   aura: AuraDef;
   effectiveRarity: number;
@@ -120,14 +130,41 @@ function getPotionExclusivePool(potionId: string): PotionExclusiveRoll[] {
   return pool;
 }
 
-function isAllowedByBaseFlags(
-  aura: AuraDef,
-  ctx: RollContext
-): boolean {
+function isAllowedByBaseFlags(aura: AuraDef, ctx: RollContext): boolean {
   if (aura.deleted && !ctx.includeDeleted) return false;
   if (aura.unobtainable && !ctx.includeUnobtainable) return false;
 
   return true;
+}
+
+function sortHits(hits: RollHitResult[]): RollHitResult[] {
+  return [...hits].sort((a, b) => b.effectiveRarity - a.effectiveRarity);
+}
+
+function buildDetailedResult(hits: RollHitResult[]): DetailedRollResult {
+  const sorted = sortHits(hits);
+
+  if (sorted.length > 0) {
+    const best = sorted[0];
+
+    return {
+      aura: best.aura,
+      effectiveRarity: best.effectiveRarity,
+      hits: sorted,
+      missed: sorted.slice(1),
+    };
+  }
+
+  const fallback =
+    auras.find((a) => a.id === "common") ??
+    auras.find((a) => a.id === "nothing")!;
+
+  return {
+    aura: fallback,
+    effectiveRarity: fallback.rarity,
+    hits: [],
+    missed: [],
+  };
 }
 
 export function getEffectiveRarity(
@@ -200,14 +237,14 @@ export function getEligibleAuras(
 ): AuraDef[] {
   const { state, potionId } = ctx;
 
+  const exclusivePool = potionId ? getPotionExclusivePool(potionId) : [];
+
   return auras.filter((aura) => {
     const isExclusive = isPotionExclusiveAura(aura);
 
     if (potionId) {
       if (potionExclusiveOnly) {
-        return getPotionExclusivePool(potionId).some(
-          (entry) => entry.aura.id === aura.id
-        );
+        return exclusivePool.some((entry) => entry.aura.id === aura.id);
       }
 
       if (isExclusive) return false;
@@ -225,25 +262,27 @@ export function getEligibleAuras(
   });
 }
 
-export function rollOnce(
-  ctx: RollContext
-): { aura: AuraDef; effectiveRarity: number } {
+export function rollOnceDetailed(ctx: RollContext): DetailedRollResult {
   if (ctx.forceAuraId) {
     const forced = auras.find((a) => a.id === ctx.forceAuraId);
 
     if (forced) {
       const eff = getEffectiveRarity(forced, ctx.state) ?? forced.rarity;
-      return { aura: forced, effectiveRarity: eff };
+      return {
+        aura: forced,
+        effectiveRarity: eff,
+        hits: [{ aura: forced, effectiveRarity: eff }],
+        missed: [],
+      };
     }
   }
 
   const luck = ctx.luck;
+  const hits: RollHitResult[] = [];
 
   if (ctx.potionId) {
     const exclusivePool = getPotionExclusivePool(ctx.potionId);
     const generalAuras = getEligibleAuras(ctx, false);
-
-    const hits: Array<{ aura: AuraDef; effectiveRarity: number }> = [];
 
     for (const entry of exclusivePool) {
       const hit = rollHit(1, entry.effectiveRarity);
@@ -272,23 +311,10 @@ export function rollOnce(
       }
     }
 
-    if (hits.length > 0) {
-      hits.sort((a, b) => b.effectiveRarity - a.effectiveRarity);
-      return hits[0];
-    }
-
-    const fallback =
-      auras.find((a) => a.id === "common") ??
-      auras.find((a) => a.id === "nothing")!;
-
-    return {
-      aura: fallback,
-      effectiveRarity: fallback.rarity,
-    };
+    return buildDetailedResult(hits);
   }
 
   const eligible = getEligibleAuras(ctx);
-  const hits: Array<{ aura: AuraDef; effectiveRarity: number }> = [];
 
   for (const aura of eligible) {
     const eff = getEffectiveRarity(aura, ctx.state);
@@ -306,18 +332,17 @@ export function rollOnce(
     }
   }
 
-  if (hits.length > 0) {
-    hits.sort((a, b) => b.effectiveRarity - a.effectiveRarity);
-    return hits[0];
-  }
+  return buildDetailedResult(hits);
+}
 
-  const fallback =
-    auras.find((a) => a.id === "common") ??
-    auras.find((a) => a.id === "nothing")!;
+export function rollOnce(
+  ctx: RollContext
+): { aura: AuraDef; effectiveRarity: number } {
+  const result = rollOnceDetailed(ctx);
 
   return {
-    aura: fallback,
-    effectiveRarity: fallback.rarity,
+    aura: result.aura,
+    effectiveRarity: result.effectiveRarity,
   };
 }
 
