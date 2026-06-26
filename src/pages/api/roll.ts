@@ -20,6 +20,7 @@ import {
 import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
+import { recordViewerRolls } from "@/lib/profile";
 
 function parseAmount(rawArgs: string | undefined): number {
   const raw = (rawArgs ?? "").trim();
@@ -86,6 +87,8 @@ export default async function handler(
 
     const results = rollMultiple(ctx, rollCount);
     const top = topRarest(results, displayCount);
+
+    await recordViewerRolls(channelId, user, results, "roll");
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
