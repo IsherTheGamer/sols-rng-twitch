@@ -5,7 +5,10 @@ import {
   cooldownKey,
   formatRemaining,
 } from "@/lib/state";
-import { rollOnce } from "@/lib/roll-engine";
+import {
+  rollOnceDetailed,
+  type RollHitResult,
+} from "@/lib/roll-engine";
 import {
   findPotion,
   DEV_LUCK_MULTIPLIER,
@@ -17,7 +20,11 @@ import {
   getPotionCooldownSeconds,
 } from "@/lib/cooldowns";
 import { text, error, parseQuery } from "@/lib/api-helpers";
-import { formatPopResult } from "@/lib/format";
+import {
+  formatPopResult,
+  formatRarity,
+  truncate,
+} from "@/lib/format";
 import {
   getViewerProfile,
   isBroadcasterUser,
@@ -27,12 +34,29 @@ import {
   getPotionRestriction,
   validatePotionRestriction,
 } from "@/lib/potion-restrictions";
+import { announceAuraResults } from "@/lib/global-announcements";
 
 function isDevActive(state: {
   activeDevBiome: string | null;
   devExpiresAt: number;
 }) {
   return state.activeDevBiome && state.devExpiresAt > Date.now();
+}
+
+function formatMissedHits(missed: RollHitResult[]): string {
+  if (missed.length === 0) return "";
+
+  const shown = missed.slice(0, 3);
+
+  const body = shown
+    .map((hit) => `${hit.aura.name} ${formatRarity(hit.effectiveRarity)}`)
+    .join(", ");
+
+  const extra = missed.length > shown.length
+    ? `, +${missed.length - shown.length} more`
+    : "";
+
+  return ` | Missed: ${body}${extra}`;
 }
 
 async function handlePop(
@@ -127,37 +151,48 @@ async function handlePop(
   const effectiveLuck = Math.floor(potion.luck * luckMult);
   const displayName = user?.displayName ?? user?.name ?? "Player";
 
-  const results: Array<{
-    aura: ReturnType<typeof rollOnce>["aura"];
-    effectiveRarity: number;
-  }> = [];
-
+  const results: RollHitResult[] = [];
   const messages: string[] = [];
 
   for (let i = 0; i < popCount; i++) {
     const ctx = {
       state,
       luck: effectiveLuck,
-      potionId: potion.exclusiveAuras?.length ? potion.id : undefined,
+      potionId: potion.id,
     };
 
-    const result = rollOnce(ctx);
+    const result = rollOnceDetailed(ctx);
 
-    results.push(result);
+    results.push({
+      aura: result.aura,
+      effectiveRarity: result.effectiveRarity,
+    });
 
-    messages.push(
-      formatPopResult(
-        displayName,
-        potion.name,
-        result.aura.name,
-        result.effectiveRarity
-      )
+    const baseMsg = formatPopResult(
+      displayName,
+      potion.name,
+      result.aura.name,
+      result.effectiveRarity
     );
+
+    const missedText =
+      maxPops === 1 ? formatMissedHits(result.missed) : "";
+
+    messages.push(`${baseMsg}${missedText}`);
   }
 
   await recordViewerRolls(channelId, user, results, "potion");
 
-  return text(res, messages.join(" | "));
+  await announceAuraResults({
+    channelId,
+    displayName,
+    results,
+    source: "potion",
+    potionId: potion.id,
+    potionName: potion.name,
+  });
+
+  return text(res, truncate(messages.join(" | "), 390));
 }
 
 export default async function handler(
