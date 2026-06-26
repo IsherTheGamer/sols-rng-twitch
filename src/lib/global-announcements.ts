@@ -1,6 +1,11 @@
 import { Redis } from "@upstash/redis";
 import type { AuraDef } from "../types/data";
-import { potions } from "./data";
+import {
+  auraAnnouncements,
+  auraMap,
+  findAuraByQuery,
+  potions,
+} from "./data";
 import { sendNightbotMessage } from "./nightbot";
 import { formatRarity, truncate } from "./format";
 import {
@@ -33,8 +38,15 @@ export type AnnouncementThreshold =
 
 export interface AnnouncementSettings {
   enabled: boolean;
-  minTier: AnnouncementThreshold;
+  rollMinTier: AnnouncementThreshold;
+  potionMinTier: AnnouncementThreshold;
   updatedAt: number;
+
+  /**
+   * Old setting support.
+   * This keeps existing Redis data from breaking after the upgrade.
+   */
+  minTier?: AnnouncementThreshold;
 }
 
 export const ANNOUNCEMENT_THRESHOLDS: AnnouncementThreshold[] = [
@@ -48,7 +60,8 @@ export const ANNOUNCEMENT_THRESHOLDS: AnnouncementThreshold[] = [
 
 const DEFAULT_SETTINGS: AnnouncementSettings = {
   enabled: true,
-  minTier: "glorious",
+  rollMinTier: "glorious",
+  potionMinTier: "transcendent",
   updatedAt: 0,
 };
 
@@ -93,13 +106,20 @@ function normalizeSettings(
 ): AnnouncementSettings {
   if (!input) return { ...DEFAULT_SETTINGS };
 
-  const minTier =
-    normalizeAnnouncementThreshold(input.minTier) ??
-    DEFAULT_SETTINGS.minTier;
+  const oldMinTier =
+    normalizeAnnouncementThreshold(input.minTier) ?? DEFAULT_SETTINGS.rollMinTier;
+
+  const rollMinTier =
+    normalizeAnnouncementThreshold(input.rollMinTier) ?? oldMinTier;
+
+  const potionMinTier =
+    normalizeAnnouncementThreshold(input.potionMinTier) ??
+    DEFAULT_SETTINGS.potionMinTier;
 
   return {
     enabled: input.enabled ?? DEFAULT_SETTINGS.enabled,
-    minTier,
+    rollMinTier,
+    potionMinTier,
     updatedAt: input.updatedAt ?? 0,
   };
 }
@@ -137,7 +157,7 @@ export function formatAnnouncementSettings(
     return "Global announcements: OFF";
   }
 
-  return `Global announcements: ON | Minimum: ${settings.minTier}`;
+  return `Global announcements: ON | Roll: ${settings.rollMinTier}+ | Potion: ${settings.potionMinTier}+`;
 }
 
 function getThresholdRank(threshold: AnnouncementThreshold): number {
@@ -149,7 +169,13 @@ function isPotionExclusiveAuraForPotion(
   potionId?: string
 ): boolean {
   if (!potionId) {
-    return !!aura.potion?.id;
+    if (aura.potion?.id) return true;
+
+    return potions.some((potion) =>
+      (potion.exclusiveAuras ?? []).some(
+        (exclusive) => exclusive.auraId === aura.id
+      )
+    );
   }
 
   if (aura.potion?.id === potionId) return true;
@@ -161,10 +187,7 @@ function isPotionExclusiveAuraForPotion(
   );
 }
 
-function isNativeRarity(
-  aura: AuraDef,
-  effectiveRarity: number
-): boolean {
+function isNativeRarity(aura: AuraDef, effectiveRarity: number): boolean {
   return (
     aura.nativeRarity != null &&
     aura.nativeRarity === effectiveRarity &&
@@ -172,14 +195,40 @@ function isNativeRarity(
   );
 }
 
+function getAnnouncementTierInfo(options: {
+  aura: AuraDef;
+  effectiveRarity: number;
+  source: "roll" | "potion";
+  potionId?: string;
+}): { tierId: ProfileTierId; rank: number; tierRarity: number } {
+  const isPotionExclusive = isPotionExclusiveAuraForPotion(
+    options.aura,
+    options.potionId
+  );
+
+  const tierRarity =
+    options.source === "potion" && isPotionExclusive
+      ? options.aura.rarity
+      : options.effectiveRarity;
+
+  const tierId = getProfileTierId(options.aura, tierRarity);
+
+  return {
+    tierId,
+    rank: PROFILE_TIER_RANK[tierId],
+    tierRarity,
+  };
+}
+
 function formatAuraRarityForAnnouncement(options: {
   aura: AuraDef;
   effectiveRarity: number;
+  source: "roll" | "potion";
   potionId?: string;
 }): string {
-  const { aura, effectiveRarity, potionId } = options;
+  const { aura, effectiveRarity, source, potionId } = options;
 
-  if (isPotionExclusiveAuraForPotion(aura, potionId)) {
+  if (source === "potion" && isPotionExclusiveAuraForPotion(aura, potionId)) {
     return "";
   }
 
@@ -192,18 +241,6 @@ function formatAuraRarityForAnnouncement(options: {
   return ` ${formatRarity(effectiveRarity)}`;
 }
 
-function getTierRank(
-  aura: AuraDef,
-  effectiveRarity: number
-): { tierId: ProfileTierId; rank: number } {
-  const tierId = getProfileTierId(aura, effectiveRarity);
-
-  return {
-    tierId,
-    rank: PROFILE_TIER_RANK[tierId],
-  };
-}
-
 function formatSourceText(options: {
   source: "roll" | "potion";
   potionName?: string;
@@ -213,6 +250,48 @@ function formatSourceText(options: {
   }
 
   return "rolled";
+}
+
+function fillTemplate(template: string, displayName: string): string {
+  return template
+    .replaceAll("{user}", displayName)
+    .replaceAll("{username}", displayName)
+    .replaceAll("[Username]", displayName)
+    .replaceAll("[username]", displayName)
+    .replaceAll("[@username]", displayName)
+    .replaceAll("@Username", displayName)
+    .replaceAll("@username", displayName);
+}
+
+function getAuraAnnouncementLine(
+  aura: AuraDef,
+  displayName: string
+): string | null {
+  const template = auraAnnouncements[aura.id];
+
+  if (!template) return null;
+
+  return fillTemplate(template, displayName);
+}
+
+function isPotionExclusiveAura(aura: AuraDef): boolean {
+  return isPotionExclusiveAuraForPotion(aura);
+}
+
+function shouldAnnounceResult(options: {
+  source: "roll" | "potion";
+  tierRank: number;
+  minRank: number;
+  aura: AuraDef;
+  potionId?: string;
+}): boolean {
+  if (options.source === "potion") {
+    if (isPotionExclusiveAuraForPotion(options.aura, options.potionId)) {
+      return true;
+    }
+  }
+
+  return options.tierRank >= options.minRank;
 }
 
 export function buildAuraAnnouncement(options: {
@@ -232,17 +311,27 @@ export function buildAuraAnnouncement(options: {
     potionName,
   } = options;
 
-  const { tierId } = getTierRank(aura, effectiveRarity);
+  const tier = getAnnouncementTierInfo({
+    aura,
+    effectiveRarity,
+    source,
+    potionId,
+  });
+
   const sourceText = formatSourceText({ source, potionName });
 
   const rarityText = formatAuraRarityForAnnouncement({
     aura,
     effectiveRarity,
+    source,
     potionId,
   });
 
+  const messageLine = getAuraAnnouncementLine(aura, displayName);
+  const messageText = messageLine ? ` — ${messageLine}` : "";
+
   return truncate(
-    `🌍 GLOBAL: ${displayName} ${sourceText} ${aura.name}${rarityText} [${tierId}]`,
+    `🌍 GLOBAL: ${displayName} ${sourceText} ${aura.name}${rarityText} [${tier.tierId}]${messageText}`,
     390
   );
 }
@@ -258,8 +347,15 @@ export function buildDevExclusivePinAnnouncement(options: {
     potionName: options.potionName,
   });
 
+  const messageLine = getAuraAnnouncementLine(
+    options.aura,
+    options.displayName
+  );
+
+  const messageText = messageLine ? ` — ${messageLine}` : "";
+
   return truncate(
-    `📌 PIN 5m: ${options.displayName} ${sourceText} DEV-EXCLUSIVE ${options.aura.name}!`,
+    `📌 PIN 5m: ${options.displayName} ${sourceText} DEV-EXCLUSIVE ${options.aura.name}!${messageText}`,
     390
   );
 }
@@ -276,19 +372,41 @@ export async function announceAuraResults(options: {
 
   if (!settings.enabled) return;
 
-  const minRank = getThresholdRank(settings.minTier);
+  const minTier =
+    options.source === "potion"
+      ? settings.potionMinTier
+      : settings.rollMinTier;
+
+  const minRank = getThresholdRank(minTier);
 
   const qualifying = options.results
     .map((result) => {
-      const tier = getTierRank(result.aura, result.effectiveRarity);
+      const tier = getAnnouncementTierInfo({
+        aura: result.aura,
+        effectiveRarity: result.effectiveRarity,
+        source: options.source,
+        potionId: options.potionId,
+      });
 
       return {
         ...result,
         tierId: tier.tierId,
         tierRank: tier.rank,
+        isPotionExclusive: isPotionExclusiveAuraForPotion(
+          result.aura,
+          options.potionId
+        ),
       };
     })
-    .filter((result) => result.tierRank >= minRank)
+    .filter((result) =>
+      shouldAnnounceResult({
+        source: options.source,
+        tierRank: result.tierRank,
+        minRank,
+        aura: result.aura,
+        potionId: options.potionId,
+      })
+    )
     .sort((a, b) => {
       if (b.tierRank !== a.tierRank) return b.tierRank - a.tierRank;
       return b.effectiveRarity - a.effectiveRarity;
@@ -328,4 +446,78 @@ export async function announceAuraResults(options: {
       truncate(`🌍 GLOBAL: +${hidden} more rare aura(s) were rolled.`, 390)
     );
   }
+}
+
+export function buildTestAnnouncementResult(options: {
+  displayName: string;
+  auraQuery: string;
+  source: "roll" | "potion";
+  potionId?: string;
+  potionName?: string;
+}): {
+  aura: AuraDef | null;
+  result: { aura: AuraDef; effectiveRarity: number } | null;
+  message: string;
+} {
+  const aura = findAuraByQuery(options.auraQuery);
+
+  if (!aura) {
+    return {
+      aura: null,
+      result: null,
+      message: `Unknown aura: ${options.auraQuery}`,
+    };
+  }
+
+  const effectiveRarity =
+    options.source === "potion" && aura.potion?.rarity
+      ? aura.potion.rarity
+      : aura.rarity;
+
+  const result = {
+    aura,
+    effectiveRarity,
+  };
+
+  const message = buildAuraAnnouncement({
+    displayName: options.displayName,
+    aura,
+    effectiveRarity,
+    source: options.source,
+    potionId: options.potionId ?? aura.potion?.id,
+    potionName: options.potionName,
+  });
+
+  return {
+    aura,
+    result,
+    message,
+  };
+}
+
+export function isAuraPotionExclusive(aura: AuraDef): boolean {
+  return isPotionExclusiveAura(aura);
+}
+
+export function findPotionForExclusiveAura(aura: AuraDef): {
+  potionId?: string;
+  potionName?: string;
+} {
+  if (aura.potion?.id) {
+    const potion = potions.find((p) => p.id === aura.potion?.id);
+
+    return {
+      potionId: aura.potion.id,
+      potionName: potion?.name,
+    };
+  }
+
+  const potion = potions.find((p) =>
+    (p.exclusiveAuras ?? []).some((exclusive) => exclusive.auraId === aura.id)
+  );
+
+  return {
+    potionId: potion?.id,
+    potionName: potion?.name,
+  };
 }
