@@ -41,7 +41,12 @@
     {
       "id": "pump_kings_blood",
       "name": "Pump King's Blood",
-      "aliases": ["pumpkin blood", "pump king's blood", "pump kings blood", "pumpkin blood potion"],
+      "aliases": [
+        "pumpkin blood",
+        "pump king's blood",
+        "pump kings blood",
+        "pumpkin blood potion"
+      ],
       "luck": 700000,
       "clearsBuffs": true,
       "requiresEvent": "halloween_2025",
@@ -53,13 +58,18 @@
       "aliases": ["dune", "potion of the dune", "dune potion"],
       "luck": 250000,
       "exclusiveAuras": [
-        { "auraId": "dune_exclusive", "rarity": 50000 }
+        { "auraId": "neferkhaf", "rarity": 50000 }
       ]
     },
     {
       "id": "red_fragment_i",
       "name": "Red Moon Potion I",
-      "aliases": ["red fragment", "red fragment potion", "red moon potion i", "red moon i"],
+      "aliases": [
+        "red fragment",
+        "red fragment potion",
+        "red moon potion i",
+        "red moon i"
+      ],
       "luck": 100000,
       "exclusiveAuras": [
         { "auraId": "fragments_of_the_red_crimson_moon_1", "rarity": 1000 }
@@ -68,7 +78,12 @@
     {
       "id": "red_fragment_ii",
       "name": "Red Moon Potion II",
-      "aliases": ["red fragment ii", "red moon potion ii", "red moon ii", "red fragment 2"],
+      "aliases": [
+        "red fragment ii",
+        "red moon potion ii",
+        "red moon ii",
+        "red fragment 2"
+      ],
       "luck": 200000,
       "exclusiveAuras": [
         { "auraId": "fragments_of_the_red_crimson_moon_2", "rarity": 100 }
@@ -80,13 +95,13 @@
       "aliases": ["void heart", "voidheart"],
       "luck": 350000,
       "exclusiveAuras": [
-        { "auraId": "eden", "rarity": 250 }
+        { "auraId": "eden", "rarity": 200 }
       ]
     },
     {
       "id": "axis_potion",
       "name": "Potion Of Time",
-      "aliases": ["time", "axis","potion of time","axis potion"],
+      "aliases": ["time", "axis", "potion of time", "axis potion"],
       "luck": 530000,
       "exclusiveAuras": [
         { "auraId": "mastermind", "rarity": 5353 }
@@ -95,7 +110,12 @@
     {
       "id": "xyz_potion",
       "name": "Potion Of Dimension",
-      "aliases": ["dimension", "xyz","potion of dimension","xyz potion"],
+      "aliases": [
+        "dimension",
+        "xyz",
+        "potion of dimension",
+        "xyz potion"
+      ],
       "luck": 540000,
       "exclusiveAuras": [
         { "auraId": "another_realm", "rarity": 5454 }
@@ -104,7 +124,7 @@
     {
       "id": "word_potion",
       "name": "Potion Of Justice",
-      "aliases": ["justice", "word","potion of justice","word potion"],
+      "aliases": ["justice", "word", "potion of justice", "word potion"],
       "luck": 535000,
       "exclusiveAuras": [
         { "auraId": "edict", "rarity": 5350 }
@@ -113,7 +133,7 @@
     {
       "id": "chaos_potion",
       "name": "Potion Of Chaos",
-      "aliases": ["chaos","potion of chaos","chaos potion"],
+      "aliases": ["chaos", "potion of chaos", "chaos potion"],
       "luck": 535000,
       "exclusiveAuras": [
         { "auraId": "red_full_moon_aura", "rarity": 4842 },
@@ -123,7 +143,7 @@
     {
       "id": "overpowered_potion",
       "name": "Potion Of Sol",
-      "aliases": ["Sol","sol","overpowered"],
+      "aliases": ["Sol", "sol", "overpowered"],
       "luck": 10000000,
       "exclusiveAuras": []
     },
