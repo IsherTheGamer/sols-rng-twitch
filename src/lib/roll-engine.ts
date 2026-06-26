@@ -1,5 +1,5 @@
 import type { AuraDef, ChannelState } from "../types/data";
-import { auras, biomeMap } from "./data";
+import { auras, auraMap, biomeMap, potions } from "./data";
 import { rollHit } from "./rng";
 
 export interface RollContext {
@@ -9,6 +9,19 @@ export interface RollContext {
   forceAuraId?: string;
   includeDeleted?: boolean;
   includeUnobtainable?: boolean;
+}
+
+interface PotionExclusiveRoll {
+  aura: AuraDef;
+  effectiveRarity: number;
+}
+
+const POTION_AURA_ID_ALIASES: Record<string, string> = {
+  dune_exclusive: "neferkhaf",
+};
+
+function normalizePotionAuraId(auraId: string): string {
+  return POTION_AURA_ID_ALIASES[auraId] ?? auraId;
 }
 
 function isDevActive(state: ChannelState): boolean {
@@ -21,37 +34,106 @@ function isEventActive(state: ChannelState, eventId: string): boolean {
 
 function getActiveBiomeIds(state: ChannelState): Set<string> {
   const ids = new Set<string>();
+
   if (state.biomeId) ids.add(state.biomeId);
   if (state.bloodRainExpiresAt > Date.now()) ids.add("blood_rain");
   if (isDevActive(state)) ids.add(state.activeDevBiome!);
+
   return ids;
 }
 
 function isNativeBiomeActive(aura: AuraDef, state: ChannelState): boolean {
   const active = getActiveBiomeIds(state);
+
   if (aura.biome && active.has(aura.biome)) return true;
   if (aura.time && state.timeOfDay === aura.time) return true;
   if (aura.devBiome && active.has(aura.devBiome)) return true;
+
   return false;
 }
 
 function isGlitchedOrAbnormality(state: ChannelState): boolean {
   const active = getActiveBiomeIds(state);
-  return active.has("glitched") || active.has("abnormality") || active.has("red_full_moon");
+
+  return (
+    active.has("glitched") ||
+    active.has("abnormality") ||
+    active.has("red_full_moon")
+  );
 }
 
-function getBiomeBTMultiplier(biomeId: string): number {
-  const b = biomeMap.get(biomeId);
-  return b?.breakthroughMultiplier ?? 1;
+function buildPotionExclusiveAuraIds(): Set<string> {
+  const ids = new Set<string>();
+
+  for (const potion of potions) {
+    for (const exclusive of potion.exclusiveAuras ?? []) {
+      ids.add(exclusive.auraId);
+      ids.add(normalizePotionAuraId(exclusive.auraId));
+    }
+  }
+
+  for (const aura of auras) {
+    if (aura.potion?.id) {
+      ids.add(aura.id);
+    }
+  }
+
+  return ids;
 }
 
-function getTimeBTMultiplier(state: ChannelState): number {
-  if (state.timeOfDay === "daytime") return 10;
-  if (state.timeOfDay === "nighttime") return 10;
-  return 1;
+const POTION_EXCLUSIVE_AURA_IDS = buildPotionExclusiveAuraIds();
+
+function isPotionExclusiveAura(aura: AuraDef): boolean {
+  return !!aura.potion?.id || POTION_EXCLUSIVE_AURA_IDS.has(aura.id);
 }
 
-export function getEffectiveRarity(aura: AuraDef, state: ChannelState): number | null {
+function getPotionExclusivePool(potionId: string): PotionExclusiveRoll[] {
+  const potion = potions.find((p) => p.id === potionId);
+  const pool: PotionExclusiveRoll[] = [];
+  const seen = new Set<string>();
+
+  function addExclusive(auraId: string, rarity: number) {
+    const normalizedId = normalizePotionAuraId(auraId);
+    const aura = auraMap.get(normalizedId);
+
+    if (!aura) return;
+    if (seen.has(aura.id)) return;
+
+    seen.add(aura.id);
+
+    pool.push({
+      aura,
+      effectiveRarity: rarity,
+    });
+  }
+
+  for (const exclusive of potion?.exclusiveAuras ?? []) {
+    addExclusive(exclusive.auraId, exclusive.rarity);
+  }
+
+  for (const aura of auras) {
+    if (aura.potion?.id !== potionId) continue;
+
+    addExclusive(aura.id, aura.potion.rarity);
+  }
+
+  return pool;
+}
+
+function isAllowedByBaseFlags(
+  aura: AuraDef,
+  ctx: RollContext
+): boolean {
+  if (aura.deleted && !ctx.includeDeleted) return false;
+  if (aura.unobtainable && !ctx.includeUnobtainable) return false;
+
+  return true;
+}
+
+export function getEffectiveRarity(
+  aura: AuraDef,
+  state: ChannelState
+): number | null {
   const active = getActiveBiomeIds(state);
   const glitchedMode = isGlitchedOrAbnormality(state);
 
@@ -76,7 +158,11 @@ export function getEffectiveRarity(aura: AuraDef, state: ChannelState): number |
     return aura.rarity;
   }
 
-  if (aura.biome && aura.nativeRarity != null && isNativeBiomeActive(aura, state)) {
+  if (
+    aura.biome &&
+    aura.nativeRarity != null &&
+    isNativeBiomeActive(aura, state)
+  ) {
     return aura.nativeRarity;
   }
 
@@ -85,7 +171,11 @@ export function getEffectiveRarity(aura: AuraDef, state: ChannelState): number |
     return aura.nativeRarity ?? aura.rarity;
   }
 
-  if (glitchedMode && aura.biome && biomeMap.get(aura.biome)?.isRareBiome) {
+  if (
+    glitchedMode &&
+    aura.biome &&
+    biomeMap.get(aura.biome)?.isRareBiome
+  ) {
     return null;
   }
 
@@ -104,31 +194,43 @@ export function getEffectiveRarity(aura: AuraDef, state: ChannelState): number |
   return aura.rarity;
 }
 
-export function getEligibleAuras(ctx: RollContext, potionExclusiveOnly = false): AuraDef[] {
-  const { state, potionId, includeDeleted, includeUnobtainable } = ctx;
+export function getEligibleAuras(
+  ctx: RollContext,
+  potionExclusiveOnly = false
+): AuraDef[] {
+  const { state, potionId } = ctx;
 
   return auras.filter((aura) => {
-    if (aura.deleted && !includeDeleted) return false;
-    if (aura.unobtainable && !includeUnobtainable) return false;
+    const isExclusive = isPotionExclusiveAura(aura);
 
     if (potionId) {
-      if (aura.potion?.id === potionId) return true;
-      if (potionExclusiveOnly) return false;
-      if (aura.potion) return false;
+      if (potionExclusiveOnly) {
+        return getPotionExclusivePool(potionId).some(
+          (entry) => entry.aura.id === aura.id
+        );
+      }
+
+      if (isExclusive) return false;
+      if (!isAllowedByBaseFlags(aura, ctx)) return false;
+
       const eff = getEffectiveRarity(aura, state);
       return eff !== null;
     }
 
-    if (aura.potion) return false;
+    if (isExclusive) return false;
+    if (!isAllowedByBaseFlags(aura, ctx)) return false;
 
     const eff = getEffectiveRarity(aura, state);
     return eff !== null;
   });
 }
 
-export function rollOnce(ctx: RollContext): { aura: AuraDef; effectiveRarity: number } {
+export function rollOnce(
+  ctx: RollContext
+): { aura: AuraDef; effectiveRarity: number } {
   if (ctx.forceAuraId) {
     const forced = auras.find((a) => a.id === ctx.forceAuraId);
+
     if (forced) {
       const eff = getEffectiveRarity(forced, ctx.state) ?? forced.rarity;
       return { aura: forced, effectiveRarity: eff };
@@ -138,23 +240,36 @@ export function rollOnce(ctx: RollContext): { aura: AuraDef; effectiveRarity: nu
   const luck = ctx.luck;
 
   if (ctx.potionId) {
-    const exclusiveAuras = getEligibleAuras(ctx, true);
+    const exclusivePool = getPotionExclusivePool(ctx.potionId);
     const generalAuras = getEligibleAuras(ctx, false);
+
     const hits: Array<{ aura: AuraDef; effectiveRarity: number }> = [];
 
-    for (const aura of exclusiveAuras) {
-      const eff = aura.potion?.rarity ?? aura.rarity;
-      const hit = rollHit(1, eff);
-      if (hit) hits.push({ aura, effectiveRarity: eff });
+    for (const entry of exclusivePool) {
+      const hit = rollHit(1, entry.effectiveRarity);
+
+      if (hit) {
+        hits.push({
+          aura: entry.aura,
+          effectiveRarity: entry.effectiveRarity,
+        });
+      }
     }
 
     for (const aura of generalAuras) {
-      if (aura.potion) continue;
       const eff = getEffectiveRarity(aura, ctx.state);
+
       if (eff === null) continue;
+
       const immune = aura.luckImmune;
       const hit = immune ? rollHit(1, eff) : rollHit(luck, eff);
-      if (hit) hits.push({ aura, effectiveRarity: eff });
+
+      if (hit) {
+        hits.push({
+          aura,
+          effectiveRarity: eff,
+        });
+      }
     }
 
     if (hits.length > 0) {
@@ -162,7 +277,14 @@ export function rollOnce(ctx: RollContext): { aura: AuraDef; effectiveRarity: nu
       return hits[0];
     }
 
-    return { aura: auras.find((a) => a.id === "common")!, effectiveRarity: 2 };
+    const fallback =
+      auras.find((a) => a.id === "common") ??
+      auras.find((a) => a.id === "nothing")!;
+
+    return {
+      aura: fallback,
+      effectiveRarity: fallback.rarity,
+    };
   }
 
   const eligible = getEligibleAuras(ctx);
@@ -170,10 +292,18 @@ export function rollOnce(ctx: RollContext): { aura: AuraDef; effectiveRarity: nu
 
   for (const aura of eligible) {
     const eff = getEffectiveRarity(aura, ctx.state);
+
     if (eff === null) continue;
+
     const immune = aura.luckImmune;
     const hit = immune ? rollHit(1, eff) : rollHit(luck, eff);
-    if (hit) hits.push({ aura, effectiveRarity: eff });
+
+    if (hit) {
+      hits.push({
+        aura,
+        effectiveRarity: eff,
+      });
+    }
   }
 
   if (hits.length > 0) {
@@ -184,20 +314,29 @@ export function rollOnce(ctx: RollContext): { aura: AuraDef; effectiveRarity: nu
   const fallback =
     auras.find((a) => a.id === "common") ??
     auras.find((a) => a.id === "nothing")!;
-  return { aura: fallback, effectiveRarity: fallback.rarity };
+
+  return {
+    aura: fallback,
+    effectiveRarity: fallback.rarity,
+  };
 }
 
 export function rollMultiple(
   ctx: RollContext,
   count: number
 ): Array<{ aura: AuraDef; effectiveRarity: number }> {
-  return Array.from({ length: count }, () => rollOnce(ctx));
+  const safeCount = Math.max(0, Math.floor(count));
+
+  return Array.from({ length: safeCount }, () => rollOnce(ctx));
 }
 
 export function topRarest(
   results: Array<{ aura: AuraDef; effectiveRarity: number }>,
   n: number
 ): Array<{ aura: AuraDef; effectiveRarity: number }> {
-  const sorted = [...results].sort((a, b) => b.effectiveRarity - a.effectiveRarity);
+  const sorted = [...results].sort(
+    (a, b) => b.effectiveRarity - a.effectiveRarity
+  );
+
   return sorted.slice(0, n);
 }
