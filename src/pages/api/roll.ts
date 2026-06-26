@@ -21,6 +21,7 @@ import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
 import { recordViewerRolls } from "@/lib/profile";
+import { announceAuraResults } from "@/lib/global-announcements";
 
 function parseAmount(rawArgs: string | undefined): number {
   const raw = (rawArgs ?? "").trim();
@@ -91,6 +92,14 @@ export default async function handler(
     await recordViewerRolls(channelId, user, results, "roll");
 
     const unlocked = await recordAuraRolls(results);
+
+    await announceAuraResults({
+      channelId,
+      displayName: name,
+      results,
+      source: "roll",
+    });
+
     const unlockText = formatAchievementUnlocks(unlocked);
     const suffix = unlockText ? ` | ${unlockText}` : "";
 
