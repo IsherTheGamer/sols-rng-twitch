@@ -4403,7 +4403,6 @@
       ],
       "time": null
     },
-    
     {
       "id": "neferkhaf",
       "name": "Neferkhaf",
@@ -4412,11 +4411,14 @@
       "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
-      "potion": null,
+      "potion": {
+        "id": "dune",
+        "rarity": 50000
+      },
       "devBiome": null,
       "luckImmune": true,
       "event": null,
-      "unobtainable": true,
+      "unobtainable": false,
       "deleted": false,
       "tags": [],
       "time": null
@@ -4426,14 +4428,17 @@
       "name": "Eden",
       "rarity": 999999999,
       "nativeRarity": null,
-      "biome": "limbo",
-      "biomeLock": true,
+      "biome": null,
+      "biomeLock": false,
       "noBreakthrough": false,
-      "potion": null,
+      "potion": {
+        "id": "void_heart",
+        "rarity": 200
+      },
       "devBiome": null,
-      "luckImmune": false,
+      "luckImmune": true,
       "event": null,
-      "unobtainable": true,
+      "unobtainable": false,
       "deleted": false,
       "tags": [
         "challenged+"
