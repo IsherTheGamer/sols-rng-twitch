@@ -13,6 +13,10 @@ function getArgs(req: NextApiRequest): string[] {
   return parseQuery(req).split(/\s+/).filter(Boolean);
 }
 
+function helpText() {
+  return "Use: !announce | !announce off/on | !announce roll glorious | !announce potion transcendent";
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -27,12 +31,7 @@ export default async function handler(
   const current = await getAnnouncementSettings(channelId);
 
   if (args.length === 0) {
-    return text(
-      res,
-      `${formatAnnouncementSettings(
-        current
-      )} | Use: !announce off/on/glorious/transcendent/challenged/dimensional/challenged+/dev-exclusive`
-    );
+    return text(res, `${formatAnnouncementSettings(current)} | ${helpText()}`);
   }
 
   const first = args[0].toLowerCase();
@@ -50,11 +49,58 @@ export default async function handler(
   }
 
   if (first === "on" || first === "enable" || first === "enabled") {
-    const threshold = normalizeAnnouncementThreshold(args[1]);
     const next = {
       ...current,
       enabled: true,
-      minTier: threshold ?? current.minTier,
+      updatedAt: Date.now(),
+    };
+
+    await setAnnouncementSettings(channelId, next);
+
+    return text(res, formatAnnouncementSettings(next));
+  }
+
+  if (first === "roll" || first === "rolls") {
+    const threshold = normalizeAnnouncementThreshold(args[1]);
+
+    if (!threshold) {
+      return error(
+        res,
+        `Unknown roll threshold. Use: ${ANNOUNCEMENT_THRESHOLDS.join(", ")}`
+      );
+    }
+
+    const next = {
+      ...current,
+      enabled: true,
+      rollMinTier: threshold,
+      updatedAt: Date.now(),
+    };
+
+    await setAnnouncementSettings(channelId, next);
+
+    return text(res, formatAnnouncementSettings(next));
+  }
+
+  if (
+    first === "potion" ||
+    first === "potions" ||
+    first === "pop" ||
+    first === "pops"
+  ) {
+    const threshold = normalizeAnnouncementThreshold(args[1]);
+
+    if (!threshold) {
+      return error(
+        res,
+        `Unknown potion threshold. Use: ${ANNOUNCEMENT_THRESHOLDS.join(", ")}`
+      );
+    }
+
+    const next = {
+      ...current,
+      enabled: true,
+      potionMinTier: threshold,
       updatedAt: Date.now(),
     };
 
@@ -66,16 +112,14 @@ export default async function handler(
   const threshold = normalizeAnnouncementThreshold(first);
 
   if (!threshold) {
-    return error(
-      res,
-      `Unknown setting. Use: off, on, ${ANNOUNCEMENT_THRESHOLDS.join(", ")}`
-    );
+    return error(res, `Unknown setting. ${helpText()}`);
   }
 
   const next = {
     ...current,
     enabled: true,
-    minTier: threshold,
+    rollMinTier: threshold,
+    potionMinTier: threshold,
     updatedAt: Date.now(),
   };
 
