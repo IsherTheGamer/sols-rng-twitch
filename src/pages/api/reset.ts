@@ -3,6 +3,7 @@ import { Redis } from "@upstash/redis";
 import type { ChannelState } from "@/types/data";
 import { setChannelState } from "@/lib/state";
 import { createDefaultAchievementState } from "@/lib/achievements";
+import { resetViewerProfiles } from "@/lib/profile";
 
 let redis: Redis | null = null;
 
@@ -25,7 +26,6 @@ function getResetKey(): string | null {
 function verifyReset(req: NextApiRequest): boolean {
   const requiredKey = getResetKey();
 
-  // If you forgot to set RESET_SECRET or CRON_SECRET, block reset for safety.
   if (!requiredKey) return false;
 
   const providedKey = req.query.key;
@@ -33,11 +33,15 @@ function verifyReset(req: NextApiRequest): boolean {
   return providedKey === requiredKey;
 }
 
+function getDefaultChannelId(): string {
+  return process.env.DEFAULT_CHANNEL_ID ?? "default";
+}
+
 function createDefaultChannelState(): ChannelState {
   const now = Date.now();
 
   return {
-    channelId: process.env.DEFAULT_CHANNEL_ID ?? "default",
+    channelId: getDefaultChannelId(),
     channelName: "default",
 
     biomeId: "normal",
@@ -86,7 +90,7 @@ async function resetCooldownData(): Promise<void> {
 
   if (!r) return;
 
-  const channelId = process.env.DEFAULT_CHANNEL_ID ?? "default";
+  const channelId = getDefaultChannelId();
 
   const keys = [
     `cd:roll:${channelId}`,
@@ -95,6 +99,10 @@ async function resetCooldownData(): Promise<void> {
   ];
 
   await r.del(...keys);
+}
+
+async function resetProfileData(): Promise<void> {
+  await resetViewerProfiles(getDefaultChannelId());
 }
 
 export default async function handler(
@@ -129,16 +137,24 @@ export default async function handler(
     return res.status(200).send("reset cooldowns ok");
   }
 
+  if (type === "profile" || type === "profiles") {
+    await resetProfileData();
+    return res.status(200).send("reset profiles ok");
+  }
+
   if (type === "full" || type === "all") {
     await resetBiomeData();
     await resetAchievementData();
     await resetRollData();
     await resetCooldownData();
+    await resetProfileData();
 
     return res.status(200).send("reset full ok");
   }
 
   return res
     .status(400)
-    .send("Unknown reset type. Use: full, biome, achievements, rolls, cooldowns");
+    .send(
+      "Unknown reset type. Use: full, biome, achievements, rolls, cooldowns, profiles"
+    );
 }
