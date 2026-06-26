@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "messages": {
+    "pixelation": "{user} Has Become P I X E L A T E D!",
+    "luminosity": "The Blinding Light has devoured {user}",
+    "equinox": "{user} Has Found The [???????] between POSITIVE and NEGATIVE.",
+    "leviathan": "{user} has tamed the Ruler of Beneath.",
+    "monarch": "All hail, The {user}.",
+
+    "breakthrough_aura": "{user} broke past the impossible.",
+    "astraios": "{user} has sealed another gate.",
+    "master_hand": "{user} has reached beyond the screen.",
+
+    "memory": "{user} found a memory that should have been forgotten.",
+    "oblivion_aura": "{user} has been swallowed by OBLIVION.",
+    "neferkhaf": "{user} has awakened the worm beneath the dunes.",
+    "eden": "{user} has opened the gates of Eden.",
+    "fragments_of_the_red_crimson_moon_1": "{user} touched a fragment of the Crimson Moon.",
+    "fragments_of_the_red_crimson_moon_2": "{user} completed another fragment of the Crimson Moon.",
+    "another_realm": "{user} slipped into ANOTHER REALM.",
+    "mastermind": "{user} has met THE ZERO.",
+    "edict": "{user} has received the final EDICT.",
+    "red_full_moon_aura": "{user} has awakened the RED FULL MOON.",
+    "abomination_aura": "{user} has become an ABOMINATION.",
+
+    "nyctophobia": "{user} has stared too long into the dark.",
+    "illusionary": "{user} saw what should not exist.",
+    "sol_dev": "{user} has touched Sol's authority."
+  }
+}
