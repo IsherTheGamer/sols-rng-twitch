@@ -2,11 +2,32 @@
   "version": "1.0",
   "events": [
     {
-      "id": "summer_2025",
-      "name": "Summer 2025",
-      "aliases": ["summer", "summer 2025", "2025 summer"],
+      "id": "valentines_2024",
+      "name": "Valentines 2024",
+      "aliases": ["valentines", "valentine", "valentines 2024", "2024 valentines"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "april_fools_2024",
+      "name": "April Fools 2024",
+      "aliases": ["april fools 2024", "2024 april fools"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "summer_2024",
+      "name": "Summer 2024",
+      "aliases": ["summer 2024", "2024 summer"],
       "eventBiomes": ["blazing_sun"],
       "addToNormalPool": true
+    },
+    {
+      "id": "ria_2024",
+      "name": "RIA 2024",
+      "aliases": ["ria", "ria 2024", "2024 ria"],
+      "eventBiomes": [],
+      "addToNormalPool": false
     },
     {
       "id": "halloween_2024",
@@ -16,11 +37,55 @@
       "addToNormalPool": true
     },
     {
+      "id": "winter_2025",
+      "name": "Winter 2025",
+      "aliases": ["winter", "winter 2025", "2025 winter"],
+      "eventBiomes": ["snowy"],
+      "addToNormalPool": true,
+      "replacesNormalWith": "snowy"
+    },
+    {
+      "id": "april_fools_2025",
+      "name": "April Fools 2025",
+      "aliases": ["april fools 2025", "2025 april fools"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "easter_2025",
+      "name": "Easter 2025",
+      "aliases": ["easter 2025", "2025 easter"],
+      "eventBiomes": ["eggland"],
+      "addToNormalPool": true,
+      "replacesNormalWith": "eggland"
+    },
+    {
+      "id": "summer_2025",
+      "name": "Summer 2025",
+      "aliases": ["summer", "summer 2025", "2025 summer"],
+      "eventBiomes": ["blazing_sun"],
+      "addToNormalPool": true
+    },
+    {
+      "id": "season_ii",
+      "name": "Season II",
+      "aliases": ["season ii", "season 2", "season two"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
       "id": "halloween_2025",
       "name": "Halloween 2025",
       "aliases": ["halloween 2025", "2025 halloween"],
       "eventBiomes": ["graveyard", "pumpkin_moon", "blood_rain"],
       "addToNormalPool": true
+    },
+    {
+      "id": "season_iii",
+      "name": "Season III",
+      "aliases": ["season iii", "season 3", "season three"],
+      "eventBiomes": [],
+      "addToNormalPool": false
     },
     {
       "id": "christmas_2025",
@@ -29,6 +94,27 @@
       "eventBiomes": ["aurora"],
       "addToNormalPool": true,
       "replacesNormalWith": "snowy"
+    },
+    {
+      "id": "season_iv",
+      "name": "Season IV",
+      "aliases": ["season iv", "season 4", "season four"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "valentines_2026",
+      "name": "Valentines 2026",
+      "aliases": ["valentines 2026", "valentine 2026", "2026 valentines"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "season_v",
+      "name": "Season V",
+      "aliases": ["season v", "season 5", "season five"],
+      "eventBiomes": [],
+      "addToNormalPool": false
     },
     {
       "id": "easter_2026",
@@ -41,7 +127,14 @@
     {
       "id": "april_fools_2026",
       "name": "April Fools 2026",
-      "aliases": ["april fools", "april fools 2026"],
+      "aliases": ["april fools", "april fools 2026", "2026 april fools"],
+      "eventBiomes": [],
+      "addToNormalPool": false
+    },
+    {
+      "id": "season_vi",
+      "name": "Season VI",
+      "aliases": ["season vi", "season 6", "season six"],
       "eventBiomes": [],
       "addToNormalPool": false
     }
