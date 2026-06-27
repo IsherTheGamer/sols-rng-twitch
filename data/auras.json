@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "count": 390,
+  "count": 393,
   "auras": [
     {
       "id": "nothing",
@@ -16,7 +16,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -33,7 +35,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -50,7 +54,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -67,7 +73,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -84,7 +92,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -101,7 +111,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -118,7 +130,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -135,7 +149,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -152,7 +168,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -169,7 +187,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -186,7 +206,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -203,7 +225,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -220,7 +244,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -237,7 +263,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -254,7 +282,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -271,7 +301,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -288,7 +320,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -305,7 +339,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -322,7 +358,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -339,7 +377,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "basic"
+      ],
       "time": null
     },
     {
@@ -356,7 +396,47 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
+      "time": null
+    },
+    {
+      "id": "penumbra",
+      "name": "Penumbra",
+      "rarity": 1010,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "epic"
+      ],
+      "time": null
+    },
+    {
+      "id": "umbra",
+      "name": "Umbra",
+      "rarity": 1010,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -373,7 +453,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -390,7 +472,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -407,7 +491,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -424,7 +510,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -441,7 +529,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -458,7 +548,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -475,7 +567,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -492,7 +586,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -509,7 +605,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -526,7 +624,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -543,7 +643,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -560,7 +662,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -577,7 +681,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -594,7 +700,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -611,7 +719,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -628,7 +738,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -645,7 +757,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -662,7 +776,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -679,7 +795,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -696,7 +814,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -713,7 +833,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "epic"
+      ],
       "time": null
     },
     {
@@ -749,7 +871,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -766,7 +890,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -783,7 +909,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -800,7 +928,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -817,7 +947,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -834,7 +966,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -851,7 +985,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -868,7 +1004,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -885,7 +1023,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -902,7 +1042,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -919,7 +1061,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -936,7 +1080,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": "daytime"
     },
     {
@@ -953,7 +1099,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": "nighttime"
     },
     {
@@ -970,7 +1118,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -987,7 +1137,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1004,7 +1156,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1021,7 +1175,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1038,7 +1194,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1055,7 +1213,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1072,7 +1232,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1089,7 +1251,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1106,7 +1270,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1123,7 +1289,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1140,7 +1308,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "unique"
+      ],
       "time": null
     },
     {
@@ -1176,7 +1346,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1193,7 +1365,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1210,7 +1384,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1227,7 +1403,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1244,7 +1422,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1261,7 +1441,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1278,7 +1460,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1295,7 +1479,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1312,7 +1498,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1329,7 +1517,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1346,7 +1536,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1363,7 +1555,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1380,7 +1574,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1397,7 +1593,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1414,7 +1612,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1431,7 +1631,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1448,7 +1650,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1465,7 +1669,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1482,7 +1688,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "legendary"
+      ],
       "time": null
     },
     {
@@ -1518,7 +1726,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1535,7 +1745,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1552,7 +1764,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1569,7 +1783,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1586,7 +1802,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1603,7 +1821,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1620,7 +1840,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1637,7 +1859,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1654,7 +1878,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1671,7 +1897,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1688,7 +1916,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1705,7 +1935,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1722,7 +1954,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1739,7 +1973,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1756,7 +1992,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1773,7 +2011,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1790,7 +2030,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1807,7 +2049,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1824,7 +2068,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1841,7 +2087,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1858,7 +2106,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1875,7 +2125,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1892,7 +2144,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1909,7 +2163,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1926,7 +2182,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1943,7 +2201,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1960,7 +2220,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1977,7 +2239,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -1994,7 +2258,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2011,7 +2277,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2028,7 +2296,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": "daytime"
     },
     {
@@ -2045,7 +2315,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2062,7 +2334,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": "nighttime"
     },
     {
@@ -2079,7 +2353,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2096,7 +2372,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": "nighttime"
     },
     {
@@ -2113,7 +2391,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2130,7 +2410,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2147,7 +2429,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2164,7 +2448,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2181,7 +2467,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2198,7 +2486,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2215,7 +2505,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2232,7 +2524,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2249,7 +2543,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2266,7 +2562,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2283,7 +2581,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2300,7 +2600,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2317,7 +2619,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2334,7 +2638,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2351,7 +2657,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2368,7 +2676,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2385,7 +2695,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "mythic"
+      ],
       "time": null
     },
     {
@@ -2402,7 +2714,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2419,7 +2733,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2436,7 +2752,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2453,7 +2771,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2470,7 +2790,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2487,7 +2809,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2504,7 +2828,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2521,7 +2847,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2538,7 +2866,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2555,7 +2885,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": "nighttime"
     },
     {
@@ -2572,7 +2904,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2589,7 +2923,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2606,7 +2942,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2623,7 +2961,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2640,7 +2980,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2657,7 +2999,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2674,7 +3018,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2691,7 +3037,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2708,7 +3056,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2725,7 +3075,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2742,7 +3094,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2759,7 +3113,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2776,7 +3132,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2793,7 +3151,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2810,7 +3170,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2827,7 +3189,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2844,7 +3208,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2861,7 +3227,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2878,7 +3246,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": "nighttime"
     },
     {
@@ -2895,7 +3265,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2912,7 +3284,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2929,7 +3303,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2946,7 +3322,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": "nighttime"
     },
     {
@@ -2963,7 +3341,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2980,7 +3360,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -2997,7 +3379,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -3014,7 +3398,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -3031,7 +3417,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -3048,7 +3436,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -3065,7 +3455,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "exalted"
+      ],
       "time": null
     },
     {
@@ -3082,7 +3474,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3099,7 +3493,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3116,7 +3512,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3133,7 +3531,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3150,7 +3550,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3167,7 +3569,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3184,7 +3588,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": "nighttime"
     },
     {
@@ -3201,7 +3607,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3218,7 +3626,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3235,7 +3645,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3252,7 +3664,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3269,7 +3683,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3286,7 +3702,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3303,7 +3721,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3320,7 +3740,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3337,7 +3759,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3354,7 +3778,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3371,7 +3797,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3388,7 +3816,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3405,7 +3835,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": "nighttime"
     },
     {
@@ -3422,7 +3854,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3439,7 +3873,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3456,7 +3892,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3473,7 +3911,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3490,7 +3930,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3507,7 +3949,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3524,7 +3968,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3541,7 +3987,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3558,7 +4006,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3575,7 +4025,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3592,7 +4044,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3609,7 +4063,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3626,7 +4082,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3643,7 +4101,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3660,7 +4120,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3677,7 +4139,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3694,7 +4158,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3711,7 +4177,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "glorious"
+      ],
       "time": null
     },
     {
@@ -3842,12 +4310,14 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged"
+      ],
       "time": null
     },
     {
       "id": "oppression",
-      "name": "[oppRESsioN]",
+      "name": "[OPPRESSION]",
       "rarity": 220000000,
       "nativeRarity": null,
       "biome": "glitched",
@@ -3859,7 +4329,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged+"
+      ],
       "time": null
     },
     {
@@ -3876,7 +4348,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged"
+      ],
       "time": null
     },
     {
@@ -3893,7 +4367,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged+"
+      ],
       "time": null
     },
     {
@@ -3911,6 +4387,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged",
         "raw-luck-only"
       ],
       "time": null
@@ -3949,7 +4426,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged"
+      ],
       "time": null
     },
     {
@@ -3966,7 +4445,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged"
+      ],
       "time": null
     },
     {
@@ -3983,7 +4464,9 @@
       "event": null,
       "unobtainable": false,
       "deleted": false,
-      "tags": [],
+      "tags": [
+        "challenged+"
+      ],
       "time": null
     },
     {
@@ -4025,6 +4508,25 @@
       "time": null
     },
     {
+      "id": "dream_catcher",
+      "name": "dream catcher",
+      "rarity": 2222222222,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged"
+      ],
+      "time": "nighttime"
+    },
+    {
       "id": "memory",
       "name": "Memory",
       "rarity": 100,
@@ -4042,6 +4544,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4065,6 +4568,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged+",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4080,7 +4584,7 @@
       "noBreakthrough": false,
       "potion": {
         "id": "dune",
-        "rarity": 50000
+        "rarity": 1000
       },
       "devBiome": null,
       "luckImmune": true,
@@ -4088,6 +4592,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4103,7 +4608,7 @@
       "noBreakthrough": false,
       "potion": {
         "id": "void_heart",
-        "rarity": 200
+        "rarity": 50000
       },
       "devBiome": null,
       "luckImmune": true,
@@ -4135,6 +4640,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4158,6 +4664,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "challenged",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4181,6 +4688,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "transcendent",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4204,6 +4712,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "transcendent",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4227,6 +4736,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "transcendent",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4250,6 +4760,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "transcendent",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4273,6 +4784,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "transcendent",
         "potion-exclusive",
         "raw-luck-only"
       ],
@@ -4293,6 +4805,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "dev-exclusive"
       ],
       "time": null
@@ -4312,6 +4825,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "dev-exclusive"
       ],
       "time": null
@@ -4331,6 +4845,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "dev-exclusive"
       ],
       "time": null
@@ -4350,6 +4865,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "dev-exclusive"
       ],
       "time": null
@@ -4369,9 +4885,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4392,9 +4909,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4415,9 +4933,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4438,9 +4957,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4461,6 +4981,7 @@
       "unobtainable": false,
       "deleted": true,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive",
         "deleted"
@@ -4482,6 +5003,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4502,6 +5024,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4522,6 +5045,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -4542,6 +5066,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -4562,6 +5087,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4582,9 +5108,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4605,6 +5132,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4625,6 +5153,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -4645,6 +5174,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -4665,6 +5195,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -4685,6 +5216,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4705,6 +5237,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4725,6 +5258,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4745,6 +5279,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4765,6 +5300,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4785,6 +5321,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4805,8 +5342,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "glorious",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -4826,6 +5363,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4846,6 +5384,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4866,6 +5405,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4886,6 +5426,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -4906,6 +5447,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4926,6 +5468,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -4946,9 +5489,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4969,9 +5513,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -4992,6 +5537,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "epic",
         "event",
         "event-exclusive"
       ],
@@ -5012,6 +5558,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5032,6 +5579,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5052,6 +5600,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5072,9 +5621,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5095,9 +5645,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5118,9 +5669,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5141,9 +5693,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5164,9 +5717,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5187,9 +5741,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5210,9 +5765,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5233,9 +5789,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5256,9 +5813,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5279,6 +5837,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5299,6 +5858,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5319,8 +5879,9 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "purchasable",
+        "legendary",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -5340,8 +5901,9 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "purchasable",
+        "legendary",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -5361,9 +5923,10 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "purchasable",
         "pearl-clams",
+        "legendary",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -5371,7 +5934,7 @@
     {
       "id": "sandbasket",
       "name": "SandBasket",
-      "rarity": 3500000,
+      "rarity": 3500,
       "nativeRarity": null,
       "biome": null,
       "biomeLock": false,
@@ -5383,9 +5946,9 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "per-dig",
+        "epic",
         "event",
-        "purchasable",
-        "placeholder-price",
         "event-exclusive"
       ],
       "time": null
@@ -5405,10 +5968,12 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
         "purchasable",
+        "unknown-price",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5429,10 +5994,12 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
-        "purchasable",
+        "rng-pass",
+        "summer-medal",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5453,9 +6020,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -5476,6 +6044,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -5496,6 +6065,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5516,6 +6086,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5536,6 +6107,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5556,6 +6128,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5576,6 +6149,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5596,6 +6170,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -5616,6 +6191,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5636,6 +6212,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5656,6 +6233,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5676,6 +6254,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5696,6 +6275,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5716,6 +6296,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -5736,6 +6317,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5756,6 +6338,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5776,6 +6359,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5796,6 +6380,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5816,6 +6401,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5836,6 +6422,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5856,6 +6443,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5876,6 +6464,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5896,6 +6485,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5916,6 +6506,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -5936,8 +6527,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -5957,8 +6548,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -5978,9 +6569,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6001,9 +6593,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6024,9 +6617,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6047,9 +6641,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6070,9 +6665,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6093,9 +6689,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6116,6 +6713,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "unique",
         "event",
         "event-exclusive"
       ],
@@ -6136,6 +6734,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -6156,6 +6755,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive",
         "raw-luck-only"
@@ -6177,6 +6777,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -6197,6 +6798,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -6217,6 +6819,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -6237,6 +6840,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -6257,6 +6861,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -6277,6 +6882,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -6297,6 +6903,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6317,6 +6924,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6337,6 +6945,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6357,6 +6966,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6377,6 +6987,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6397,6 +7008,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6417,8 +7029,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6438,8 +7050,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6459,8 +7071,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6480,9 +7092,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6503,9 +7116,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6526,9 +7140,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6549,9 +7164,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6572,9 +7188,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6595,6 +7212,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6615,9 +7233,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6638,9 +7257,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6661,6 +7281,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -6681,6 +7302,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -6701,6 +7323,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6721,6 +7344,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6741,6 +7365,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -6761,8 +7386,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6782,8 +7407,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6803,8 +7428,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6824,8 +7449,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -6845,9 +7470,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6868,9 +7494,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6891,9 +7518,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6914,9 +7542,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6937,9 +7566,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
@@ -6960,6 +7590,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "legendary",
         "event",
         "event-exclusive"
       ],
@@ -6980,6 +7611,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -7000,6 +7632,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "mythic",
         "event",
         "event-exclusive"
       ],
@@ -7020,6 +7653,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -7040,6 +7674,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -7060,6 +7695,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -7080,6 +7716,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "exalted",
         "event",
         "event-exclusive"
       ],
@@ -7100,6 +7737,7 @@
       "unobtainable": false,
       "deleted": true,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive",
         "deleted"
@@ -7121,6 +7759,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -7141,6 +7780,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -7161,6 +7801,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -7181,6 +7822,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
+        "glorious",
         "event",
         "event-exclusive"
       ],
@@ -7201,8 +7843,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -7222,8 +7864,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -7243,8 +7885,8 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "event",
         "transcendent",
+        "event",
         "event-exclusive"
       ],
       "time": null
@@ -7264,9 +7906,10 @@
       "unobtainable": true,
       "deleted": false,
       "tags": [
-        "event",
         "limited",
         "unknown-rarity",
+        "basic",
+        "event",
         "event-exclusive",
         "unobtainable"
       ],
