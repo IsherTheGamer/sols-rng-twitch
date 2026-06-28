@@ -226,17 +226,18 @@ function simulateSeconds(state: ChannelState, seconds: number): TickResult {
 export async function processBiomeTick(
   state: ChannelState,
   elapsedMs: number,
-  channelName?: string | null
+  channelName?: string | null,
+  announceToChat = true
 ): Promise<TickResult> {
   const seconds = Math.max(1, Math.min(120, Math.floor(elapsedMs / 1000)));
 
   const result = simulateSeconds(state, seconds);
 
-  if (result.changeMessage) {
+  if (announceToChat && result.changeMessage) {
     await sendNightbotMessage(result.changeMessage, channelName);
   }
 
-  if (result.statusMessage) {
+  if (announceToChat && result.statusMessage) {
     await sendNightbotMessage(result.statusMessage, channelName);
   }
 
