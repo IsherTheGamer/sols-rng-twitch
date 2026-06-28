@@ -39,14 +39,36 @@ import { isPopopAllowlisted } from "@/lib/popop-access";
 import { runAfterCommandReply } from "@/lib/delayed-announcement";
 
 export const config = {
-  maxDuration: 20,
+  maxDuration: 30,
 };
+
+const MAX_POPOP = 10000;
+const POPOP_TOP_RESULTS = 3;
 
 function isDevActive(state: {
   activeDevBiome: string | null;
   devExpiresAt: number;
 }): boolean {
   return Boolean(state.activeDevBiome && state.devExpiresAt > Date.now());
+}
+
+function parsePopAmount(raw: string): number {
+  const clean = raw.trim().toLowerCase();
+
+  const match = clean.match(/^(\d+)(k|m)?$/);
+
+  if (!match) return 1;
+
+  const base = parseInt(match[1], 10);
+
+  if (!Number.isFinite(base) || base < 1) return 1;
+
+  const suffix = match[2];
+
+  if (suffix === "k") return base * 1000;
+  if (suffix === "m") return base * 1000000;
+
+  return base;
 }
 
 function formatMissedHits(missed: RollHitResult[]): string {
@@ -66,12 +88,35 @@ function formatMissedHits(missed: RollHitResult[]): string {
   return ` | Missed: ${body}${extra}`;
 }
 
+function formatTopPotionResults(
+  results: RollHitResult[],
+  maxShown: number
+): string {
+  const top = [...results]
+    .sort((a, b) => {
+      if (b.effectiveRarity !== a.effectiveRarity) {
+        return b.effectiveRarity - a.effectiveRarity;
+      }
+
+      return b.aura.rarity - a.aura.rarity;
+    })
+    .slice(0, maxShown);
+
+  return top
+    .map(
+      (hit, index) =>
+        `${index + 1}) ${hit.aura.name} ${formatRarity(hit.effectiveRarity)}`
+    )
+    .join(" | ");
+}
+
 async function handlePop(
   req: NextApiRequest,
   res: NextApiResponse,
   maxPops: number,
   options?: {
     bypassRequirements?: boolean;
+    summarizeBestCount?: number;
   }
 ) {
   const {
@@ -84,6 +129,7 @@ async function handlePop(
   } = getChannelContext(req);
 
   const bypassRequirements = options?.bypassRequirements ?? false;
+  const summarizeBestCount = options?.summarizeBestCount ?? 0;
 
   const query = parseQuery(req);
   const parts = query.split(/\s+/).filter(Boolean);
@@ -92,9 +138,9 @@ async function handlePop(
   let potionQuery = query;
 
   if (maxPops > 1 && parts.length >= 2) {
-    const maybeCount = parseInt(parts[parts.length - 1], 10);
+    const maybeCount = parsePopAmount(parts[parts.length - 1]);
 
-    if (!isNaN(maybeCount) && maybeCount > 0) {
+    if (maybeCount > 1) {
       popCount = Math.min(maybeCount, maxPops);
       potionQuery = parts.slice(0, -1).join(" ");
     }
@@ -167,6 +213,7 @@ async function handlePop(
 
   const results: RollHitResult[] = [];
   const messages: string[] = [];
+  const shouldSummarize = summarizeBestCount > 0 && popCount > 1;
 
   for (let i = 0; i < popCount; i++) {
     const ctx = {
@@ -177,27 +224,43 @@ async function handlePop(
 
     const result = rollOnceDetailed(ctx);
 
-    results.push({
+    const hit = {
       aura: result.aura,
       effectiveRarity: result.effectiveRarity,
-    });
+    };
 
-    const baseMsg = formatPopResult(
-      displayName,
-      potion.name,
-      result.aura.name,
-      result.effectiveRarity
-    );
+    results.push(hit);
 
-    const missedText =
-      maxPops === 1 ? formatMissedHits(result.missed) : "";
+    if (!shouldSummarize) {
+      const baseMsg = formatPopResult(
+        displayName,
+        potion.name,
+        result.aura.name,
+        result.effectiveRarity
+      );
 
-    messages.push(`${baseMsg}${missedText}`);
+      const missedText =
+        maxPops === 1 ? formatMissedHits(result.missed) : "";
+
+      messages.push(`${baseMsg}${missedText}`);
+    }
   }
 
   await recordViewerRolls(channelId, user, results, "potion");
 
-  text(res, truncate(messages.join(" | "), 390));
+  if (shouldSummarize) {
+    const topText = formatTopPotionResults(results, summarizeBestCount);
+
+    text(
+      res,
+      truncate(
+        `${displayName} popped ${potion.name} ${popCount}x — top ${summarizeBestCount}: ${topText}`,
+        390
+      )
+    );
+  } else {
+    text(res, truncate(messages.join(" | "), 390));
+  }
 
   await runAfterCommandReply(() =>
     announceAuraResults({
@@ -230,8 +293,9 @@ export default async function handler(
       return error(res, "Popop is trusted-user only.");
     }
 
-    return handlePop(req, res, 4, {
+    return handlePop(req, res, MAX_POPOP, {
       bypassRequirements: true,
+      summarizeBestCount: POPOP_TOP_RESULTS,
     });
   }
 
