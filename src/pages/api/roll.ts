@@ -24,7 +24,7 @@ import { withTick } from "@/lib/run-with-tick";
 import { recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 
-const MAX_MULTIROLLS = 100000;
+const MAX_MULTIROLLS = 10000;
 const MAX_DISPLAY_RESULTS = 5;
 
 export const config = {
