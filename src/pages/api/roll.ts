@@ -1,3 +1,4 @@
+import { runAfterCommandReply } from "@/lib/delayed-announcement";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   addGlobalRolls,
@@ -98,15 +99,7 @@ export default async function handler(
     await recordViewerRolls(channelId, user, results, "roll");
 
     const unlocked = await recordAuraRolls(results);
-
-    await announceAuraResults({
-      channelId,
-      channelName: channelLoginName,
-      displayName: name,
-      results,
-      source: "roll",
-    });
-
+    
     const unlockText = formatAchievementUnlocks(unlocked);
     const suffix = unlockText ? ` | ${unlockText}` : "";
 
@@ -114,14 +107,26 @@ export default async function handler(
       const best = top[0];
       const rollNote = rollCount > 1 ? ` (${rollCount}x)` : "";
 
-      return text(
-        res,
-        `${formatRollResult(
-          name,
-          best.aura.name,
-          best.effectiveRarity
-        )}${rollNote}${suffix}`
-      );
+      text(
+  res,
+  `${formatRollResult(
+    name,
+    best.aura.name,
+    best.effectiveRarity
+  )}${rollNote}${suffix}`
+);
+
+await runAfterCommandReply(() =>
+  announceAuraResults({
+    channelId,
+    channelName: channelLoginName,
+    displayName: name,
+    results,
+    source: "roll",
+  })
+);
+
+return;
     }
 
     const msg =
@@ -133,6 +138,18 @@ export default async function handler(
         }))
       );
 
-    return text(res, `${msg}${suffix}`);
+    text(res, `${msg}${suffix}`);
+
+await runAfterCommandReply(() =>
+  announceAuraResults({
+    channelId,
+    channelName: channelLoginName,
+    displayName: name,
+    results,
+    source: "roll",
+  })
+);
+
+return;
   });
 }
