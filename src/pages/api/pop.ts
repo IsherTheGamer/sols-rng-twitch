@@ -38,6 +38,10 @@ import { announceAuraResults } from "@/lib/global-announcements";
 import { isPopopAllowlisted } from "@/lib/popop-access";
 import { runAfterCommandReply } from "@/lib/delayed-announcement";
 
+export const config = {
+  maxDuration: 20,
+};
+
 function isDevActive(state: {
   activeDevBiome: string | null;
   devExpiresAt: number;
