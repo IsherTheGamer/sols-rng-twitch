@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Redis } from "@upstash/redis";
-import type { ChannelState } from "@/types/data";
-import { setChannelState } from "@/lib/state";
 import { createDefaultAchievementState } from "@/lib/achievements";
-import { resetViewerProfiles } from "@/lib/profile";
 
 let redis: Redis | null = null;
 
@@ -33,76 +30,88 @@ function verifyReset(req: NextApiRequest): boolean {
   return providedKey === requiredKey;
 }
 
-function getDefaultChannelId(): string {
-  return process.env.DEFAULT_CHANNEL_ID ?? "default";
+async function scanKeys(pattern: string): Promise<string[]> {
+  const r = getRedis();
+
+  if (!r) return [];
+
+  const keys: string[] = [];
+  let cursor = 0;
+
+  do {
+    const result = (await r.scan(cursor, {
+      match: pattern,
+      count: 100,
+    })) as [number | string, string[]];
+
+    cursor = Number(result[0]);
+    keys.push(...result[1]);
+  } while (cursor !== 0);
+
+  return keys;
 }
 
-function createDefaultChannelState(): ChannelState {
-  const now = Date.now();
+async function deleteKeys(keys: string[]): Promise<number> {
+  const r = getRedis();
+
+  if (!r || keys.length === 0) return 0;
+
+  let deleted = 0;
+
+  for (let i = 0; i < keys.length; i += 100) {
+    const chunk = keys.slice(i, i + 100);
+    deleted += await r.del(...chunk);
+  }
+
+  return deleted;
+}
+
+async function resetGameData(): Promise<{
+  deleted: number;
+  resetGlobals: boolean;
+}> {
+  const r = getRedis();
+
+  if (!r) {
+    return {
+      deleted: 0,
+      resetGlobals: false,
+    };
+  }
+
+  const patterns = [
+    // Channel/server state
+    "channel:*:state",
+    "channel:*:announcement-settings",
+
+    // Viewer profiles
+    "profile:*",
+    "profiles:*:keys",
+
+    // Cooldowns
+    "cd:*",
+  ];
+
+  const keys = (
+    await Promise.all(patterns.map((pattern) => scanKeys(pattern)))
+  ).flat();
+
+  const deleted = await deleteKeys([...new Set(keys)]);
+
+  await r.set("global:rolls", 0);
+  await r.set("global:achievement-state", createDefaultAchievementState());
 
   return {
-    channelId: getDefaultChannelId(),
-    channelName: "default",
-
-    biomeId: "normal",
-    biomeExpiresAt: now + 30000,
-
-    timeOfDay: "daytime",
-    timeExpiresAt: now + 150000,
-
-    activeEvents: [],
-    activeDevBiome: null,
-    devExpiresAt: 0,
-    bloodRainExpiresAt: 0,
-
-    lastStatusAt: 0,
-    lastTickAt: now,
-
-    deviceServerCooldownUntil: 0,
-    strangeControllerCooldownUntil: 0,
-    biomeRandomizerCooldownUntil: 0,
+    deleted,
+    resetGlobals: true,
   };
 }
 
-async function resetBiomeData(): Promise<void> {
-  const state = createDefaultChannelState();
-  await setChannelState(state);
-}
+async function wipeOAuthTokens(): Promise<number> {
+  const keys = await scanKeys("nightbot:channel:*");
+  keys.push("nightbot:channels");
 
-async function resetAchievementData(): Promise<void> {
-  const r = getRedis();
-
-  if (!r) return;
-
-  await r.set("global:achievement-state", createDefaultAchievementState());
-}
-
-async function resetRollData(): Promise<void> {
-  const r = getRedis();
-
-  if (!r) return;
-
-  await r.set("global:rolls", 0);
-}
-
-async function resetCooldownData(): Promise<void> {
-  const r = getRedis();
-
-  if (!r) return;
-
-  const channelId = getDefaultChannelId();
-
-  const keys = [
-    `cd:roll:${channelId}`,
-    `cd:pop:${channelId}`,
-    `cd:device:${channelId}`,
-  ];
-
-  await r.del(...keys);
-}
-
-async function resetProfileData(): Promise<void> {
-  await resetViewerProfiles(getDefaultChannelId());
+  return deleteKeys([...new Set(keys)]);
 }
 
 export default async function handler(
@@ -113,48 +122,40 @@ export default async function handler(
     return res.status(401).send("Unauthorized reset.");
   }
 
-  const type = ((req.query.type as string) ?? "full")
-    .toLowerCase()
-    .trim();
+  const type = String(req.query.type ?? "game").toLowerCase().trim();
 
-  if (type === "biome" || type === "biomes") {
-    await resetBiomeData();
-    return res.status(200).send("reset biome ok");
+  if (type === "game" || type === "full" || type === "all") {
+    const result = await resetGameData();
+
+    return res
+      .status(200)
+      .send(
+        `reset game ok | deleted ${result.deleted} keys | globals reset: ${result.resetGlobals}`
+      );
   }
 
-  if (type === "achievement" || type === "achievements") {
-    await resetAchievementData();
-    return res.status(200).send("reset achievements ok");
+  if (type === "oauth" || type === "nightbot") {
+    const deleted = await wipeOAuthTokens();
+
+    return res
+      .status(200)
+      .send(
+        `reset oauth ok | deleted ${deleted} keys | streamers must reconnect Nightbot`
+      );
   }
 
-  if (type === "roll" || type === "rolls") {
-    await resetRollData();
-    return res.status(200).send("reset rolls ok");
-  }
+  if (type === "everything" || type === "danger") {
+    const game = await resetGameData();
+    const oauthDeleted = await wipeOAuthTokens();
 
-  if (type === "cooldown" || type === "cooldowns") {
-    await resetCooldownData();
-    return res.status(200).send("reset cooldowns ok");
-  }
-
-  if (type === "profile" || type === "profiles") {
-    await resetProfileData();
-    return res.status(200).send("reset profiles ok");
-  }
-
-  if (type === "full" || type === "all") {
-    await resetBiomeData();
-    await resetAchievementData();
-    await resetRollData();
-    await resetCooldownData();
-    await resetProfileData();
-
-    return res.status(200).send("reset full ok");
+    return res
+      .status(200)
+      .send(
+        `reset everything ok | game deleted ${game.deleted} keys | oauth deleted ${oauthDeleted} keys`
+      );
   }
 
   return res
     .status(400)
-    .send(
-      "Unknown reset type. Use: full, biome, achievements, rolls, cooldowns, profiles"
-    );
+    .send("Unknown reset type. Use: game, oauth, or everything");
 }
