@@ -24,6 +24,9 @@ import { withTick } from "@/lib/run-with-tick";
 import { recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 
+const MAX_MULTIROLLS = 100000;
+const MAX_DISPLAY_RESULTS = 5;
+
 export const config = {
   maxDuration: 20,
 };
@@ -53,10 +56,17 @@ export default async function handler(
     isMod,
   } = getChannelContext(req);
 
-  const amount = parseAmount(req.query.args as string | undefined);
+    const amount = parseAmount(req.query.args as string | undefined);
 
   if (amount > 1 && !isMod) {
     return error(res, "Multi-roll is mod-only. Use !roll");
+  }
+
+  if (amount > MAX_MULTIROLLS) {
+    return error(
+      res,
+      `Max multi-roll is ${MAX_MULTIROLLS}. Use !roll ${MAX_MULTIROLLS}`
+    );
   }
 
   const achievementBonuses = await getAchievementBonuses();
@@ -81,10 +91,11 @@ export default async function handler(
     await applyCooldown(key, cooldownMs);
   }
 
-  const baseRollCount = amount > 1 ? Math.min(amount, 5) * 4 : 1;
+    const baseRollCount = amount > 1 ? Math.min(amount, MAX_MULTIROLLS) : 1;
   const bonusRolls = Math.floor(achievementBonuses.extraRolls);
   const rollCount = baseRollCount + bonusRolls;
-  const displayCount = amount > 1 ? Math.min(amount, 5) : 1;
+  const displayCount =
+    amount > 1 ? Math.min(baseRollCount, MAX_DISPLAY_RESULTS) : 1;
 
   const globalRolls = await addGlobalRolls(rollCount);
   const baseLuck = getGlobalLuck(globalRolls);
