@@ -85,6 +85,12 @@ export const POTION_RESTRICTIONS: Record<string, PotionRestriction> = {
     cooldownSeconds: 48 * HOUR,
   },
 
+  chaos_potion: {
+    minRolls: 150000,
+    requiredTier: "challenged+",
+    cooldownSeconds: 48 * HOUR,
+  },
+
   overpowered_potion: {
     modOnly: true,
     requiredTier: "challenged+",
