@@ -212,12 +212,14 @@ export default async function handler(
   const isOp = req.url?.includes("popop") || req.query.op === "1";
 
   if (isOp) {
-    const { channel, channelLoginName, user, isMod } = getChannelContext(req);
+    const { channel, channelLoginName, user } = getChannelContext(req);
 
     const broadcaster = isBroadcasterUser(user, channel);
     const allowlisted = isPopopAllowlisted(user, channelLoginName);
 
-    if (!isMod && !broadcaster && !allowlisted) {
+    // Only the broadcaster OR allowlisted Twitch usernames can use !popop.
+    // Mods do NOT automatically get access.
+    if (!broadcaster && !allowlisted) {
       return error(res, "Popop is trusted-user only.");
     }
 
