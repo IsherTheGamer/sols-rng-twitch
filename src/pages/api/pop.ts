@@ -1,4 +1,3 @@
-import { runAfterCommandReply } from "@/lib/delayed-announcement";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
 import {
@@ -37,12 +36,13 @@ import {
 } from "@/lib/potion-restrictions";
 import { announceAuraResults } from "@/lib/global-announcements";
 import { isPopopAllowlisted } from "@/lib/popop-access";
+import { runAfterCommandReply } from "@/lib/delayed-announcement";
 
 function isDevActive(state: {
   activeDevBiome: string | null;
   devExpiresAt: number;
-}) {
-  return state.activeDevBiome && state.devExpiresAt > Date.now();
+}): boolean {
+  return Boolean(state.activeDevBiome && state.devExpiresAt > Date.now());
 }
 
 function formatMissedHits(missed: RollHitResult[]): string {
@@ -195,19 +195,20 @@ async function handlePop(
 
   text(res, truncate(messages.join(" | "), 390));
 
-await runAfterCommandReply(() =>
-  announceAuraResults({
-    channelId,
-    channelName: channelLoginName,
-    displayName,
-    results,
-    source: "potion",
-    potionId: potion.id,
-    potionName: potion.name,
-  })
-);
+  await runAfterCommandReply(() =>
+    announceAuraResults({
+      channelId,
+      channelName: channelLoginName,
+      displayName,
+      results,
+      source: "potion",
+      potionId: potion.id,
+      potionName: potion.name,
+    })
+  );
 
-return;
+  return;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -221,8 +222,6 @@ export default async function handler(
     const broadcaster = isBroadcasterUser(user, channel);
     const allowlisted = isPopopAllowlisted(user, channelLoginName);
 
-    // Only the broadcaster OR allowlisted Twitch usernames can use !popop.
-    // Mods do NOT automatically get access.
     if (!broadcaster && !allowlisted) {
       return error(res, "Popop is trusted-user only.");
     }
@@ -233,5 +232,4 @@ export default async function handler(
   }
 
   return handlePop(req, res, 1);
-}
 }
