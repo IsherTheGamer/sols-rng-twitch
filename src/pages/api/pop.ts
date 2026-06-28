@@ -1,3 +1,4 @@
+import { runAfterCommandReply } from "@/lib/delayed-announcement";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
 import {
@@ -192,7 +193,10 @@ async function handlePop(
 
   await recordViewerRolls(channelId, user, results, "potion");
 
-  await announceAuraResults({
+  text(res, truncate(messages.join(" | "), 390));
+
+await runAfterCommandReply(() =>
+  announceAuraResults({
     channelId,
     channelName: channelLoginName,
     displayName,
@@ -200,10 +204,10 @@ async function handlePop(
     source: "potion",
     potionId: potion.id,
     potionName: potion.name,
-  });
+  })
+);
 
-  return text(res, truncate(messages.join(" | "), 390));
-}
+return;
 
 export default async function handler(
   req: NextApiRequest,
