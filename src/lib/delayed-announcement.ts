@@ -4,7 +4,7 @@ function delay(ms: number): Promise<void> {
 
 export async function runAfterCommandReply(
   fn: () => Promise<void>,
-  delayMs = 1500
+  delayMs = 12000
 ): Promise<void> {
   try {
     await delay(delayMs);
