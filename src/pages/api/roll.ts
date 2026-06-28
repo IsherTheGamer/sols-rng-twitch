@@ -24,6 +24,10 @@ import { withTick } from "@/lib/run-with-tick";
 import { recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 
+export const config = {
+  maxDuration: 20,
+};
+
 function parseAmount(rawArgs: string | undefined): number {
   const raw = (rawArgs ?? "").trim();
 
