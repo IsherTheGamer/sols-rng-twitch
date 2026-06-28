@@ -6,6 +6,14 @@ import { recordBiomeVisit } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { sendNightbotMessage } from "@/lib/nightbot";
 
+function normalizeChannel(input: string): string {
+  return input
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -14,11 +22,18 @@ export default async function handler(
     return res.status(401).send("Unauthorized");
   }
 
-  const channelId = process.env.DEFAULT_CHANNEL_ID ?? "default";
-  const state = await getChannelState(channelId);
+  const rawChannel =
+    typeof req.query.channel === "string"
+      ? req.query.channel
+      : process.env.DEFAULT_CHANNEL_NAME ?? process.env.DEFAULT_CHANNEL_ID ?? "default";
+
+  const channelName = normalizeChannel(rawChannel);
+  const channelId = channelName || "default";
+
+  const state = await getChannelState(channelId, channelName);
 
   const elapsed = Date.now() - state.lastTickAt;
-  const result = await processBiomeTick(state, elapsed);
+  const result = await processBiomeTick(state, elapsed, channelName);
 
   await setChannelState(result.state);
 
@@ -30,14 +45,14 @@ export default async function handler(
   const unlockText = formatAchievementUnlocks(unlocked);
 
   if (unlockText) {
-    await sendNightbotMessage(unlockText);
+    await sendNightbotMessage(unlockText, channelName);
   }
 
-  const parts: string[] = ["tick ok"];
+  const parts: string[] = [`tick ok for ${channelName}`];
 
   if (result.changeMessage) parts.push("changed");
   if (result.statusMessage) parts.push("status sent");
   if (unlocked.length > 0) parts.push("achievement");
 
-  return text(res, parts.join(" "));
+  return text(res, parts.join(" | "));
 }
