@@ -35,6 +35,7 @@ import {
   validatePotionRestriction,
 } from "@/lib/potion-restrictions";
 import { announceAuraResults } from "@/lib/global-announcements";
+import { isPopopAllowlisted } from "@/lib/popop-access";
 
 function isDevActive(state: {
   activeDevBiome: string | null;
@@ -52,9 +53,10 @@ function formatMissedHits(missed: RollHitResult[]): string {
     .map((hit) => `${hit.aura.name} ${formatRarity(hit.effectiveRarity)}`)
     .join(", ");
 
-  const extra = missed.length > shown.length
-    ? `, +${missed.length - shown.length} more`
-    : "";
+  const extra =
+    missed.length > shown.length
+      ? `, +${missed.length - shown.length} more`
+      : "";
 
   return ` | Missed: ${body}${extra}`;
 }
@@ -62,7 +64,10 @@ function formatMissedHits(missed: RollHitResult[]): string {
 async function handlePop(
   req: NextApiRequest,
   res: NextApiResponse,
-  maxPops: number
+  maxPops: number,
+  options?: {
+    bypassRequirements?: boolean;
+  }
 ) {
   const {
     channel,
@@ -72,6 +77,8 @@ async function handlePop(
     user,
     isMod,
   } = getChannelContext(req);
+
+  const bypassRequirements = options?.bypassRequirements ?? false;
 
   const query = parseQuery(req);
   const parts = query.split(/\s+/).filter(Boolean);
@@ -101,6 +108,7 @@ async function handlePop(
   if (
     potion.requiresEvent &&
     !broadcaster &&
+    !bypassRequirements &&
     !state.activeEvents.includes(potion.requiresEvent)
   ) {
     return error(
@@ -113,7 +121,7 @@ async function handlePop(
   const fallbackCooldown = getPotionCooldownSeconds(potion.luck);
   const restriction = getPotionRestriction(potion, fallbackCooldown);
 
-  if (!broadcaster) {
+  if (!broadcaster && !bypassRequirements) {
     const restrictionError = validatePotionRestriction({
       potion,
       profile,
@@ -204,11 +212,18 @@ export default async function handler(
   const isOp = req.url?.includes("popop") || req.query.op === "1";
 
   if (isOp) {
-    const { isMod } = getChannelContext(req);
+    const { channel, channelLoginName, user, isMod } = getChannelContext(req);
 
-    if (!isMod) return error(res, "Mod only.");
+    const broadcaster = isBroadcasterUser(user, channel);
+    const allowlisted = isPopopAllowlisted(user, channelLoginName);
 
-    return handlePop(req, res, 4);
+    if (!isMod && !broadcaster && !allowlisted) {
+      return error(res, "Popop is trusted-user only.");
+    }
+
+    return handlePop(req, res, 4, {
+      bypassRequirements: true,
+    });
   }
 
   return handlePop(req, res, 1);
