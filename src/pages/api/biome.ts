@@ -24,14 +24,17 @@ export default async function handler(
 
   const elapsed = Math.max(1, now - state.lastTickAt);
 
-  const tick = await processBiomeTick(state, elapsed);
+  // Silent tick for normal commands, so !biome / !changebiome do not steal
+  // Nightbot's chat-send cooldown from !roll.
+  const tick = await processBiomeTick(state, elapsed, null, false);
+
   state = tick.state;
   state.lastTickAt = now;
 
   await setChannelState(state);
 
   if (state.biomeExpiresAt <= now) {
-    const fallback = await processBiomeTick(state, 1);
+    const fallback = await processBiomeTick(state, 1, null, false);
 
     state = fallback.state;
     state.lastTickAt = now;
