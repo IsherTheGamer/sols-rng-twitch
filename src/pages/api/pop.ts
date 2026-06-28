@@ -68,6 +68,7 @@ async function handlePop(
     channel,
     channelId,
     channelName,
+    channelLoginName,
     user,
     isMod,
   } = getChannelContext(req);
@@ -185,6 +186,7 @@ async function handlePop(
 
   await announceAuraResults({
     channelId,
+    channelName: channelLoginName,
     displayName,
     results,
     source: "potion",

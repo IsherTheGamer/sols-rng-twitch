@@ -362,6 +362,7 @@ export function buildDevExclusivePinAnnouncement(options: {
 
 export async function announceAuraResults(options: {
   channelId: string;
+  channelName?: string | null;
   displayName: string;
   results: Array<{ aura: AuraDef; effectiveRarity: number }>;
   source: "roll" | "potion";
@@ -436,14 +437,15 @@ export async function announceAuraResults(options: {
           potionName: options.potionName,
         });
 
-    await sendNightbotMessage(msg);
+    await sendNightbotMessage(msg, options.channelName);
   }
 
   const hidden = qualifying.length - shown.length;
 
   if (hidden > 0) {
     await sendNightbotMessage(
-      truncate(`🌍 GLOBAL: +${hidden} more rare aura(s) were rolled.`, 390)
+      truncate(`🌍 GLOBAL: +${hidden} more rare aura(s) were rolled.`, 390),
+      options.channelName
     );
   }
 }

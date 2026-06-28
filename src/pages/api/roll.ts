@@ -40,7 +40,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { channelId, channelName, user, isMod } = getChannelContext(req);
+  const {
+    channelId,
+    channelName,
+    channelLoginName,
+    user,
+    isMod,
+  } = getChannelContext(req);
 
   const amount = parseAmount(req.query.args as string | undefined);
 
@@ -95,6 +101,7 @@ export default async function handler(
 
     await announceAuraResults({
       channelId,
+      channelName: channelLoginName,
       displayName: name,
       results,
       source: "roll",

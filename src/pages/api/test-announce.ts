@@ -38,7 +38,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { channelId, user, isMod } = getChannelContext(req);
+  const {
+    channelId,
+    channelLoginName,
+    user,
+    isMod,
+  } = getChannelContext(req);
 
   if (!isMod) {
     return error(res, "Mod only.");
@@ -71,6 +76,7 @@ export default async function handler(
 
   await announceAuraResults({
     channelId,
+    channelName: channelLoginName,
     displayName,
     results: [built.result],
     source,
