@@ -66,8 +66,9 @@ export interface ViewerProfile {
   userId: string;
   displayName: string;
 
-  rolls: number;
+   rolls: number;
   potionRolls: number;
+  rarityTotal: number;
 
   highestTierId: ProfileTierId | null;
   highestTierRank: number;
@@ -125,8 +126,9 @@ export function createDefaultViewerProfile(
     userId,
     displayName,
 
-    rolls: 0,
+       rolls: 0,
     potionRolls: 0,
+    rarityTotal: 0,
 
     highestTierId: null,
     highestTierRank: 0,
@@ -155,8 +157,9 @@ export function normalizeViewerProfile(
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
 
-    rolls: input.rolls ?? 0,
+        rolls: input.rolls ?? 0,
     potionRolls: input.potionRolls ?? 0,
+    rarityTotal: input.rarityTotal ?? 0,
 
     highestTierId: input.highestTierId ?? null,
     highestTierRank: input.highestTierRank ?? 0,
@@ -314,7 +317,8 @@ export async function recordViewerRolls(
 
   for (const roll of rolls) {
     const record = makeBestAuraRecord(roll.aura, roll.effectiveRarity);
-
+    profile.rarityTotal += Math.max(0, Math.floor(roll.effectiveRarity));
+    
     if (source === "roll") {
       profile.rolls += 1;
       updateOwnedTier(profile, record.tierId);
@@ -361,6 +365,36 @@ export function formatViewerProfile(profile: ViewerProfile): string {
     `Best Potion: ${formatBestAura(profile.bestPotionAura)}`;
 
   return truncate(msg, 390);
+}
+
+export async function listViewerProfiles(
+  channelId: string
+): Promise<ViewerProfile[]> {
+  const r = getRedis();
+
+  if (!r) return [];
+
+  const indexKey = profileIndexKey(channelId);
+  const keys = (await r.get<string[]>(indexKey)) ?? [];
+
+  const profiles: ViewerProfile[] = [];
+
+  for (const key of keys) {
+    const data = await r.get<ViewerProfile>(key);
+
+    if (!data) continue;
+
+    profiles.push(
+      normalizeViewerProfile(
+        data,
+        data.channelId ?? channelId,
+        data.userId ?? "anon",
+        data.displayName ?? "Player"
+      )
+    );
+  }
+
+  return profiles;
 }
 
 export async function resetViewerProfiles(channelId: string): Promise<void> {
