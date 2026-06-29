@@ -3,6 +3,16 @@ import type { AuraDef } from "../types/data";
 import type { NightbotChannel, NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
 
+import {
+  awardXpForRolls,
+  calculateLevel,
+  formatLevelSummary,
+  formatRewardList,
+  getUpcomingLevelRewards,
+  normalizeWeeklyXpState,
+  type WeeklyXpState,
+} from "./levels";
+
 let redis: Redis | null = null;
 
 function getRedis(): Redis | null {
