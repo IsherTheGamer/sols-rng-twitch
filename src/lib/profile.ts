@@ -447,11 +447,11 @@ export async function listViewerProfiles(
   return profiles;
 }
 
-  await grantLevelRewardTokens({
-    channelId,
-    user,
-    rewards: levelResult.unlockedRewards,
-  });
+await grantLevelRewardTokens({
+  channelId: profile.channelId,
+  user,
+  rewards: levelResult.unlockedRewards,
+});
 
 export function formatViewerLevel(profile: ViewerProfile): string {
   return formatLevelSummary({
