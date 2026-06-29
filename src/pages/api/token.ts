@@ -1,12 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelContext } from "@/lib/nightbot";
-import { isBroadcasterUser } from "@/lib/profile";
+import {
+  getViewerProfile,
+  isBroadcasterUser,
+} from "@/lib/profile";
 import { isPopopAllowlisted } from "@/lib/popop-access";
 import {
+  findPotionForToken,
+  formatTokenList,
   grantTokensToUsername,
   refundActiveTokenBuffs,
   useToken,
 } from "@/lib/inventory";
+import { getChannelState } from "@/lib/state";
+import { getPotionCooldownSeconds } from "@/lib/cooldowns";
+import {
+  getPotionRestriction,
+  validatePotionRestriction,
+} from "@/lib/potion-restrictions";
 import { text, error, parseQuery } from "@/lib/api-helpers";
 import { truncate } from "@/lib/format";
 
@@ -41,7 +52,7 @@ function parseAmount(parts: string[]): {
 }
 
 function usage(): string {
-  return "Usage: !token use <token> [amount] | !token refund | !token give <user> <token> [amount]";
+  return "Usage: !token list | !token use <token> [amount] | !token refund | !token give <user> <token> [amount]";
 }
 
 export default async function handler(
@@ -51,8 +62,10 @@ export default async function handler(
   const {
     channel,
     channelId,
+    channelName,
     channelLoginName,
     user,
+    isMod,
   } = getChannelContext(req);
 
   if (!user) {
@@ -65,6 +78,10 @@ export default async function handler(
 
   if (!action) {
     return text(res, usage());
+  }
+
+  if (action === "list" || action === "tokens") {
+    return text(res, truncate(formatTokenList(parts.slice(1).join(" ")), 390));
   }
 
   if (action === "refund") {
@@ -94,6 +111,40 @@ export default async function handler(
 
     if (!tokenQuery) {
       return error(res, "Use what token? Example: !token use bound 2");
+    }
+
+    const broadcaster = isBroadcasterUser(user, channel);
+    const potion = findPotionForToken(tokenQuery);
+
+    if (potion && !broadcaster) {
+      const state = await getChannelState(channelId, channelName);
+
+      if (
+        potion.requiresEvent &&
+        !state.activeEvents.includes(potion.requiresEvent)
+      ) {
+        return error(
+          res,
+          `${potion.name} only works during ${potion.requiresEvent} event.`
+        );
+      }
+
+      const profile = await getViewerProfile(channelId, user);
+      const restriction = getPotionRestriction(
+        potion,
+        getPotionCooldownSeconds(potion.luck)
+      );
+
+      const restrictionError = validatePotionRestriction({
+        potion,
+        profile,
+        restriction,
+        isMod,
+      });
+
+      if (restrictionError) {
+        return error(res, restrictionError);
+      }
     }
 
     const result = await useToken({
