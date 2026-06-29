@@ -44,6 +44,11 @@ export interface ActiveTokenBuff {
   consumeOnRoll: boolean;
 }
 
+type LegacyActiveTokenBuff = Partial<ActiveTokenBuff> & {
+  potionName?: string;
+  luck?: number;
+};
+
 export interface ViewerInventory {
   channelId: string;
   userId: string;
@@ -201,7 +206,7 @@ export function findPotionForToken(query: string): PotionDef | null {
     return potions.find((potion) => potion.id === token.potionId) ?? null;
   }
 
-  return findPotion(query);
+  return findPotion(query) ?? null;
 }
 
 export function getPotionTokenId(potion: PotionDef): string {
@@ -249,18 +254,20 @@ export function normalizeInventory(
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
     tokens: input.tokens ?? {},
-    activeBuffs: (input.activeBuffs ?? []).map((buff) => ({
-      tokenId: buff.tokenId,
-      tokenName: buff.tokenName ?? buff.potionName ?? buff.tokenId,
-      kind: buff.kind ?? "potion",
-      potionId: buff.potionId,
-      flatLuck: buff.flatLuck ?? buff.luck ?? 0,
-      percentLuck: buff.percentLuck ?? 0,
-      amount: buff.amount ?? 1,
-      activatedAt: buff.activatedAt ?? Date.now(),
-      expiresAt: buff.expiresAt ?? null,
-      consumeOnRoll: buff.consumeOnRoll ?? true,
-    })),
+   activeBuffs: ((input.activeBuffs ?? []) as LegacyActiveTokenBuff[]).map(
+      (buff) => ({
+        tokenId: buff.tokenId ?? "unknown",
+        tokenName: buff.tokenName ?? buff.potionName ?? buff.tokenId ?? "Unknown Token",
+        kind: buff.kind ?? "potion",
+        potionId: buff.potionId,
+        flatLuck: buff.flatLuck ?? buff.luck ?? 0,
+        percentLuck: buff.percentLuck ?? 0,
+        amount: buff.amount ?? 1,
+        activatedAt: buff.activatedAt ?? Date.now(),
+        expiresAt: buff.expiresAt ?? null,
+        consumeOnRoll: buff.consumeOnRoll ?? true,
+      })
+    ),
     createdAt: input.createdAt ?? base.createdAt,
     updatedAt: Date.now(),
   };
