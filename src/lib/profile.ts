@@ -3,7 +3,6 @@ import type { AuraDef } from "../types/data";
 import type { NightbotChannel, NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
 import { grantLevelRewardTokens } from "./inventory";
-
 import {
   awardXpForRolls,
   calculateLevel,
@@ -86,7 +85,7 @@ export interface ViewerProfile {
   weeklyXp: WeeklyXpState;
   claimedLevelRewards: Record<string, boolean>;
   devExclusiveXpAuras: string[];
-  
+
   highestTierId: ProfileTierId | null;
   highestTierRank: number;
   ownedTiers: Record<string, number>;
@@ -152,7 +151,6 @@ export function createDefaultViewerProfile(
     weeklyXp: normalizeWeeklyXpState(null),
     claimedLevelRewards: {},
     devExclusiveXpAuras: [],
-    
 
     highestTierId: null,
     highestTierRank: 0,
@@ -190,7 +188,7 @@ export function normalizeViewerProfile(
     weeklyXp: normalizeWeeklyXpState(input.weeklyXp),
     claimedLevelRewards: input.claimedLevelRewards ?? {},
     devExclusiveXpAuras: input.devExclusiveXpAuras ?? [],
-    
+
     highestTierId: input.highestTierId ?? null,
     highestTierRank: input.highestTierRank ?? 0,
     ownedTiers: input.ownedTiers ?? {},
@@ -278,18 +276,23 @@ export function getProfileTierId(
   if (effectiveRarity >= 1 && effectiveRarity <= 999) return "basic";
   if (effectiveRarity >= 1000 && effectiveRarity <= 9999) return "epic";
   if (effectiveRarity >= 10000 && effectiveRarity <= 99999) return "unique";
+
   if (effectiveRarity >= 100000 && effectiveRarity <= 999999) {
     return "legendary";
   }
+
   if (effectiveRarity >= 1000000 && effectiveRarity <= 9999999) {
     return "mythic";
   }
+
   if (effectiveRarity >= 10000000 && effectiveRarity <= 99999998) {
     return "exalted";
   }
+
   if (effectiveRarity >= 99999999 && effectiveRarity <= 999999999) {
     return "glorious";
   }
+
   if (effectiveRarity >= 1000000000 && effectiveRarity <= 7499999999) {
     return "transcendent";
   }
@@ -347,8 +350,9 @@ export async function recordViewerRolls(
 
   for (const roll of rolls) {
     const record = makeBestAuraRecord(roll.aura, roll.effectiveRarity);
+
     profile.rarityTotal += Math.max(0, Math.floor(roll.effectiveRarity));
-    
+
     if (source === "roll") {
       profile.rolls += 1;
       updateOwnedTier(profile, record.tierId);
@@ -384,7 +388,13 @@ export async function recordViewerRolls(
 
   profile.xp += levelResult.xpGained;
   profile.level = levelResult.levelAfter;
-  
+
+  await grantLevelRewardTokens({
+    channelId: profile.channelId,
+    user,
+    rewards: levelResult.unlockedRewards,
+  });
+
   await setViewerProfile(profile);
 
   return profile;
@@ -409,7 +419,9 @@ export function formatViewerProfile(profile: ViewerProfile): string {
     : "None";
 
   const msg =
-    `${profile.displayName} | Rolls: ${profile.rolls} | ` +
+    `${profile.displayName} | Level: ${profile.level} | XP: ${profile.xp.toLocaleString(
+      "en-US"
+    )} | Rolls: ${profile.rolls} | ` +
     `Best Rarity: ${bestRarity} | ` +
     `Best Aura: ${formatBestAura(profile.bestAura)} | ` +
     `Best Potion: ${formatBestAura(profile.bestPotionAura)}`;
@@ -446,12 +458,6 @@ export async function listViewerProfiles(
 
   return profiles;
 }
-
-await grantLevelRewardTokens({
-  channelId: profile.channelId,
-  user,
-  rewards: levelResult.unlockedRewards,
-});
 
 export function formatViewerLevel(profile: ViewerProfile): string {
   return formatLevelSummary({
