@@ -39,7 +39,7 @@ export interface LevelXpResult {
   notes: string[];
 }
 
-const REWARDS = levelRewardsData.rewards as LevelReward[];
+const STATIC_REWARDS = levelRewardsData.rewards as LevelReward[];
 
 const TIER_XP: Partial<Record<LevelTierId, number>> = {
   unique: 5,
@@ -65,6 +65,25 @@ const WEEKLY_TIER_LIMITS: Partial<Record<LevelTierId, number>> = {
   "challenged+": 3,
 };
 
+const POST_100_REWARD_POOL: Array<{
+  name: string;
+  id: string;
+  minAmount: number;
+  maxAmount: number;
+}> = [
+  { name: "Token of Popping", id: "popping", minAmount: 1, maxAmount: 5 },
+  { name: "Token of Bound", id: "bound", minAmount: 1, maxAmount: 3 },
+  { name: "Token of Heavenly", id: "heavenly", minAmount: 1, maxAmount: 2 },
+  { name: "Token of Clover", id: "clover", minAmount: 1, maxAmount: 2 },
+  { name: "Token of Lunar", id: "lunar", minAmount: 1, maxAmount: 3 },
+  { name: "Token of Eclipse", id: "eclipse", minAmount: 1, maxAmount: 2 },
+  { name: "Token of Starlight", id: "starlight", minAmount: 1, maxAmount: 2 },
+  { name: "Token of Nebula", id: "nebula", minAmount: 1, maxAmount: 1 },
+  { name: "Token of Fortune", id: "fortune", minAmount: 1, maxAmount: 2 },
+  { name: "Token of Godlike", id: "godlike", minAmount: 1, maxAmount: 1 },
+  { name: "Token of Oblivion", id: "oblivion", minAmount: 1, maxAmount: 1 },
+];
+
 function getWeekId(date = new Date()): string {
   const utc = Date.UTC(
     date.getUTCFullYear(),
@@ -77,6 +96,63 @@ function getWeekId(date = new Date()): string {
   const week = Math.floor(day / 7) + 1;
 
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function hashNumber(input: string): number {
+  let hash = 0;
+
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 31 + input.charCodeAt(i)) | 0;
+  }
+
+  return Math.abs(hash);
+}
+
+function randomPost100Reward(level: number): LevelReward {
+  const poolIndex = hashNumber(`reward-${level}`) % POST_100_REWARD_POOL.length;
+  const chosen = POST_100_REWARD_POOL[poolIndex];
+
+  const spread = chosen.maxAmount - chosen.minAmount + 1;
+  const amount =
+    chosen.minAmount + (hashNumber(`amount-${level}`) % Math.max(1, spread));
+
+  return {
+    level,
+    name: `${chosen.name} x${amount}`,
+    type: "token",
+    id: chosen.id,
+    amount,
+  };
+}
+
+function getGeneratedRewardsUpTo(level: number): LevelReward[] {
+  const rewards: LevelReward[] = [];
+
+  for (let current = 105; current <= level; current += 5) {
+    rewards.push(randomPost100Reward(current));
+  }
+
+  return rewards;
+}
+
+function getGeneratedUpcomingRewards(level: number, count: number): LevelReward[] {
+  const rewards: LevelReward[] = [];
+  let next = Math.max(105, Math.floor(level / 5) * 5 + 5);
+
+  while (rewards.length < count) {
+    rewards.push(randomPost100Reward(next));
+    next += 5;
+  }
+
+  return rewards;
+}
+
+function getRewardClaimKey(reward: LevelReward): string {
+  if (reward.level > 100) {
+    return `post_100_${reward.level}`;
+  }
+
+  return String(reward.level);
 }
 
 export function normalizeWeeklyXpState(
@@ -149,17 +225,26 @@ function useWeeklyTierXp(weekly: WeeklyXpState, tierId: LevelTierId): void {
 function isDevExclusiveAura(aura: AuraDef, tierId: LevelTierId): boolean {
   const tags = (aura.tags ?? []).map((tag) => tag.toLowerCase().trim());
 
-  return tierId === "dev-exclusive" || tags.includes("dev-exclusive") || !!aura.devBiome;
+  return (
+    tierId === "dev-exclusive" ||
+    tags.includes("dev-exclusive") ||
+    !!aura.devBiome
+  );
 }
 
 export function getUnlockedLevelRewards(
   level: number,
   claimed: Record<string, boolean>
 ): LevelReward[] {
-  return REWARDS.filter((reward) => {
+  const allRewards = [
+    ...STATIC_REWARDS,
+    ...getGeneratedRewardsUpTo(level),
+  ];
+
+  return allRewards.filter((reward) => {
     if (reward.level > level) return false;
 
-    return !claimed[String(reward.level)];
+    return !claimed[getRewardClaimKey(reward)];
   });
 }
 
@@ -167,11 +252,22 @@ export function getUpcomingLevelRewards(
   level: number,
   count = 5
 ): LevelReward[] {
-  return REWARDS.filter((reward) => reward.level > level).slice(0, count);
+  const staticUpcoming = STATIC_REWARDS.filter(
+    (reward) => reward.level > level
+  );
+
+  const generatedUpcoming =
+    level >= 100 || staticUpcoming.length < count
+      ? getGeneratedUpcomingRewards(level, count)
+      : [];
+
+  return [...staticUpcoming, ...generatedUpcoming]
+    .sort((a, b) => a.level - b.level)
+    .slice(0, count);
 }
 
 export function getAllLevelRewards(): LevelReward[] {
-  return [...REWARDS].sort((a, b) => a.level - b.level);
+  return [...STATIC_REWARDS].sort((a, b) => a.level - b.level);
 }
 
 export function awardXpForRolls(options: {
@@ -198,7 +294,6 @@ export function awardXpForRolls(options: {
   let baseXp = 0;
   let bonusXp = 0;
   const notes: string[] = [];
-
   const devSet = new Set(devExclusiveXpAuras);
 
   for (const roll of rolls) {
@@ -241,7 +336,7 @@ export function awardXpForRolls(options: {
   );
 
   for (const reward of unlockedRewards) {
-    claimedLevelRewards[String(reward.level)] = true;
+    claimedLevelRewards[getRewardClaimKey(reward)] = true;
   }
 
   return {
@@ -264,7 +359,11 @@ export function formatLevelSummary(options: {
   const nextXp = xpRequiredForNextLevel(options.level);
   const remaining = Math.max(0, nextXp - options.xp);
 
-  return `${options.displayName} | Level ${options.level} | XP: ${options.xp.toLocaleString("en-US")}/${nextXp.toLocaleString("en-US")} | Next: ${remaining.toLocaleString("en-US")} XP`;
+  return `${options.displayName} | Level ${
+    options.level
+  } | XP: ${options.xp.toLocaleString("en-US")}/${nextXp.toLocaleString(
+    "en-US"
+  )} | Next: ${remaining.toLocaleString("en-US")} XP`;
 }
 
 export function formatRewardList(rewards: LevelReward[]): string {
