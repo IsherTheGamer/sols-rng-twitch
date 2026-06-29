@@ -24,7 +24,10 @@ import { withTick } from "@/lib/run-with-tick";
 import { isBroadcasterUser, recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 import { isRollMultiAllowlisted } from "@/lib/roll-access";
-import { consumeActiveTokenBuffs, formatLuckAmount } from "@/lib/inventory";
+import {
+  consumeRollTokenBuffs,
+  formatTokenUsage,
+} from "@/lib/inventory";
 
 const NORMAL_MULTIROLL_LIMIT = 20;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
@@ -120,18 +123,19 @@ export default async function handler(
   const displayCount =
     amount > 1 ? Math.min(baseRollCount, MAX_DISPLAY_RESULTS) : 1;
 
-  const consumedBuffs = await consumeActiveTokenBuffs({
+  const tokenBuffs = await consumeRollTokenBuffs({
     channelId,
     user,
   });
 
-  const tokenLuck = consumedBuffs.totalLuck;
-
   const globalRolls = await addGlobalRolls(rollCount);
   const baseLuck = getGlobalLuck(globalRolls);
 
+  const percentMultiplier = 1 + tokenBuffs.percentLuck;
+
   const luck =
-    (baseLuck + tokenLuck + achievementBonuses.flatLuck) *
+    ((baseLuck + tokenBuffs.flatLuck) * percentMultiplier +
+      achievementBonuses.flatLuck) *
     achievementBonuses.finalLuckMultiplier;
 
   return withTick(channelId, channelName, async (state) => {
@@ -146,10 +150,12 @@ export default async function handler(
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
 
-    const tokenText =
-      tokenLuck > 0
-        ? ` | Tokens used: +${formatLuckAmount(tokenLuck)} luck`
-        : "";
+    const tokenUsage = formatTokenUsage({
+      flatLuck: tokenBuffs.flatLuck,
+      percentLuck: tokenBuffs.percentLuck,
+    });
+
+    const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
 
     const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}`;
 
