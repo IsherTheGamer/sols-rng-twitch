@@ -120,7 +120,7 @@ export default async function handler(
   const displayCount =
     amount > 1 ? Math.min(baseRollCount, MAX_DISPLAY_RESULTS) : 1;
 
-    const consumedBuffs = await consumeActiveTokenBuffs({
+  const consumedBuffs = await consumeActiveTokenBuffs({
     channelId,
     user,
   });
@@ -133,7 +133,6 @@ export default async function handler(
   const luck =
     (baseLuck + tokenLuck + achievementBonuses.flatLuck) *
     achievementBonuses.finalLuckMultiplier;
-  
 
   return withTick(channelId, channelName, async (state) => {
     const ctx = { state, luck };
@@ -145,13 +144,14 @@ export default async function handler(
     await recordViewerRolls(channelId, user, results, "roll");
 
     const unlocked = await recordAuraRolls(results);
+    const unlockText = formatAchievementUnlocks(unlocked);
 
-        const unlockText = formatAchievementUnlocks(unlocked);
     const tokenText =
-      tokenLuck > 0 ? ` | Tokens used: +${formatLuckAmount(tokenLuck)} luck` : "";
+      tokenLuck > 0
+        ? ` | Tokens used: +${formatLuckAmount(tokenLuck)} luck`
+        : "";
 
     const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}`;
-    
 
     if (displayCount === 1) {
       const best = top[0];
