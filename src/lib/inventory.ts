@@ -669,6 +669,73 @@ export function formatTokenUsage(options: {
   return parts.join(" and ");
 }
 
+function shorten(input: string, max = 390): string {
+  if (input.length <= max) return input;
+
+  return `${input.slice(0, max - 3)}...`;
+}
+
+function shortTokenName(name: string): string {
+  return name
+    .replace(/^Token of\s+/i, "")
+    .replace(/^Potion of\s+/i, "")
+    .replace(/\s+Potion$/i, "")
+    .trim();
+}
+
+function formatPercent(percent: number): string {
+  return `${Math.round(percent * 100)}%`;
+}
+
+function formatTokenDefinitionShort(token: TokenDefinition): string {
+  const name = shortTokenName(token.name);
+
+  if (token.kind === "percent_luck") {
+    return `${name} +${formatPercent(token.percentLuck ?? 0)} ${
+      token.durationSeconds ?? 0
+    }s`;
+  }
+
+  return `${name} +${formatLuckAmount(token.flatLuck ?? 0)} next roll`;
+}
+
+export function formatTokenList(query = ""): string {
+  const mode = normalize(query);
+
+  const boostTokens = BOOST_TOKENS;
+  const potionTokens = potions.map(getPotionTokenDefinition);
+
+  if (
+    mode.includes("boost") ||
+    mode.includes("percent") ||
+    mode.includes("%")
+  ) {
+    return shorten(
+      `🎟️ Boost Tokens: ${boostTokens
+        .map(formatTokenDefinitionShort)
+        .join(" | ")}`
+    );
+  }
+
+  if (
+    mode.includes("potion") ||
+    mode.includes("flat") ||
+    mode.includes("roll")
+  ) {
+    return shorten(
+      `🧪 Potion Tokens: ${potionTokens
+        .map(formatTokenDefinitionShort)
+        .join(" | ")}`
+    );
+  }
+
+  return shorten(
+    `🎟️ Tokens: ${boostTokens
+      .map(formatTokenDefinitionShort)
+      .join(" | ")} | Potion tokens exist too. Use !tokens potions`
+  );
+}
+
 export function formatInventory(inventory: ViewerInventory): string {
   removeExpiredBuffs(inventory);
 
