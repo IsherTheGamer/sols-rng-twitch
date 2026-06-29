@@ -76,10 +76,16 @@ export interface ViewerProfile {
   userId: string;
   displayName: string;
 
-   rolls: number;
+  rolls: number;
   potionRolls: number;
   rarityTotal: number;
 
+  xp: number;
+  level: number;
+  weeklyXp: WeeklyXpState;
+  claimedLevelRewards: Record<string, boolean>;
+  devExclusiveXpAuras: string[];
+  
   highestTierId: ProfileTierId | null;
   highestTierRank: number;
   ownedTiers: Record<string, number>;
@@ -136,9 +142,16 @@ export function createDefaultViewerProfile(
     userId,
     displayName,
 
-       rolls: 0,
+    rolls: 0,
     potionRolls: 0,
     rarityTotal: 0,
+
+    xp: 0,
+    level: 1,
+    weeklyXp: normalizeWeeklyXpState(null),
+    claimedLevelRewards: {},
+    devExclusiveXpAuras: [],
+    
 
     highestTierId: null,
     highestTierRank: 0,
@@ -167,10 +180,16 @@ export function normalizeViewerProfile(
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
 
-        rolls: input.rolls ?? 0,
+    rolls: input.rolls ?? 0,
     potionRolls: input.potionRolls ?? 0,
     rarityTotal: input.rarityTotal ?? 0,
 
+    xp: input.xp ?? 0,
+    level: input.level ?? calculateLevel(input.xp ?? 0),
+    weeklyXp: normalizeWeeklyXpState(input.weeklyXp),
+    claimedLevelRewards: input.claimedLevelRewards ?? {},
+    devExclusiveXpAuras: input.devExclusiveXpAuras ?? [],
+    
     highestTierId: input.highestTierId ?? null,
     highestTierRank: input.highestTierRank ?? 0,
     ownedTiers: input.ownedTiers ?? {},
@@ -345,6 +364,26 @@ export async function recordViewerRolls(
     }
   }
 
+  const levelResult = awardXpForRolls({
+    currentXp: profile.xp,
+    currentLevel: profile.level,
+    weeklyXp: profile.weeklyXp,
+    claimedLevelRewards: profile.claimedLevelRewards,
+    devExclusiveXpAuras: profile.devExclusiveXpAuras,
+    rolls: rolls.map((roll) => {
+      const record = makeBestAuraRecord(roll.aura, roll.effectiveRarity);
+
+      return {
+        aura: roll.aura,
+        effectiveRarity: roll.effectiveRarity,
+        tierId: record.tierId,
+      };
+    }),
+  });
+
+  profile.xp += levelResult.xpGained;
+  profile.level = levelResult.levelAfter;
+  
   await setViewerProfile(profile);
 
   return profile;
@@ -405,6 +444,20 @@ export async function listViewerProfiles(
   }
 
   return profiles;
+}
+
+export function formatViewerLevel(profile: ViewerProfile): string {
+  return formatLevelSummary({
+    displayName: profile.displayName,
+    xp: profile.xp,
+    level: profile.level,
+  });
+}
+
+export function formatViewerLevelRewards(profile: ViewerProfile): string {
+  const rewards = getUpcomingLevelRewards(profile.level, 5);
+
+  return `${profile.displayName} upcoming rewards: ${formatRewardList(rewards)}`;
 }
 
 export async function resetViewerProfiles(channelId: string): Promise<void> {
