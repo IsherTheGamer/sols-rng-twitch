@@ -2,6 +2,7 @@ import { Redis } from "@upstash/redis";
 import type { AuraDef } from "../types/data";
 import type { NightbotChannel, NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
+import { grantLevelRewardTokens } from "./inventory";
 
 import {
   awardXpForRolls,
@@ -445,6 +446,12 @@ export async function listViewerProfiles(
 
   return profiles;
 }
+
+  await grantLevelRewardTokens({
+    channelId,
+    user,
+    rewards: levelResult.unlockedRewards,
+  });
 
 export function formatViewerLevel(profile: ViewerProfile): string {
   return formatLevelSummary({
