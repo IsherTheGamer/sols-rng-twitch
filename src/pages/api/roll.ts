@@ -21,27 +21,38 @@ import {
 import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
-import { recordViewerRolls } from "@/lib/profile";
+import { isBroadcasterUser, recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
+import { isRollMultiAllowlisted } from "@/lib/roll-access";
 
-const MAX_MULTIROLLS = 10000;
+const NORMAL_MULTIROLL_LIMIT = 20;
+const TRUSTED_MULTIROLL_LIMIT = 10000;
 const MAX_DISPLAY_RESULTS = 5;
 
 export const config = {
-  maxDuration: 20,
+  maxDuration: 30,
 };
 
 function parseAmount(rawArgs: string | undefined): number {
-  const raw = (rawArgs ?? "").trim();
+  const raw = (rawArgs ?? "").trim().toLowerCase();
 
   if (!raw) return 1;
 
   const first = raw.split(/\s+/)[0];
-  const amount = parseInt(first, 10);
+  const match = first.match(/^(\d+)(k|m)?$/);
 
-  if (!Number.isFinite(amount) || amount < 1) return 1;
+  if (!match) return 1;
 
-  return amount;
+  const base = parseInt(match[1], 10);
+
+  if (!Number.isFinite(base) || base < 1) return 1;
+
+  const suffix = match[2];
+
+  if (suffix === "k") return base * 1000;
+  if (suffix === "m") return base * 1000000;
+
+  return base;
 }
 
 export default async function handler(
@@ -49,6 +60,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const {
+    channel,
     channelId,
     channelName,
     channelLoginName,
@@ -56,16 +68,26 @@ export default async function handler(
     isMod,
   } = getChannelContext(req);
 
-    const amount = parseAmount(req.query.args as string | undefined);
+  const amount = parseAmount(req.query.args as string | undefined);
 
-  if (amount > 1 && !isMod) {
-    return error(res, "Multi-roll is mod-only. Use !roll");
+  const broadcaster = isBroadcasterUser(user, channel);
+  const allowlisted = isRollMultiAllowlisted(user, channelLoginName);
+  const trustedMultiroll = broadcaster || allowlisted;
+
+  const maxAllowed = trustedMultiroll
+    ? TRUSTED_MULTIROLL_LIMIT
+    : NORMAL_MULTIROLL_LIMIT;
+
+  if (amount > 1 && !isMod && !trustedMultiroll) {
+    return error(res, "Multi-roll is mod/trusted-user only. Use !roll");
   }
 
-  if (amount > MAX_MULTIROLLS) {
+  if (amount > maxAllowed) {
     return error(
       res,
-      `Max multi-roll is ${MAX_MULTIROLLS}. Use !roll ${MAX_MULTIROLLS}`
+      trustedMultiroll
+        ? `Max trusted multi-roll is ${TRUSTED_MULTIROLL_LIMIT}.`
+        : `Max mod multi-roll is ${NORMAL_MULTIROLL_LIMIT}.`
     );
   }
 
@@ -77,7 +99,7 @@ export default async function handler(
       achievementBonuses.cooldownReductionSeconds * 1000
   );
 
-  if (!isMod && amount <= 1) {
+  if (!isMod && !trustedMultiroll && amount <= 1) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
     const cd = await checkCooldown(key, cooldownMs);
 
@@ -91,7 +113,7 @@ export default async function handler(
     await applyCooldown(key, cooldownMs);
   }
 
-    const baseRollCount = amount > 1 ? Math.min(amount, MAX_MULTIROLLS) : 1;
+  const baseRollCount = amount > 1 ? Math.min(amount, maxAllowed) : 1;
   const bonusRolls = Math.floor(achievementBonuses.extraRolls);
   const rollCount = baseRollCount + bonusRolls;
   const displayCount =
@@ -114,7 +136,7 @@ export default async function handler(
     await recordViewerRolls(channelId, user, results, "roll");
 
     const unlocked = await recordAuraRolls(results);
-    
+
     const unlockText = formatAchievementUnlocks(unlocked);
     const suffix = unlockText ? ` | ${unlockText}` : "";
 
@@ -123,25 +145,25 @@ export default async function handler(
       const rollNote = rollCount > 1 ? ` (${rollCount}x)` : "";
 
       text(
-  res,
-  `${formatRollResult(
-    name,
-    best.aura.name,
-    best.effectiveRarity
-  )}${rollNote}${suffix}`
-);
+        res,
+        `${formatRollResult(
+          name,
+          best.aura.name,
+          best.effectiveRarity
+        )}${rollNote}${suffix}`
+      );
 
-await runAfterCommandReply(() =>
-  announceAuraResults({
-    channelId,
-    channelName: channelLoginName,
-    displayName: name,
-    results,
-    source: "roll",
-  })
-);
+      await runAfterCommandReply(() =>
+        announceAuraResults({
+          channelId,
+          channelName: channelLoginName,
+          displayName: name,
+          results,
+          source: "roll",
+        })
+      );
 
-return;
+      return;
     }
 
     const msg =
@@ -155,16 +177,16 @@ return;
 
     text(res, `${msg}${suffix}`);
 
-await runAfterCommandReply(() =>
-  announceAuraResults({
-    channelId,
-    channelName: channelLoginName,
-    displayName: name,
-    results,
-    source: "roll",
-  })
-);
+    await runAfterCommandReply(() =>
+      announceAuraResults({
+        channelId,
+        channelName: channelLoginName,
+        displayName: name,
+        results,
+        source: "roll",
+      })
+    );
 
-return;
+    return;
   });
 }
