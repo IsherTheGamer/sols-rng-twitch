@@ -1,0 +1,22 @@
+{
+  "rewards": [
+    { "level": 5, "name": "Token of Popping x1", "type": "token", "id": "popping", "amount": 1 },
+    { "level": 10, "name": "Token of Bound x1", "type": "token", "id": "bound", "amount": 1 },
+    { "level": 15, "name": "Clover Token x1", "type": "token", "id": "clover", "amount": 1 },
+    { "level": 20, "name": "Token of Popping x2", "type": "token", "id": "popping", "amount": 2 },
+
+    { "level": 25, "name": "Reserved Aura Slot I", "type": "reserved_aura", "id": "reserved_aura_1", "amount": 1 },
+
+    { "level": 30, "name": "Token of Heavenly x1", "type": "token", "id": "heavenly", "amount": 1 },
+    { "level": 40, "name": "Token of Bound x2", "type": "token", "id": "bound", "amount": 2 },
+
+    { "level": 50, "name": "Reserved Aura Slot II", "type": "reserved_aura", "id": "reserved_aura_2", "amount": 1 },
+
+    { "level": 60, "name": "Token of Godlike x1", "type": "token", "id": "godlike", "amount": 1 },
+    { "level": 75, "name": "Reserved Aura Slot III", "type": "reserved_aura", "id": "reserved_aura_3", "amount": 1 },
+
+    { "level": 90, "name": "Token of Oblivion x1", "type": "token", "id": "oblivion", "amount": 1 },
+
+    { "level": 100, "name": "Level 100 Season Aura Slot", "type": "reserved_aura", "id": "level_100_aura", "amount": 1 }
+  ]
+}
