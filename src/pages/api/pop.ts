@@ -37,6 +37,11 @@ import {
 import { announceAuraResults } from "@/lib/global-announcements";
 import { isPopopAllowlisted } from "@/lib/popop-access";
 import { runAfterCommandReply } from "@/lib/delayed-announcement";
+import {
+  activatePotionTokens,
+  formatLuckAmount,
+  getPotionTokenName,
+} from "@/lib/inventory";
 
 export const config = {
   maxDuration: 30,
@@ -54,7 +59,6 @@ function isDevActive(state: {
 
 function parsePopAmount(raw: string): number {
   const clean = raw.trim().toLowerCase();
-
   const match = clean.match(/^(\d+)(k|m)?$/);
 
   if (!match) return 1;
@@ -110,7 +114,96 @@ function formatTopPotionResults(
     .join(" | ");
 }
 
-async function handlePop(
+function parsePotionAndAmount(query: string): {
+  potionQuery: string;
+  amount: number;
+} {
+  const parts = query.split(/\s+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    const maybeAmount = parsePopAmount(parts[parts.length - 1]);
+
+    if (maybeAmount > 1) {
+      return {
+        potionQuery: parts.slice(0, -1).join(" "),
+        amount: maybeAmount,
+      };
+    }
+  }
+
+  return {
+    potionQuery: query,
+    amount: 1,
+  };
+}
+
+async function handleTokenPop(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const {
+    channel,
+    channelId,
+    user,
+    isMod,
+  } = getChannelContext(req);
+
+  const query = parseQuery(req);
+  const { potionQuery, amount } = parsePotionAndAmount(query);
+  const potion = findPotion(potionQuery);
+
+  if (!potion) {
+    const list = potions.map((p) => p.name).join(", ");
+    return error(res, `Unknown potion token. Try: ${list}`);
+  }
+
+  const broadcaster = isBroadcasterUser(user, channel);
+  const profile = await getViewerProfile(channelId, user);
+  const restriction = getPotionRestriction(
+    potion,
+    getPotionCooldownSeconds(potion.luck)
+  );
+
+  if (!broadcaster) {
+    const restrictionError = validatePotionRestriction({
+      potion,
+      profile,
+      restriction,
+      isMod,
+    });
+
+    if (restrictionError) {
+      return error(res, restrictionError);
+    }
+  }
+
+  const result = await activatePotionTokens({
+    channelId,
+    user,
+    potion,
+    amount,
+  });
+
+  if (!result.ok) {
+    return error(res, result.message);
+  }
+
+  const displayName = user?.displayName ?? user?.name ?? "Player";
+
+  return text(
+    res,
+    truncate(
+      `${displayName} activated ${getPotionTokenName(
+        potion
+      )} x${amount} (+${formatLuckAmount(
+        result.totalLuck
+      )} luck). Use !roll to consume it, or !token to refund.`,
+      390
+    )
+  );
+}
+
+async function handlePopopRoll(
   req: NextApiRequest,
   res: NextApiResponse,
   maxPops: number,
@@ -132,19 +225,8 @@ async function handlePop(
   const summarizeBestCount = options?.summarizeBestCount ?? 0;
 
   const query = parseQuery(req);
-  const parts = query.split(/\s+/).filter(Boolean);
-
-  let popCount = 1;
-  let potionQuery = query;
-
-  if (maxPops > 1 && parts.length >= 2) {
-    const maybeCount = parsePopAmount(parts[parts.length - 1]);
-
-    if (maybeCount > 1) {
-      popCount = Math.min(maybeCount, maxPops);
-      potionQuery = parts.slice(0, -1).join(" ");
-    }
-  }
+  const { potionQuery, amount } = parsePotionAndAmount(query);
+  const popCount = Math.min(amount, maxPops);
 
   const potion = findPotion(potionQuery);
 
@@ -293,11 +375,11 @@ export default async function handler(
       return error(res, "Popop is trusted-user only.");
     }
 
-    return handlePop(req, res, MAX_POPOP, {
+    return handlePopopRoll(req, res, MAX_POPOP, {
       bypassRequirements: true,
       summarizeBestCount: POPOP_TOP_RESULTS,
     });
   }
 
-  return handlePop(req, res, 1);
+  return handleTokenPop(req, res);
 }
