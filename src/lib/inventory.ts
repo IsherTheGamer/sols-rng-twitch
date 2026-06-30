@@ -19,25 +19,33 @@ function getRedis(): Redis | null {
 }
 
 export type TokenKind = "potion" | "percent_luck";
+export type TokenEffectMode = "normal" | "exclusive";
 
 export interface TokenDefinition {
   id: string;
   name: string;
   aliases: string[];
   kind: TokenKind;
+  effectMode: TokenEffectMode;
   potionId?: string;
   flatLuck?: number;
   percentLuck?: number;
+  rareBiomePercentLuck?: number;
+  finalLuckMultiplier?: number;
   durationSeconds?: number;
+  note?: string;
 }
 
 export interface ActiveTokenBuff {
   tokenId: string;
   tokenName: string;
   kind: TokenKind;
+  effectMode: TokenEffectMode;
   potionId?: string;
   flatLuck: number;
   percentLuck: number;
+  rareBiomePercentLuck: number;
+  finalLuckMultiplier: number;
   amount: number;
   activatedAt: number;
   expiresAt: number | null;
@@ -59,12 +67,36 @@ export interface ViewerInventory {
   updatedAt: number;
 }
 
-const BOOST_TOKENS: TokenDefinition[] = [
+export interface RollTokenEffect {
+  flatLuck: number;
+  percentLuck: number;
+  rareBiomePercentLuck: number;
+  finalLuckMultiplier: number;
+  potionId?: string;
+  exclusive: boolean;
+  used: ActiveTokenBuff[];
+}
+
+export interface RollTokenPlan {
+  effects: RollTokenEffect[];
+}
+
+const EXCLUSIVE_POTION_IDS = new Set([
+  "oblivion",
+  "axis_potion",
+  "xyz_potion",
+  "word_potion",
+  "chaos_potion",
+  "overpowered_potion",
+]);
+
+const TIMED_TOKENS: TokenDefinition[] = [
   {
     id: "clover",
     name: "Token of Clover",
     aliases: ["clover", "token of clover", "clover token"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.5,
     durationSeconds: 120,
   },
@@ -73,6 +105,7 @@ const BOOST_TOKENS: TokenDefinition[] = [
     name: "Token of Lunar",
     aliases: ["lunar", "moon", "token of lunar", "token of moon"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.1,
     durationSeconds: 60,
   },
@@ -81,6 +114,7 @@ const BOOST_TOKENS: TokenDefinition[] = [
     name: "Token of Fortune",
     aliases: ["fortune", "lucky", "token of fortune", "luck token"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.2,
     durationSeconds: 75,
   },
@@ -89,6 +123,7 @@ const BOOST_TOKENS: TokenDefinition[] = [
     name: "Token of Eclipse",
     aliases: ["eclipse", "token of eclipse"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.25,
     durationSeconds: 90,
   },
@@ -97,6 +132,7 @@ const BOOST_TOKENS: TokenDefinition[] = [
     name: "Token of Starlight",
     aliases: ["starlight", "star", "token of starlight"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.35,
     durationSeconds: 90,
   },
@@ -105,8 +141,202 @@ const BOOST_TOKENS: TokenDefinition[] = [
     name: "Token of Nebula",
     aliases: ["nebula", "token of nebula"],
     kind: "percent_luck",
+    effectMode: "normal",
     percentLuck: 0.6,
     durationSeconds: 120,
+  },
+
+  // 20 new balanced timed/special tokens
+  {
+    id: "spark",
+    name: "Token of Spark",
+    aliases: ["spark", "token of spark"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.05,
+    durationSeconds: 30,
+  },
+  {
+    id: "drizzle",
+    name: "Token of Drizzle",
+    aliases: ["drizzle", "rain", "token of drizzle"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.07,
+    durationSeconds: 45,
+  },
+  {
+    id: "ember",
+    name: "Token of Ember",
+    aliases: ["ember", "token of ember"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.1,
+    durationSeconds: 60,
+  },
+  {
+    id: "frost",
+    name: "Token of Frost",
+    aliases: ["frost", "ice", "token of frost"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.12,
+    durationSeconds: 60,
+  },
+  {
+    id: "bloom",
+    name: "Token of Bloom",
+    aliases: ["bloom", "flower", "token of bloom"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.14,
+    durationSeconds: 75,
+  },
+  {
+    id: "storm",
+    name: "Token of Storm",
+    aliases: ["storm", "token of storm"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.16,
+    durationSeconds: 75,
+  },
+  {
+    id: "prism",
+    name: "Token of Prism",
+    aliases: ["prism", "rainbow", "token of prism"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.18,
+    durationSeconds: 90,
+  },
+  {
+    id: "comet",
+    name: "Token of Comet",
+    aliases: ["comet", "token of comet"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.2,
+    durationSeconds: 90,
+  },
+  {
+    id: "galaxy",
+    name: "Token of Galaxy",
+    aliases: ["galaxy", "token of galaxy"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.24,
+    durationSeconds: 100,
+  },
+  {
+    id: "nova",
+    name: "Token of Nova",
+    aliases: ["nova", "token of nova"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.28,
+    durationSeconds: 105,
+  },
+  {
+    id: "astral",
+    name: "Token of Astral",
+    aliases: ["astral", "token of astral"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.32,
+    durationSeconds: 110,
+  },
+  {
+    id: "supernova",
+    name: "Token of Supernova",
+    aliases: ["supernova", "token of supernova"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.38,
+    durationSeconds: 120,
+  },
+  {
+    id: "focus",
+    name: "Token of Focus",
+    aliases: ["focus", "token of focus"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    finalLuckMultiplier: 1.03,
+    durationSeconds: 60,
+    note: "+3% final luck",
+  },
+  {
+    id: "catalyst",
+    name: "Token of Catalyst",
+    aliases: ["catalyst", "token of catalyst"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    finalLuckMultiplier: 1.05,
+    durationSeconds: 75,
+    note: "+5% final luck",
+  },
+  {
+    id: "horizon",
+    name: "Token of Horizon",
+    aliases: ["horizon", "token of horizon"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    rareBiomePercentLuck: 0.2,
+    durationSeconds: 90,
+    note: "+20% luck in rare/special biomes",
+  },
+  {
+    id: "distortion",
+    name: "Token of Distortion",
+    aliases: ["distortion", "token of distortion"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    rareBiomePercentLuck: 0.35,
+    durationSeconds: 90,
+    note: "+35% luck in rare/special biomes",
+  },
+  {
+    id: "resonance",
+    name: "Token of Resonance",
+    aliases: ["resonance", "token of resonance"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    flatLuck: 2500,
+    percentLuck: 0.05,
+    durationSeconds: 90,
+    note: "+2,500 flat luck and +5% luck",
+  },
+  {
+    id: "pulse",
+    name: "Token of Pulse",
+    aliases: ["pulse", "token of pulse"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    flatLuck: 7500,
+    durationSeconds: 60,
+    note: "+7,500 flat luck",
+  },
+  {
+    id: "stability",
+    name: "Token of Stability",
+    aliases: ["stability", "stable", "token of stability"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.12,
+    finalLuckMultiplier: 1.02,
+    durationSeconds: 90,
+    note: "+12% luck and +2% final luck",
+  },
+  {
+    id: "eclipse_core",
+    name: "Token of Eclipse Core",
+    aliases: ["eclipse core", "core", "token of eclipse core"],
+    kind: "percent_luck",
+    effectMode: "normal",
+    percentLuck: 0.18,
+    rareBiomePercentLuck: 0.15,
+    durationSeconds: 100,
+    note: "+18% luck and +15% extra in rare/special biomes",
   },
 ];
 
@@ -154,6 +384,13 @@ function getPossibleUsernames(user: NightbotUser | null): string[] {
   return [...new Set(names)];
 }
 
+function getPotionEffectMode(potion: PotionDef): TokenEffectMode {
+  if (potion.clearsBuffs) return "exclusive";
+  if (EXCLUSIVE_POTION_IDS.has(potion.id)) return "exclusive";
+
+  return "normal";
+}
+
 function getPotionTokenDefinition(potion: PotionDef): TokenDefinition {
   return {
     id: potion.id,
@@ -165,6 +402,7 @@ function getPotionTokenDefinition(potion: PotionDef): TokenDefinition {
       ...(potion.aliases ?? []),
     ],
     kind: "potion",
+    effectMode: getPotionEffectMode(potion),
     potionId: potion.id,
     flatLuck: potion.luck,
   };
@@ -172,7 +410,7 @@ function getPotionTokenDefinition(potion: PotionDef): TokenDefinition {
 
 export function getAllTokenDefinitions(): TokenDefinition[] {
   return [
-    ...BOOST_TOKENS,
+    ...TIMED_TOKENS,
     ...potions.map(getPotionTokenDefinition),
   ];
 }
@@ -254,14 +492,18 @@ export function normalizeInventory(
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
     tokens: input.tokens ?? {},
-   activeBuffs: ((input.activeBuffs ?? []) as LegacyActiveTokenBuff[]).map(
+    activeBuffs: ((input.activeBuffs ?? []) as LegacyActiveTokenBuff[]).map(
       (buff) => ({
         tokenId: buff.tokenId ?? "unknown",
-        tokenName: buff.tokenName ?? buff.potionName ?? buff.tokenId ?? "Unknown Token",
+        tokenName:
+          buff.tokenName ?? buff.potionName ?? buff.tokenId ?? "Unknown Token",
         kind: buff.kind ?? "potion",
+        effectMode: buff.effectMode ?? "normal",
         potionId: buff.potionId,
         flatLuck: buff.flatLuck ?? buff.luck ?? 0,
         percentLuck: buff.percentLuck ?? 0,
+        rareBiomePercentLuck: buff.rareBiomePercentLuck ?? 0,
+        finalLuckMultiplier: buff.finalLuckMultiplier ?? 1,
         amount: buff.amount ?? 1,
         activatedAt: buff.activatedAt ?? Date.now(),
         expiresAt: buff.expiresAt ?? null,
@@ -450,6 +692,40 @@ export async function grantLevelRewardTokens(options: {
   await setViewerInventory(inventory);
 }
 
+function hasActiveExclusiveBuff(inventory: ViewerInventory): boolean {
+  removeExpiredBuffs(inventory);
+
+  return inventory.activeBuffs.some(
+    (buff) => buff.effectMode === "exclusive" && buff.amount > 0
+  );
+}
+
+function formatTimedTokenEffect(token: TokenDefinition): string {
+  const parts: string[] = [];
+
+  if ((token.flatLuck ?? 0) > 0) {
+    parts.push(`+${formatLuckAmount(token.flatLuck ?? 0)} flat`);
+  }
+
+  if ((token.percentLuck ?? 0) > 0) {
+    parts.push(`+${Math.round((token.percentLuck ?? 0) * 100)}% luck`);
+  }
+
+  if ((token.rareBiomePercentLuck ?? 0) > 0) {
+    parts.push(
+      `+${Math.round((token.rareBiomePercentLuck ?? 0) * 100)}% rare-biome luck`
+    );
+  }
+
+  if ((token.finalLuckMultiplier ?? 1) > 1) {
+    parts.push(
+      `+${Math.round(((token.finalLuckMultiplier ?? 1) - 1) * 100)}% final luck`
+    );
+  }
+
+  return parts.join(", ") || "special timed effect";
+}
+
 export async function useToken(options: {
   channelId: string;
   user: NightbotUser | null;
@@ -478,42 +754,90 @@ export async function useToken(options: {
     };
   }
 
+  if (token.effectMode !== "exclusive" && hasActiveExclusiveBuff(inventory)) {
+    return {
+      ok: false,
+      message:
+        "An exclusive potion token is active. Roll it first or use !token refund before activating other tokens.",
+      inventory,
+    };
+  }
+
   removeToken(inventory, token.id, amount);
 
   const now = Date.now();
 
-  const buff: ActiveTokenBuff = {
-    tokenId: token.id,
-    tokenName: token.name,
-    kind: token.kind,
-    potionId: token.potionId,
-    flatLuck: token.flatLuck ?? 0,
-    percentLuck: token.percentLuck ?? 0,
-    amount,
-    activatedAt: now,
-    expiresAt: token.durationSeconds ? now + token.durationSeconds * 1000 : null,
-    consumeOnRoll: token.kind === "potion",
-  };
+  if (token.effectMode === "exclusive") {
+    inventory.activeBuffs = [];
+  }
 
-  inventory.activeBuffs.push(buff);
+  const existing =
+    token.effectMode === "exclusive"
+      ? null
+      : inventory.activeBuffs.find((buff) => buff.tokenId === token.id);
+
+  const durationMs = token.durationSeconds
+    ? token.durationSeconds * 1000 * amount
+    : 0;
+
+  if (existing) {
+    existing.amount += amount;
+    existing.activatedAt = now;
+
+    if (token.kind === "percent_luck" && token.durationSeconds) {
+      const currentEnd =
+        existing.expiresAt && existing.expiresAt > now
+          ? existing.expiresAt
+          : now;
+
+      existing.expiresAt = currentEnd + durationMs;
+    }
+  } else {
+    inventory.activeBuffs.push({
+      tokenId: token.id,
+      tokenName: token.name,
+      kind: token.kind,
+      effectMode: token.effectMode,
+      potionId: token.potionId,
+      flatLuck: token.flatLuck ?? 0,
+      percentLuck: token.percentLuck ?? 0,
+      rareBiomePercentLuck: token.rareBiomePercentLuck ?? 0,
+      finalLuckMultiplier: token.finalLuckMultiplier ?? 1,
+      amount,
+      activatedAt: now,
+      expiresAt:
+        token.kind === "percent_luck" && token.durationSeconds
+          ? now + durationMs
+          : null,
+      consumeOnRoll: token.kind === "potion",
+    });
+  }
 
   await setViewerInventory(inventory);
 
   if (token.kind === "percent_luck") {
     return {
       ok: true,
-      message: `Activated ${token.name} x${amount}: +${Math.round(
-        (token.percentLuck ?? 0) * 100 * amount
-      )}% luck for ${token.durationSeconds}s.`,
+      message: `Activated ${token.name} x${amount}: ${formatTimedTokenEffect(
+        token
+      )} for ${(token.durationSeconds ?? 0) * amount}s.`,
+      inventory,
+    };
+  }
+
+  if (token.effectMode === "exclusive") {
+    return {
+      ok: true,
+      message: `Activated ${token.name} x${amount}: exclusive potion effect. Other token luck will not combine with it.`,
       inventory,
     };
   }
 
   return {
     ok: true,
-    message: `Activated ${token.name} x${amount}: +${formatLuckAmount(
-      (token.flatLuck ?? 0) * amount
-    )} luck on your next !roll.`,
+    message: `Activated ${token.name} x${amount}: uses 1 token per roll, +${formatLuckAmount(
+      token.flatLuck ?? 0
+    )} luck each roll.`,
     inventory,
   };
 }
@@ -537,7 +861,8 @@ export async function activatePotionTokens(options: {
     amount: options.amount,
   });
 
-  const totalLuck = options.potion.luck * Math.max(1, Math.floor(options.amount));
+  const totalLuck =
+    options.potion.luck * Math.max(1, Math.floor(options.amount));
 
   return {
     ok: result.ok,
@@ -547,42 +872,189 @@ export async function activatePotionTokens(options: {
   };
 }
 
-export async function consumeRollTokenBuffs(options: {
+function consumeOne(buff: ActiveTokenBuff): ActiveTokenBuff {
+  return {
+    ...buff,
+    amount: 1,
+  };
+}
+
+function emptyRollTokenEffect(): RollTokenEffect {
+  return {
+    flatLuck: 0,
+    percentLuck: 0,
+    rareBiomePercentLuck: 0,
+    finalLuckMultiplier: 1,
+    exclusive: false,
+    used: [],
+  };
+}
+
+function addFinalMultiplier(base: number, extra: number): number {
+  if (extra <= 1) return base;
+
+  return base + (extra - 1);
+}
+
+function getPotionIdForUsedBuffs(buffs: ActiveTokenBuff[]): string | undefined {
+  const potionBuffs = buffs.filter((buff) => buff.potionId);
+
+  const withExclusivePool = potionBuffs.find((buff) => {
+    const potion = potions.find((p) => p.id === buff.potionId);
+    return (potion?.exclusiveAuras ?? []).length > 0;
+  });
+
+  return withExclusivePool?.potionId ?? potionBuffs[0]?.potionId;
+}
+
+function buildTimedEffect(timedBuffs: ActiveTokenBuff[]): RollTokenEffect {
+  const effect = emptyRollTokenEffect();
+
+  for (const buff of timedBuffs) {
+    effect.flatLuck += buff.flatLuck;
+    effect.percentLuck += buff.percentLuck;
+    effect.rareBiomePercentLuck += buff.rareBiomePercentLuck;
+    effect.finalLuckMultiplier = addFinalMultiplier(
+      effect.finalLuckMultiplier,
+      buff.finalLuckMultiplier
+    );
+    effect.used.push(buff);
+  }
+
+  return effect;
+}
+
+function consumeOneRollFromActiveBuffs(
+  activeBuffs: ActiveTokenBuff[]
+): {
+  effect: RollTokenEffect;
+  nextBuffs: ActiveTokenBuff[];
+} {
+  const exclusiveBuff = activeBuffs.find(
+    (buff) =>
+      buff.effectMode === "exclusive" &&
+      buff.consumeOnRoll &&
+      buff.amount > 0
+  );
+
+  if (exclusiveBuff) {
+    const used = consumeOne(exclusiveBuff);
+    const effect: RollTokenEffect = {
+      flatLuck: exclusiveBuff.flatLuck,
+      percentLuck: 0,
+      rareBiomePercentLuck: 0,
+      finalLuckMultiplier: 1,
+      potionId: exclusiveBuff.potionId,
+      exclusive: true,
+      used: [used],
+    };
+
+    const nextBuffs = activeBuffs
+      .map((buff) => {
+        if (buff.tokenId !== exclusiveBuff.tokenId) return buff;
+
+        return {
+          ...buff,
+          amount: buff.amount - 1,
+        };
+      })
+      .filter((buff) => buff.amount > 0);
+
+    return {
+      effect,
+      nextBuffs,
+    };
+  }
+
+  const timedBuffs = activeBuffs.filter(
+    (buff) =>
+      buff.kind === "percent_luck" &&
+      !buff.consumeOnRoll &&
+      buff.amount > 0
+  );
+
+  const potionBuffs = activeBuffs.filter(
+    (buff) =>
+      buff.kind === "potion" &&
+      buff.consumeOnRoll &&
+      buff.effectMode === "normal" &&
+      buff.amount > 0
+  );
+
+  const usedPotionBuffs = potionBuffs.map(consumeOne);
+  const effect = buildTimedEffect(timedBuffs);
+
+  for (const buff of usedPotionBuffs) {
+    effect.flatLuck += buff.flatLuck;
+    effect.used.push(buff);
+  }
+
+  effect.potionId = getPotionIdForUsedBuffs(usedPotionBuffs);
+
+  const consumedIds = usedPotionBuffs.map((buff) => buff.tokenId);
+  const remaining = [...consumedIds];
+
+  const nextBuffs = activeBuffs
+    .map((buff) => {
+      const index = remaining.indexOf(buff.tokenId);
+
+      if (index === -1) return buff;
+
+      remaining.splice(index, 1);
+
+      return {
+        ...buff,
+        amount: buff.amount - 1,
+      };
+    })
+    .filter((buff) => buff.amount > 0);
+
+  return {
+    effect,
+    nextBuffs,
+  };
+}
+
+export async function consumeRollTokenBuffsForRolls(options: {
   channelId: string;
   user: NightbotUser | null;
-}): Promise<{
-  flatLuck: number;
-  percentLuck: number;
-  used: ActiveTokenBuff[];
-}> {
+  rolls: number;
+}): Promise<RollTokenPlan> {
   const inventory = await getViewerInventory(options.channelId, options.user);
-  const now = Date.now();
+  const rolls = Math.max(0, Math.floor(options.rolls));
 
-  const active = inventory.activeBuffs.filter(
-    (buff) => !buff.expiresAt || buff.expiresAt > now
-  );
+  removeExpiredBuffs(inventory);
 
-  const used = [...active];
+  const effects: RollTokenEffect[] = [];
+  let activeBuffs = inventory.activeBuffs;
 
-  const flatLuck = active.reduce(
-    (sum, buff) => sum + buff.flatLuck * buff.amount,
-    0
-  );
+  for (let i = 0; i < rolls; i++) {
+    const result = consumeOneRollFromActiveBuffs(activeBuffs);
 
-  const percentLuck = active.reduce(
-    (sum, buff) => sum + buff.percentLuck * buff.amount,
-    0
-  );
+    effects.push(result.effect);
+    activeBuffs = result.nextBuffs;
+  }
 
-  inventory.activeBuffs = active.filter((buff) => !buff.consumeOnRoll);
+  inventory.activeBuffs = activeBuffs;
 
   await setViewerInventory(inventory);
 
   return {
-    flatLuck,
-    percentLuck,
-    used,
+    effects,
   };
+}
+
+export async function consumeRollTokenBuffs(options: {
+  channelId: string;
+  user: NightbotUser | null;
+}): Promise<RollTokenEffect> {
+  const plan = await consumeRollTokenBuffsForRolls({
+    channelId: options.channelId,
+    user: options.user,
+    rolls: 1,
+  });
+
+  return plan.effects[0] ?? emptyRollTokenEffect();
 }
 
 // Backward compatibility for old roll.ts names.
@@ -606,11 +1078,10 @@ export async function refundActiveTokenBuffs(options: {
   user: NightbotUser | null;
 }): Promise<{ refunded: ActiveTokenBuff[] }> {
   const inventory = await getViewerInventory(options.channelId, options.user);
-  const now = Date.now();
 
-  const refunded = inventory.activeBuffs.filter(
-    (buff) => !buff.expiresAt || buff.expiresAt > now
-  );
+  removeExpiredBuffs(inventory);
+
+  const refunded = [...inventory.activeBuffs];
 
   for (const buff of refunded) {
     addToken(inventory, buff.tokenId, buff.amount);
@@ -633,7 +1104,7 @@ function formatTokenEntry(tokenId: string, amount: number): string {
 }
 
 function formatSecondsRemaining(expiresAt: number | null): string {
-  if (!expiresAt) return "next roll";
+  if (!expiresAt) return "queued";
 
   const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
 
@@ -642,21 +1113,45 @@ function formatSecondsRemaining(expiresAt: number | null): string {
 
 function formatActiveBuff(buff: ActiveTokenBuff): string {
   if (buff.kind === "percent_luck") {
-    return `${buff.tokenName} x${buff.amount} (+${Math.round(
-      buff.percentLuck * 100 * buff.amount
-    )}% | ${formatSecondsRemaining(buff.expiresAt)})`;
+    const parts: string[] = [];
+
+    if (buff.flatLuck > 0) parts.push(`+${formatLuckAmount(buff.flatLuck)} flat`);
+    if (buff.percentLuck > 0) parts.push(`+${Math.round(buff.percentLuck * 100)}%`);
+    if (buff.rareBiomePercentLuck > 0) {
+      parts.push(`+${Math.round(buff.rareBiomePercentLuck * 100)}% rare`);
+    }
+    if (buff.finalLuckMultiplier > 1) {
+      parts.push(`+${Math.round((buff.finalLuckMultiplier - 1) * 100)}% final`);
+    }
+
+    const effect = parts.length > 0 ? parts.join(", ") : "special";
+
+    return `${buff.tokenName} x${buff.amount} (${effect} | ${formatSecondsRemaining(
+      buff.expiresAt
+    )})`;
+  }
+
+  if (buff.effectMode === "exclusive") {
+    return `${buff.tokenName} x${buff.amount} (exclusive | queued rolls)`;
   }
 
   return `${buff.tokenName} x${buff.amount} (+${formatLuckAmount(
-    buff.flatLuck * buff.amount
-  )} | next roll)`;
+    buff.flatLuck
+  )} each roll | queued rolls)`;
 }
 
 export function formatTokenUsage(options: {
   flatLuck: number;
   percentLuck: number;
+  rareBiomePercentLuck?: number;
+  finalLuckMultiplier?: number;
+  exclusive?: boolean;
 }): string {
   const parts: string[] = [];
+
+  if (options.exclusive) {
+    parts.push("exclusive potion effect");
+  }
 
   if (options.flatLuck > 0) {
     parts.push(`+${formatLuckAmount(options.flatLuck)} luck`);
@@ -666,7 +1161,53 @@ export function formatTokenUsage(options: {
     parts.push(`+${Math.round(options.percentLuck * 100)}% luck`);
   }
 
+  if ((options.rareBiomePercentLuck ?? 0) > 0) {
+    parts.push(`+${Math.round((options.rareBiomePercentLuck ?? 0) * 100)}% rare-biome luck`);
+  }
+
+  if ((options.finalLuckMultiplier ?? 1) > 1) {
+    parts.push(
+      `+${Math.round(((options.finalLuckMultiplier ?? 1) - 1) * 100)}% final luck`
+    );
+  }
+
   return parts.join(" and ");
+}
+
+export function formatConsumedRollTokenEffects(effects: RollTokenEffect[]): string {
+  const consumed = new Map<string, { name: string; amount: number }>();
+  const timed = new Map<string, string>();
+
+  for (const effect of effects) {
+    for (const buff of effect.used) {
+      if (buff.consumeOnRoll) {
+        const current = consumed.get(buff.tokenId);
+
+        consumed.set(buff.tokenId, {
+          name: buff.tokenName,
+          amount: (current?.amount ?? 0) + 1,
+        });
+      } else {
+        timed.set(buff.tokenId, buff.tokenName);
+      }
+    }
+  }
+
+  const parts: string[] = [];
+
+  if (consumed.size > 0) {
+    parts.push(
+      [...consumed.values()]
+        .map((entry) => `${entry.name} x${entry.amount}`)
+        .join(", ")
+    );
+  }
+
+  if (timed.size > 0) {
+    parts.push(`timed: ${[...timed.values()].join(", ")}`);
+  }
+
+  return parts.join(" | ");
 }
 
 function shorten(input: string, max = 390): string {
@@ -687,31 +1228,77 @@ function formatPercent(percent: number): string {
   return `${Math.round(percent * 100)}%`;
 }
 
+function isSpecialTimedToken(token: TokenDefinition): boolean {
+  return Boolean(
+    (token.flatLuck ?? 0) > 0 ||
+      (token.rareBiomePercentLuck ?? 0) > 0 ||
+      (token.finalLuckMultiplier ?? 1) > 1
+  );
+}
+
 function formatTokenDefinitionShort(token: TokenDefinition): string {
   const name = shortTokenName(token.name);
 
   if (token.kind === "percent_luck") {
-    return `${name} +${formatPercent(token.percentLuck ?? 0)} ${
-      token.durationSeconds ?? 0
-    }s`;
+    const parts: string[] = [];
+
+    if ((token.percentLuck ?? 0) > 0) {
+      parts.push(`+${formatPercent(token.percentLuck ?? 0)}`);
+    }
+
+    if ((token.flatLuck ?? 0) > 0) {
+      parts.push(`+${formatLuckAmount(token.flatLuck ?? 0)} flat`);
+    }
+
+    if ((token.rareBiomePercentLuck ?? 0) > 0) {
+      parts.push(`+${formatPercent(token.rareBiomePercentLuck ?? 0)} rare`);
+    }
+
+    if ((token.finalLuckMultiplier ?? 1) > 1) {
+      parts.push(
+        `+${Math.round(((token.finalLuckMultiplier ?? 1) - 1) * 100)}% final`
+      );
+    }
+
+    return `${name} ${parts.join("/")} ${token.durationSeconds ?? 0}s`;
   }
 
-  return `${name} +${formatLuckAmount(token.flatLuck ?? 0)} next roll`;
+  if (token.effectMode === "exclusive") {
+    return `${name} +${formatLuckAmount(token.flatLuck ?? 0)} exclusive`;
+  }
+
+  return `${name} +${formatLuckAmount(token.flatLuck ?? 0)} each roll`;
 }
 
 export function formatTokenList(query = ""): string {
   const mode = normalize(query);
 
-  const boostTokens = BOOST_TOKENS;
+  const timedTokens = TIMED_TOKENS;
+  const normalTimedTokens = timedTokens.filter((token) => !isSpecialTimedToken(token));
+  const specialTimedTokens = timedTokens.filter(isSpecialTimedToken);
   const potionTokens = potions.map(getPotionTokenDefinition);
+
+  if (
+    mode.includes("special") ||
+    mode.includes("rare") ||
+    mode.includes("final") ||
+    mode.includes("flat")
+  ) {
+    return shorten(
+      `✨ Special Tokens: ${specialTimedTokens
+        .map(formatTokenDefinitionShort)
+        .join(" | ")}`
+    );
+  }
 
   if (
     mode.includes("boost") ||
     mode.includes("percent") ||
-    mode.includes("%")
+    mode.includes("%") ||
+    mode.includes("timed")
   ) {
     return shorten(
-      `🎟️ Boost Tokens: ${boostTokens
+      `🎟️ Timed Tokens: ${normalTimedTokens
         .map(formatTokenDefinitionShort)
         .join(" | ")}`
     );
@@ -719,7 +1306,6 @@ export function formatTokenList(query = ""): string {
 
   if (
     mode.includes("potion") ||
-    mode.includes("flat") ||
     mode.includes("roll")
   ) {
     return shorten(
@@ -730,9 +1316,7 @@ export function formatTokenList(query = ""): string {
   }
 
   return shorten(
-    `🎟️ Tokens: ${boostTokens
-      .map(formatTokenDefinitionShort)
-      .join(" | ")} | Potion tokens exist too. Use !tokens potions`
+    "🎟️ Token help: !tokens boosts = timed luck | !tokens special = rare/final/flat effects | !tokens potions = queued potion tokens. Same timed token stacks duration, not luck."
   );
 }
 
