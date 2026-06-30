@@ -66,40 +66,68 @@ async function deleteKeys(keys: string[]): Promise<number> {
   return deleted;
 }
 
-async function resetGameData(): Promise<{
-  deleted: number;
-  resetGlobals: boolean;
-}> {
-  const r = getRedis();
-
-  if (!r) {
-    return {
-      deleted: 0,
-      resetGlobals: false,
-    };
-  }
-
-  const patterns = [
-    // Channel/server state
-    "channel:*:state",
-    "channel:*:announcement-settings",
-
-    // Viewer profiles
-    "profile:*",
-    "profiles:*:keys",
-
-    // Cooldowns
-    "cd:*",
-  ];
-
+async function deletePatterns(patterns: string[]): Promise<number> {
   const keys = (
     await Promise.all(patterns.map((pattern) => scanKeys(pattern)))
   ).flat();
 
-  const deleted = await deleteKeys([...new Set(keys)]);
+  return deleteKeys([...new Set(keys)]);
+}
+
+async function resetGlobals(): Promise<void> {
+  const r = getRedis();
+
+  if (!r) return;
 
   await r.set("global:rolls", 0);
   await r.set("global:achievement-state", createDefaultAchievementState());
+}
+
+async function resetGameData(): Promise<{
+  deleted: number;
+  resetGlobals: boolean;
+}> {
+  const deleted = await deletePatterns([
+    // Channel/server state
+    "channel:*:state",
+    "channel:*:announcement-settings",
+
+    // Viewer profiles / progression
+    "profile:*",
+    "profiles:*:keys",
+
+    // Inventories / tokens / items / pending token gifts
+    "inventory:*",
+    "inventory-grants:*",
+    "item:*",
+    "items:*",
+
+    // Cooldowns
+    "cd:*",
+
+    // Personal quests
+    "quest:*",
+    "quests:*",
+    "viewer-quest:*",
+    "viewer-quests:*",
+
+    // Global quests
+    "global-quest:*",
+    "global-quests:*",
+    "weekly-quest:*",
+    "monthly-quest:*",
+    "yearly-quest:*",
+
+    // Future currency systems
+    "currency:*",
+    "wallet:*",
+    "wallets:*",
+    "economy:*",
+    "coins:*",
+    "coin:*",
+  ]);
+
+  await resetGlobals();
 
   return {
     deleted,
@@ -107,11 +135,108 @@ async function resetGameData(): Promise<{
   };
 }
 
+async function resetProfiles(): Promise<number> {
+  return deletePatterns([
+    "profile:*",
+    "profiles:*:keys",
+  ]);
+}
+
+async function resetInventories(): Promise<number> {
+  return deletePatterns([
+    "inventory:*",
+    "inventory-grants:*",
+    "item:*",
+    "items:*",
+  ]);
+}
+
+async function resetTokensOnly(): Promise<number> {
+  return deletePatterns([
+    "inventory:*",
+    "inventory-grants:*",
+  ]);
+}
+
+async function resetProgression(): Promise<number> {
+  const deleted = await deletePatterns([
+    "profile:*",
+    "profiles:*:keys",
+    "inventory:*",
+    "inventory-grants:*",
+    "quest:*",
+    "quests:*",
+    "viewer-quest:*",
+    "viewer-quests:*",
+  ]);
+
+  await resetGlobals();
+
+  return deleted;
+}
+
+async function resetCooldowns(): Promise<number> {
+  return deletePatterns(["cd:*"]);
+}
+
+async function resetQuests(): Promise<number> {
+  return deletePatterns([
+    "quest:*",
+    "quests:*",
+    "viewer-quest:*",
+    "viewer-quests:*",
+    "global-quest:*",
+    "global-quests:*",
+    "weekly-quest:*",
+    "monthly-quest:*",
+    "yearly-quest:*",
+  ]);
+}
+
+async function resetGlobalQuests(): Promise<number> {
+  return deletePatterns([
+    "global-quest:*",
+    "global-quests:*",
+    "weekly-quest:*",
+    "monthly-quest:*",
+    "yearly-quest:*",
+  ]);
+}
+
+async function resetCurrency(): Promise<number> {
+  return deletePatterns([
+    "currency:*",
+    "wallet:*",
+    "wallets:*",
+    "economy:*",
+    "coins:*",
+    "coin:*",
+  ]);
+}
+
 async function wipeOAuthTokens(): Promise<number> {
   const keys = await scanKeys("nightbot:channel:*");
   keys.push("nightbot:channels");
 
   return deleteKeys([...new Set(keys)]);
+}
+
+function helpText(): string {
+  return [
+    "Reset types:",
+    "game",
+    "profiles",
+    "inventories",
+    "tokens",
+    "progression",
+    "cooldowns",
+    "quests",
+    "globalquests",
+    "currency",
+    "globals",
+    "oauth",
+    "everything",
+  ].join(", ");
 }
 
 export default async function handler(
@@ -122,7 +247,11 @@ export default async function handler(
     return res.status(401).send("Unauthorized reset.");
   }
 
-  const type = String(req.query.type ?? "game").toLowerCase().trim();
+  const type = String(req.query.type ?? "help").toLowerCase().trim();
+
+  if (type === "help") {
+    return res.status(200).send(helpText());
+  }
 
   if (type === "game" || type === "full" || type === "all") {
     const result = await resetGameData();
@@ -132,6 +261,72 @@ export default async function handler(
       .send(
         `reset game ok | deleted ${result.deleted} keys | globals reset: ${result.resetGlobals}`
       );
+  }
+
+  if (type === "profiles") {
+    const deleted = await resetProfiles();
+
+    return res.status(200).send(`reset profiles ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "inventories" || type === "inventory" || type === "items") {
+    const deleted = await resetInventories();
+
+    return res
+      .status(200)
+      .send(`reset inventories ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "tokens") {
+    const deleted = await resetTokensOnly();
+
+    return res.status(200).send(`reset tokens ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "progression") {
+    const deleted = await resetProgression();
+
+    return res
+      .status(200)
+      .send(`reset progression ok | deleted ${deleted} keys | globals reset`);
+  }
+
+  if (type === "cooldowns" || type === "cd") {
+    const deleted = await resetCooldowns();
+
+    return res.status(200).send(`reset cooldowns ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "quests") {
+    const deleted = await resetQuests();
+
+    return res.status(200).send(`reset quests ok | deleted ${deleted} keys`);
+  }
+
+  if (
+    type === "globalquests" ||
+    type === "global-quests" ||
+    type === "weekly" ||
+    type === "monthly" ||
+    type === "yearly"
+  ) {
+    const deleted = await resetGlobalQuests();
+
+    return res
+      .status(200)
+      .send(`reset global quests ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "currency" || type === "wallet" || type === "coins") {
+    const deleted = await resetCurrency();
+
+    return res.status(200).send(`reset currency ok | deleted ${deleted} keys`);
+  }
+
+  if (type === "globals") {
+    await resetGlobals();
+
+    return res.status(200).send("reset globals ok");
   }
 
   if (type === "oauth" || type === "nightbot") {
@@ -155,7 +350,5 @@ export default async function handler(
       );
   }
 
-  return res
-    .status(400)
-    .send("Unknown reset type. Use: game, oauth, or everything");
+  return res.status(400).send(`Unknown reset type. ${helpText()}`);
 }
