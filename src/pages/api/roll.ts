@@ -12,7 +12,11 @@ import {
   cooldownKey,
   formatRemaining,
 } from "@/lib/state";
-import { rollMultiple, topRarest } from "@/lib/roll-engine";
+import {
+  rollOnce,
+  topRarest,
+  type RollHitResult,
+} from "@/lib/roll-engine";
 import {
   applyCooldown,
   checkCooldown,
@@ -25,9 +29,10 @@ import { isBroadcasterUser, recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 import { isRollMultiAllowlisted } from "@/lib/roll-access";
 import {
-  consumeRollTokenBuffs,
-  formatTokenUsage,
+  consumeRollTokenBuffsForRolls,
+  formatConsumedRollTokenEffects,
 } from "@/lib/inventory";
+import type { ChannelState } from "@/types/data";
 
 const NORMAL_MULTIROLL_LIMIT = 20;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
@@ -36,6 +41,22 @@ const MAX_DISPLAY_RESULTS = 5;
 export const config = {
   maxDuration: 30,
 };
+
+const SPECIAL_BIOME_IDS = new Set([
+  "glitched",
+  "dreamspace",
+  "abnormality",
+  "blood_rain",
+  "starfall",
+  "singularity",
+  "cyberspace",
+  "red_full_moon",
+  "graveyard",
+  "pumpkin_moon",
+  "blazing_sun",
+  "aurora",
+  "snowy",
+]);
 
 function parseAmount(rawArgs: string | undefined): number {
   const raw = (rawArgs ?? "").trim().toLowerCase();
@@ -57,6 +78,36 @@ function parseAmount(rawArgs: string | undefined): number {
   if (suffix === "m") return base * 1000000;
 
   return base;
+}
+
+function isSpecialBiomeActive(state: ChannelState): boolean {
+  if (state.biomeId && SPECIAL_BIOME_IDS.has(state.biomeId)) return true;
+  if (state.bloodRainExpiresAt > Date.now()) return true;
+  if (state.activeDevBiome && state.devExpiresAt > Date.now()) return true;
+
+  return false;
+}
+
+function calculateRollLuck(options: {
+  baseLuck: number;
+  tokenFlatLuck: number;
+  tokenPercentLuck: number;
+  tokenRareBiomePercentLuck: number;
+  tokenFinalLuckMultiplier: number;
+  achievementFlatLuck: number;
+  achievementFinalLuckMultiplier: number;
+  rareBiomeActive: boolean;
+}): number {
+  const tokenPercent =
+    options.tokenPercentLuck +
+    (options.rareBiomeActive ? options.tokenRareBiomePercentLuck : 0);
+
+  return (
+    ((options.baseLuck + options.tokenFlatLuck) * (1 + tokenPercent) +
+      options.achievementFlatLuck) *
+    options.achievementFinalLuckMultiplier *
+    options.tokenFinalLuckMultiplier
+  );
 }
 
 export default async function handler(
@@ -123,26 +174,53 @@ export default async function handler(
   const displayCount =
     amount > 1 ? Math.min(baseRollCount, MAX_DISPLAY_RESULTS) : 1;
 
-  const tokenBuffs = await consumeRollTokenBuffs({
+  const tokenPlan = await consumeRollTokenBuffsForRolls({
     channelId,
     user,
+    rolls: rollCount,
   });
 
-  const globalRolls = await addGlobalRolls(rollCount);
-  const baseLuck = getGlobalLuck(globalRolls);
-
-  const percentMultiplier = 1 + tokenBuffs.percentLuck;
-
-  const luck =
-    ((baseLuck + tokenBuffs.flatLuck) * percentMultiplier +
-      achievementBonuses.flatLuck) *
-    achievementBonuses.finalLuckMultiplier;
+  const globalRollsAfter = await addGlobalRolls(rollCount);
+  const firstGlobalRoll = Math.max(1, globalRollsAfter - rollCount + 1);
 
   return withTick(channelId, channelName, async (state) => {
-    const ctx = { state, luck };
     const name = user?.displayName ?? user?.name ?? "Player";
+    const rareBiomeActive = isSpecialBiomeActive(state);
 
-    const results = rollMultiple(ctx, rollCount);
+    const results: RollHitResult[] = [];
+
+    for (let i = 0; i < rollCount; i++) {
+      const tokenEffect = tokenPlan.effects[i] ?? {
+        flatLuck: 0,
+        percentLuck: 0,
+        rareBiomePercentLuck: 0,
+        finalLuckMultiplier: 1,
+        exclusive: false,
+        used: [],
+      };
+
+      const baseLuck = getGlobalLuck(firstGlobalRoll + i);
+
+      const luck = calculateRollLuck({
+        baseLuck,
+        tokenFlatLuck: tokenEffect.flatLuck,
+        tokenPercentLuck: tokenEffect.percentLuck,
+        tokenRareBiomePercentLuck: tokenEffect.rareBiomePercentLuck,
+        tokenFinalLuckMultiplier: tokenEffect.finalLuckMultiplier,
+        achievementFlatLuck: achievementBonuses.flatLuck,
+        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier,
+        rareBiomeActive,
+      });
+
+      const result = rollOnce({
+        state,
+        luck,
+        potionId: tokenEffect.potionId,
+      });
+
+      results.push(result);
+    }
+
     const top = topRarest(results, displayCount);
 
     await recordViewerRolls(channelId, user, results, "roll");
@@ -150,13 +228,8 @@ export default async function handler(
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
 
-    const tokenUsage = formatTokenUsage({
-      flatLuck: tokenBuffs.flatLuck,
-      percentLuck: tokenBuffs.percentLuck,
-    });
-
+    const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
     const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
-
     const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}`;
 
     if (displayCount === 1) {
