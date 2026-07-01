@@ -240,7 +240,7 @@ function rollAmount(entry: LootPoolEntry): number {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
-function getRewardClaimKey(reward: LevelReward): string {
+export function getRewardClaimKey(reward: LevelReward): string {
   if (reward.claimKey) return reward.claimKey;
 
   if (reward.level > 100) {
@@ -401,6 +401,14 @@ function isDevExclusiveAura(aura: AuraDef, tierId: LevelTierId): boolean {
 }
 
 export function getUnlockedLevelRewards(
+  export function markLevelRewardsClaimed(
+  claimed: Record<string, boolean>,
+  rewards: LevelReward[]
+): void {
+  for (const reward of rewards) {
+    claimed[getRewardClaimKey(reward)] = true;
+  }
+}
   level: number,
   claimed: Record<string, boolean>
 ): LevelReward[] {
@@ -512,9 +520,6 @@ export function awardXpForRolls(options: {
     claimedLevelRewards
   );
 
-  for (const reward of unlockedRewards) {
-    claimedLevelRewards[getRewardClaimKey(reward)] = true;
-  }
 
   return {
     xpGained,
