@@ -34,7 +34,9 @@ import {
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
 
-const NORMAL_MULTIROLL_LIMIT = 20;
+const VIEWER_MULTIROLL_LIMIT = 3;
+const VIP_MULTIROLL_LIMIT = 10;
+const MOD_MULTIROLL_LIMIT = 20;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
 const MAX_DISPLAY_RESULTS = 5;
 
@@ -78,6 +80,40 @@ function parseAmount(rawArgs: string | undefined): number {
   if (suffix === "m") return base * 1000000;
 
   return base;
+}
+
+function getUserLevel(userLevel: string | undefined | null): string {
+  return (userLevel ?? "everyone").toLowerCase().trim();
+}
+
+function isVipUser(userLevel: string | undefined | null): boolean {
+  const level = getUserLevel(userLevel);
+
+  return level === "vip" || level === "regular" || level === "subscriber";
+}
+
+function getRoleRollLimit(options: {
+  userLevel: string | undefined | null;
+  isMod: boolean;
+  trustedMultiroll: boolean;
+}): number {
+  if (options.trustedMultiroll) return TRUSTED_MULTIROLL_LIMIT;
+  if (options.isMod) return MOD_MULTIROLL_LIMIT;
+  if (isVipUser(options.userLevel)) return VIP_MULTIROLL_LIMIT;
+
+  return VIEWER_MULTIROLL_LIMIT;
+}
+
+function getRoleRollLimitName(options: {
+  userLevel: string | undefined | null;
+  isMod: boolean;
+  trustedMultiroll: boolean;
+}): string {
+  if (options.trustedMultiroll) return "trusted/broadcaster";
+  if (options.isMod) return "mod";
+  if (isVipUser(options.userLevel)) return "VIP";
+
+  return "viewer";
 }
 
 function isSpecialBiomeActive(state: ChannelState): boolean {
@@ -129,20 +165,22 @@ export default async function handler(
   const allowlisted = isRollMultiAllowlisted(user, channelLoginName);
   const trustedMultiroll = broadcaster || allowlisted;
 
-  const maxAllowed = trustedMultiroll
-    ? TRUSTED_MULTIROLL_LIMIT
-    : NORMAL_MULTIROLL_LIMIT;
+  const maxAllowed = getRoleRollLimit({
+    userLevel: user?.userLevel,
+    isMod,
+    trustedMultiroll,
+  });
 
-  if (amount > 1 && !isMod && !trustedMultiroll) {
-    return error(res, "Multi-roll is mod/trusted-user only. Use !roll");
-  }
+  const limitName = getRoleRollLimitName({
+    userLevel: user?.userLevel,
+    isMod,
+    trustedMultiroll,
+  });
 
   if (amount > maxAllowed) {
     return error(
       res,
-      trustedMultiroll
-        ? `Max trusted multi-roll is ${TRUSTED_MULTIROLL_LIMIT}.`
-        : `Max mod multi-roll is ${NORMAL_MULTIROLL_LIMIT}.`
+      `Max ${limitName} multi-roll is ${maxAllowed}.`
     );
   }
 
