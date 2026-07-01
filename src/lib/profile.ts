@@ -65,6 +65,49 @@ export const PROFILE_TIER_RANK: Record<ProfileTierId, number> =
     return acc;
   }, {} as Record<ProfileTierId, number>);
 
+const TOKEN_PRIORITY: Record<string, number> = {
+  overpowered_potion: 10000,
+  oblivion: 9500,
+  godlike: 9000,
+  chaos_potion: 8800,
+  axis_potion: 8700,
+  xyz_potion: 8600,
+  word_potion: 8500,
+  pump_kings_blood: 8200,
+  red_fragment_ii: 8000,
+  void_heart: 7800,
+  dune: 7600,
+  heavenly: 7000,
+  bound: 6500,
+  popping: 6000,
+
+  eclipse_core: 5600,
+  distortion: 5400,
+  supernova: 5200,
+  nebula: 5000,
+  starlight: 4800,
+  eclipse: 4600,
+  astral: 4400,
+  nova: 4200,
+  galaxy: 4000,
+  catalyst: 3800,
+  horizon: 3600,
+  resonance: 3400,
+  pulse: 3200,
+  stability: 3000,
+  clover: 2800,
+  fortune: 2600,
+  comet: 2400,
+  prism: 2200,
+  storm: 2000,
+  bloom: 1800,
+  frost: 1600,
+  ember: 1400,
+  lunar: 1200,
+  drizzle: 1000,
+  spark: 800,
+};
+
 export interface BestAuraRecord {
   auraId: string;
   auraName: string;
@@ -126,6 +169,19 @@ function getUserId(user: NightbotUser | null): string {
 
 function getDisplayName(user: NightbotUser | null): string {
   return user?.displayName ?? user?.name ?? "Player";
+}
+
+function tokenPriority(tokenId: string): number {
+  return TOKEN_PRIORITY[tokenId] ?? 0;
+}
+
+function shortRewardName(reward: LevelReward): string {
+  return reward.name
+    .replace(/^Token of\s+/i, "")
+    .replace(/^Potion of\s+/i, "")
+    .replace(/\s+Potion$/i, "")
+    .replace(/\sx\d+$/i, "")
+    .trim();
 }
 
 export function isBroadcasterUser(
@@ -533,6 +589,64 @@ export async function claimViewerLevelRewards(
   };
 }
 
+function compactRewardSummary(rewards: LevelReward[], maxLength: number): string {
+  const totals = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      amount: number;
+      priority: number;
+    }
+  >();
+
+  for (const reward of rewards) {
+    if (reward.type !== "token") continue;
+
+    const current = totals.get(reward.id);
+    const amount = Math.max(1, Math.floor(reward.amount ?? 1));
+
+    totals.set(reward.id, {
+      id: reward.id,
+      name: shortRewardName(reward),
+      amount: (current?.amount ?? 0) + amount,
+      priority: tokenPriority(reward.id),
+    });
+  }
+
+  const entries = [...totals.values()].sort((a, b) => {
+    const priorityDiff = b.priority - a.priority;
+
+    if (priorityDiff !== 0) return priorityDiff;
+
+    return b.amount - a.amount;
+  });
+
+  if (entries.length === 0) {
+    return "No token rewards";
+  }
+
+  const shown: string[] = [];
+
+  for (const entry of entries) {
+    const next = `${entry.name} x${entry.amount}`;
+    const hidden = entries.length - shown.length - 1;
+    const suffix = hidden > 0 ? ` (+${hidden} more)` : "";
+    const candidate = [...shown, next].join(", ") + suffix;
+
+    if (candidate.length > maxLength) {
+      break;
+    }
+
+    shown.push(next);
+  }
+
+  const hidden = entries.length - shown.length;
+  const body = shown.length > 0 ? shown.join(", ") : `${entries[0].name} x${entries[0].amount}`;
+
+  return hidden > 0 ? `${body} (+${hidden} more)` : body;
+}
+
 export function formatLevelClaimResult(result: LevelClaimResult): string {
   if (result.claimedRewards.length === 0) {
     const next = getUpcomingLevelRewards(result.profile.level, 1)[0];
@@ -544,20 +658,22 @@ export function formatLevelClaimResult(result: LevelClaimResult): string {
     return `${result.profile.displayName} has no level rewards to claim. Next reward: Lv.${next.level}: ${next.name}`;
   }
 
-  const grouped = new Map<number, string[]>();
+  const levels = result.claimedRewards
+    .map((reward) => reward.level)
+    .filter((level) => Number.isFinite(level));
 
-  for (const reward of result.claimedRewards) {
-    const list = grouped.get(reward.level) ?? [];
-    list.push(reward.name);
-    grouped.set(reward.level, list);
-  }
+  const minLevel = Math.min(...levels);
+  const maxLevel = Math.max(...levels);
+  const levelText =
+    minLevel === maxLevel ? `Lv.${minLevel}` : `Lv.${minLevel}-${maxLevel}`;
 
-  const body = [...grouped.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([level, rewards]) => `Lv.${level}: ${rewards.join(", ")}`)
-    .join(" | ");
+  const prefix = `🎁 ${result.profile.displayName} claimed ${levelText} | Rewards: `;
+  const rewardsText = compactRewardSummary(
+    result.claimedRewards,
+    390 - prefix.length
+  );
 
-  return `🎁 ${result.profile.displayName} claimed level rewards: ${body}`;
+  return `${prefix}${rewardsText}`;
 }
 
 export async function resetViewerProfiles(channelId: string): Promise<void> {
