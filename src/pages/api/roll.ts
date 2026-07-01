@@ -178,10 +178,7 @@ export default async function handler(
   });
 
   if (amount > maxAllowed) {
-    return error(
-      res,
-      `Max ${limitName} multi-roll is ${maxAllowed}.`
-    );
+    return error(res, `Max ${limitName} multi-roll is ${maxAllowed}.`);
   }
 
   const achievementBonuses = await getAchievementBonuses();
@@ -192,7 +189,7 @@ export default async function handler(
       achievementBonuses.cooldownReductionSeconds * 1000
   );
 
-  if (!isMod && !trustedMultiroll && amount <= 1) {
+  if (!isMod && !trustedMultiroll) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
     const cd = await checkCooldown(key, cooldownMs);
 
@@ -217,6 +214,10 @@ export default async function handler(
     user,
     rolls: rollCount,
   });
+
+  const tokenAssisted = tokenPlan.effects.some(
+    (effect) => effect.used.length > 0
+  );
 
   const globalRollsAfter = await addGlobalRolls(rollCount);
   const firstGlobalRoll = Math.max(1, globalRollsAfter - rollCount + 1);
@@ -261,7 +262,12 @@ export default async function handler(
 
     const top = topRarest(results, displayCount);
 
-    await recordViewerRolls(channelId, user, results, "roll");
+    await recordViewerRolls(
+      channelId,
+      user,
+      results,
+      tokenAssisted ? "token" : "roll"
+    );
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
