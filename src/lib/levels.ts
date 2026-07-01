@@ -15,6 +15,19 @@ export type LevelTierId =
   | "challenged+"
   | "dev-exclusive";
 
+type LootPoolId =
+  | "starter"
+  | "beginner"
+  | "early"
+  | "early_good"
+  | "normal"
+  | "normal_good"
+  | "good"
+  | "rare"
+  | "elite"
+  | "godly"
+  | "post100";
+
 export interface WeeklyXpState {
   weekId: string;
   tierCounts: Record<string, number>;
@@ -26,6 +39,8 @@ export interface LevelReward {
   type: string;
   id: string;
   amount: number;
+  pool?: LootPoolId;
+  claimKey?: string;
 }
 
 export interface LevelXpResult {
@@ -37,6 +52,14 @@ export interface LevelXpResult {
   levelsGained: number;
   unlockedRewards: LevelReward[];
   notes: string[];
+}
+
+interface LootPoolEntry {
+  id: string;
+  name: string;
+  minAmount: number;
+  maxAmount: number;
+  weight: number;
 }
 
 const STATIC_REWARDS = levelRewardsData.rewards as LevelReward[];
@@ -65,24 +88,123 @@ const WEEKLY_TIER_LIMITS: Partial<Record<LevelTierId, number>> = {
   "challenged+": 3,
 };
 
-const POST_100_REWARD_POOL: Array<{
-  name: string;
-  id: string;
-  minAmount: number;
-  maxAmount: number;
-}> = [
-  { name: "Token of Popping", id: "popping", minAmount: 1, maxAmount: 5 },
-  { name: "Token of Bound", id: "bound", minAmount: 1, maxAmount: 3 },
-  { name: "Token of Heavenly", id: "heavenly", minAmount: 1, maxAmount: 2 },
-  { name: "Token of Clover", id: "clover", minAmount: 1, maxAmount: 2 },
-  { name: "Token of Lunar", id: "lunar", minAmount: 1, maxAmount: 3 },
-  { name: "Token of Eclipse", id: "eclipse", minAmount: 1, maxAmount: 2 },
-  { name: "Token of Starlight", id: "starlight", minAmount: 1, maxAmount: 2 },
-  { name: "Token of Nebula", id: "nebula", minAmount: 1, maxAmount: 1 },
-  { name: "Token of Fortune", id: "fortune", minAmount: 1, maxAmount: 2 },
-  { name: "Token of Godlike", id: "godlike", minAmount: 1, maxAmount: 1 },
-  { name: "Token of Oblivion", id: "oblivion", minAmount: 1, maxAmount: 1 },
-];
+const LOOT_POOLS: Record<LootPoolId, LootPoolEntry[]> = {
+  starter: [
+    { id: "spark", name: "Token of Spark", minAmount: 1, maxAmount: 3, weight: 35 },
+    { id: "drizzle", name: "Token of Drizzle", minAmount: 1, maxAmount: 2, weight: 25 },
+    { id: "ember", name: "Token of Ember", minAmount: 1, maxAmount: 2, weight: 20 },
+    { id: "popping", name: "Token of Popping", minAmount: 1, maxAmount: 1, weight: 20 }
+  ],
+
+  beginner: [
+    { id: "spark", name: "Token of Spark", minAmount: 2, maxAmount: 4, weight: 20 },
+    { id: "drizzle", name: "Token of Drizzle", minAmount: 1, maxAmount: 3, weight: 18 },
+    { id: "ember", name: "Token of Ember", minAmount: 1, maxAmount: 2, weight: 17 },
+    { id: "frost", name: "Token of Frost", minAmount: 1, maxAmount: 2, weight: 15 },
+    { id: "popping", name: "Token of Popping", minAmount: 1, maxAmount: 2, weight: 20 },
+    { id: "lunar", name: "Token of Lunar", minAmount: 1, maxAmount: 1, weight: 10 }
+  ],
+
+  early: [
+    { id: "popping", name: "Token of Popping", minAmount: 1, maxAmount: 3, weight: 25 },
+    { id: "lunar", name: "Token of Lunar", minAmount: 1, maxAmount: 2, weight: 20 },
+    { id: "fortune", name: "Token of Fortune", minAmount: 1, maxAmount: 1, weight: 15 },
+    { id: "bloom", name: "Token of Bloom", minAmount: 1, maxAmount: 1, weight: 15 },
+    { id: "storm", name: "Token of Storm", minAmount: 1, maxAmount: 1, weight: 15 },
+    { id: "clover", name: "Token of Clover", minAmount: 1, maxAmount: 1, weight: 10 }
+  ],
+
+  early_good: [
+    { id: "popping", name: "Token of Popping", minAmount: 2, maxAmount: 4, weight: 20 },
+    { id: "fortune", name: "Token of Fortune", minAmount: 1, maxAmount: 2, weight: 20 },
+    { id: "clover", name: "Token of Clover", minAmount: 1, maxAmount: 1, weight: 18 },
+    { id: "bound", name: "Token of Bound", minAmount: 1, maxAmount: 1, weight: 14 },
+    { id: "prism", name: "Token of Prism", minAmount: 1, maxAmount: 1, weight: 14 },
+    { id: "comet", name: "Token of Comet", minAmount: 1, maxAmount: 1, weight: 14 }
+  ],
+
+  normal: [
+    { id: "popping", name: "Token of Popping", minAmount: 2, maxAmount: 5, weight: 18 },
+    { id: "fortune", name: "Token of Fortune", minAmount: 1, maxAmount: 3, weight: 16 },
+    { id: "bound", name: "Token of Bound", minAmount: 1, maxAmount: 2, weight: 15 },
+    { id: "clover", name: "Token of Clover", minAmount: 1, maxAmount: 2, weight: 14 },
+    { id: "eclipse", name: "Token of Eclipse", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "starlight", name: "Token of Starlight", minAmount: 1, maxAmount: 1, weight: 9 },
+    { id: "pulse", name: "Token of Pulse", minAmount: 1, maxAmount: 1, weight: 9 },
+    { id: "resonance", name: "Token of Resonance", minAmount: 1, maxAmount: 1, weight: 9 }
+  ],
+
+  normal_good: [
+    { id: "bound", name: "Token of Bound", minAmount: 1, maxAmount: 3, weight: 18 },
+    { id: "clover", name: "Token of Clover", minAmount: 1, maxAmount: 2, weight: 16 },
+    { id: "eclipse", name: "Token of Eclipse", minAmount: 1, maxAmount: 2, weight: 14 },
+    { id: "starlight", name: "Token of Starlight", minAmount: 1, maxAmount: 2, weight: 14 },
+    { id: "pulse", name: "Token of Pulse", minAmount: 1, maxAmount: 2, weight: 12 },
+    { id: "resonance", name: "Token of Resonance", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "galaxy", name: "Token of Galaxy", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 1, maxAmount: 1, weight: 8 }
+  ],
+
+  good: [
+    { id: "bound", name: "Token of Bound", minAmount: 2, maxAmount: 4, weight: 16 },
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 1, maxAmount: 1, weight: 14 },
+    { id: "nebula", name: "Token of Nebula", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "horizon", name: "Token of Horizon", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "catalyst", name: "Token of Catalyst", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "galaxy", name: "Token of Galaxy", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "nova", name: "Token of Nova", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "astral", name: "Token of Astral", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "distortion", name: "Token of Distortion", minAmount: 1, maxAmount: 1, weight: 6 },
+    { id: "godlike", name: "Token of Godlike", minAmount: 1, maxAmount: 1, weight: 4 }
+  ],
+
+  rare: [
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 1, maxAmount: 2, weight: 18 },
+    { id: "nebula", name: "Token of Nebula", minAmount: 1, maxAmount: 2, weight: 15 },
+    { id: "nova", name: "Token of Nova", minAmount: 1, maxAmount: 1, weight: 14 },
+    { id: "astral", name: "Token of Astral", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "supernova", name: "Token of Supernova", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "distortion", name: "Token of Distortion", minAmount: 1, maxAmount: 1, weight: 10 },
+    { id: "eclipse_core", name: "Token of Eclipse Core", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "godlike", name: "Token of Godlike", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "oblivion", name: "Token of Oblivion", minAmount: 1, maxAmount: 1, weight: 5 }
+  ],
+
+  elite: [
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 2, maxAmount: 3, weight: 16 },
+    { id: "godlike", name: "Token of Godlike", minAmount: 1, maxAmount: 1, weight: 15 },
+    { id: "supernova", name: "Token of Supernova", minAmount: 1, maxAmount: 1, weight: 13 },
+    { id: "distortion", name: "Token of Distortion", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "eclipse_core", name: "Token of Eclipse Core", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "nebula", name: "Token of Nebula", minAmount: 1, maxAmount: 2, weight: 12 },
+    { id: "oblivion", name: "Token of Oblivion", minAmount: 1, maxAmount: 1, weight: 8 },
+    { id: "bound", name: "Token of Bound", minAmount: 4, maxAmount: 8, weight: 12 }
+  ],
+
+  godly: [
+    { id: "godlike", name: "Token of Godlike", minAmount: 1, maxAmount: 2, weight: 22 },
+    { id: "oblivion", name: "Token of Oblivion", minAmount: 1, maxAmount: 1, weight: 18 },
+    { id: "supernova", name: "Token of Supernova", minAmount: 1, maxAmount: 2, weight: 15 },
+    { id: "eclipse_core", name: "Token of Eclipse Core", minAmount: 1, maxAmount: 1, weight: 15 },
+    { id: "distortion", name: "Token of Distortion", minAmount: 1, maxAmount: 1, weight: 12 },
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 2, maxAmount: 4, weight: 10 },
+    { id: "nebula", name: "Token of Nebula", minAmount: 2, maxAmount: 3, weight: 8 }
+  ],
+
+  post100: [
+    { id: "popping", name: "Token of Popping", minAmount: 3, maxAmount: 8, weight: 12 },
+    { id: "bound", name: "Token of Bound", minAmount: 2, maxAmount: 6, weight: 12 },
+    { id: "clover", name: "Token of Clover", minAmount: 1, maxAmount: 4, weight: 10 },
+    { id: "fortune", name: "Token of Fortune", minAmount: 1, maxAmount: 4, weight: 10 },
+    { id: "heavenly", name: "Token of Heavenly", minAmount: 1, maxAmount: 3, weight: 10 },
+    { id: "nebula", name: "Token of Nebula", minAmount: 1, maxAmount: 2, weight: 8 },
+    { id: "supernova", name: "Token of Supernova", minAmount: 1, maxAmount: 2, weight: 8 },
+    { id: "distortion", name: "Token of Distortion", minAmount: 1, maxAmount: 1, weight: 7 },
+    { id: "eclipse_core", name: "Token of Eclipse Core", minAmount: 1, maxAmount: 1, weight: 7 },
+    { id: "godlike", name: "Token of Godlike", minAmount: 1, maxAmount: 2, weight: 8 },
+    { id: "oblivion", name: "Token of Oblivion", minAmount: 1, maxAmount: 1, weight: 8 }
+  ]
+};
 
 function getWeekId(date = new Date()): string {
   const utc = Date.UTC(
@@ -98,30 +220,84 @@ function getWeekId(date = new Date()): string {
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
-function hashNumber(input: string): number {
-  let hash = 0;
+function rollWeighted(pool: LootPoolEntry[]): LootPoolEntry {
+  const total = pool.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * total;
 
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31 + input.charCodeAt(i)) | 0;
+  for (const entry of pool) {
+    roll -= entry.weight;
+
+    if (roll <= 0) return entry;
   }
 
-  return Math.abs(hash);
+  return pool[pool.length - 1];
 }
 
-function randomPost100Reward(level: number): LevelReward {
-  const poolIndex = hashNumber(`reward-${level}`) % POST_100_REWARD_POOL.length;
-  const chosen = POST_100_REWARD_POOL[poolIndex];
+function rollAmount(entry: LootPoolEntry): number {
+  const min = Math.max(1, Math.floor(entry.minAmount));
+  const max = Math.max(min, Math.floor(entry.maxAmount));
 
-  const spread = chosen.maxAmount - chosen.minAmount + 1;
-  const amount =
-    chosen.minAmount + (hashNumber(`amount-${level}`) % Math.max(1, spread));
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+function getRewardClaimKey(reward: LevelReward): string {
+  if (reward.claimKey) return reward.claimKey;
+
+  if (reward.level > 100) {
+    return `post_100_${reward.level}:${reward.id}`;
+  }
+
+  return `${reward.level}:${reward.id}`;
+}
+
+function wasRewardClaimed(
+  reward: LevelReward,
+  claimed: Record<string, boolean>
+): boolean {
+  return Boolean(
+    claimed[getRewardClaimKey(reward)] ||
+      claimed[String(reward.level)]
+  );
+}
+
+function resolveRandomLootReward(reward: LevelReward): LevelReward[] {
+  const poolId = reward.pool ?? "starter";
+  const pool = LOOT_POOLS[poolId] ?? LOOT_POOLS.starter;
+  const rolls = Math.max(1, Math.floor(reward.amount ?? 1));
+  const grouped = new Map<string, { id: string; name: string; amount: number }>();
+
+  for (let i = 0; i < rolls; i++) {
+    const entry = rollWeighted(pool);
+    const amount = rollAmount(entry);
+    const current = grouped.get(entry.id);
+
+    grouped.set(entry.id, {
+      id: entry.id,
+      name: entry.name,
+      amount: (current?.amount ?? 0) + amount,
+    });
+  }
+
+  return [...grouped.values()].map((entry) => ({
+    level: reward.level,
+    name: `${entry.name} x${entry.amount}`,
+    type: "token",
+    id: entry.id,
+    amount: entry.amount,
+    claimKey: getRewardClaimKey(reward),
+  }));
+}
+
+function getPost100RewardTemplate(level: number): LevelReward {
+  const rolls = Math.min(8, 1 + Math.floor((level - 100) / 25));
 
   return {
     level,
-    name: `${chosen.name} x${amount}`,
-    type: "token",
-    id: chosen.id,
-    amount,
+    name: `Post-100 Loot x${rolls}`,
+    type: "random_loot",
+    id: `post100_loot_${level}`,
+    pool: "post100",
+    amount: rolls,
   };
 }
 
@@ -129,7 +305,7 @@ function getGeneratedRewardsUpTo(level: number): LevelReward[] {
   const rewards: LevelReward[] = [];
 
   for (let current = 105; current <= level; current += 5) {
-    rewards.push(randomPost100Reward(current));
+    rewards.push(getPost100RewardTemplate(current));
   }
 
   return rewards;
@@ -140,19 +316,11 @@ function getGeneratedUpcomingRewards(level: number, count: number): LevelReward[
   let next = Math.max(105, Math.floor(level / 5) * 5 + 5);
 
   while (rewards.length < count) {
-    rewards.push(randomPost100Reward(next));
+    rewards.push(getPost100RewardTemplate(next));
     next += 5;
   }
 
   return rewards;
-}
-
-function getRewardClaimKey(reward: LevelReward): string {
-  if (reward.level > 100) {
-    return `post_100_${reward.level}`;
-  }
-
-  return String(reward.level);
 }
 
 export function normalizeWeeklyXpState(
@@ -241,11 +409,20 @@ export function getUnlockedLevelRewards(
     ...getGeneratedRewardsUpTo(level),
   ];
 
-  return allRewards.filter((reward) => {
-    if (reward.level > level) return false;
+  const unlocked: LevelReward[] = [];
 
-    return !claimed[getRewardClaimKey(reward)];
-  });
+  for (const reward of allRewards) {
+    if (reward.level > level) continue;
+    if (wasRewardClaimed(reward, claimed)) continue;
+
+    if (reward.type === "random_loot") {
+      unlocked.push(...resolveRandomLootReward(reward));
+    } else {
+      unlocked.push(reward);
+    }
+  }
+
+  return unlocked;
 }
 
 export function getUpcomingLevelRewards(
