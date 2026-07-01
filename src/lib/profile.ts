@@ -9,7 +9,10 @@ import {
   formatLevelSummary,
   formatRewardList,
   getUpcomingLevelRewards,
+  getUnlockedLevelRewards,
+  markLevelRewardsClaimed,
   normalizeWeeklyXpState,
+  type LevelReward,
   type WeeklyXpState,
 } from "./levels";
 
@@ -388,12 +391,6 @@ export async function recordViewerRolls(
 
   profile.xp += levelResult.xpGained;
   profile.level = levelResult.levelAfter;
-
-  await grantLevelRewardTokens({
-    channelId: profile.channelId,
-    user,
-    rewards: levelResult.unlockedRewards,
-  });
 
   await setViewerProfile(profile);
 
