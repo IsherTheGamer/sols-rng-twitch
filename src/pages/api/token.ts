@@ -52,7 +52,36 @@ function parseAmount(parts: string[]): {
 }
 
 function usage(): string {
-  return "Usage: !token list | !token use <token> [amount] | !token refund | !token give <user> <token> [amount]";
+  return [
+    "🎟️ Token help:",
+    "!token boosts",
+    "!token special",
+    "!token potions",
+    "!token use <token> [amount]",
+    "!token refund",
+    "!token give <user> <token> [amount]",
+  ].join(" | ");
+}
+
+function isListAction(action: string | undefined): boolean {
+  return action === "list" || action === "tokens";
+}
+
+function isDirectListMode(action: string | undefined): boolean {
+  return (
+    action === "boost" ||
+    action === "boosts" ||
+    action === "timed" ||
+    action === "percent" ||
+    action === "special" ||
+    action === "rare" ||
+    action === "final" ||
+    action === "flat" ||
+    action === "potion" ||
+    action === "potions" ||
+    action === "roll" ||
+    action === "rolls"
+  );
 }
 
 export default async function handler(
@@ -77,11 +106,25 @@ export default async function handler(
   const action = parts[0]?.toLowerCase();
 
   if (!action) {
-    return text(res, usage());
+    return text(res, truncate(usage(), 390));
   }
 
-  if (action === "list" || action === "tokens") {
-    return text(res, truncate(formatTokenList(parts.slice(1).join(" ")), 390));
+  if (isListAction(action)) {
+    const listQuery = parts.slice(1).join(" ");
+
+    if (!listQuery) {
+      return text(res, truncate(usage(), 390));
+    }
+
+    return text(res, truncate(formatTokenList(listQuery), 390));
+  }
+
+  if (isDirectListMode(action)) {
+    return text(res, truncate(formatTokenList(parts.join(" ")), 390));
+  }
+
+  if (action === "help" || action === "commands") {
+    return text(res, truncate(usage(), 390));
   }
 
   if (action === "refund") {
@@ -202,5 +245,5 @@ export default async function handler(
     return text(res, truncate(result.message, 390));
   }
 
-  return error(res, usage());
+  return error(res, truncate(usage(), 390));
 }
