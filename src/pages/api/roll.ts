@@ -215,8 +215,8 @@ export default async function handler(
     rolls: rollCount,
   });
 
-  const tokenAssisted = tokenPlan.effects.some(
-    (effect) => effect.used.length > 0
+  const oneTimeTokenAssisted = tokenPlan.effects.some((effect) =>
+    effect.used.some((buff) => buff.consumeOnRoll)
   );
 
   const globalRollsAfter = await addGlobalRolls(rollCount);
@@ -266,7 +266,7 @@ export default async function handler(
       channelId,
       user,
       results,
-      tokenAssisted ? "token" : "roll"
+      oneTimeTokenAssisted ? "token" : "roll"
     );
 
     const unlocked = await recordAuraRolls(results);
