@@ -206,8 +206,12 @@ export default async function handler(
   const baseRollCount = amount > 1 ? Math.min(amount, maxAllowed) : 1;
   const bonusRolls = Math.floor(achievementBonuses.extraRolls);
   const rollCount = baseRollCount + bonusRolls;
+
+  // Important:
+  // If achievement bonus rolls make !roll become 2x, show both rolls.
+  // Old behavior showed only the best result with "(2x)", which made it look duplicated.
   const displayCount =
-    amount > 1 ? Math.min(baseRollCount, MAX_DISPLAY_RESULTS) : 1;
+    rollCount > 1 ? Math.min(rollCount, MAX_DISPLAY_RESULTS) : 1;
 
   const tokenPlan = await consumeRollTokenBuffsForRolls({
     channelId,
@@ -278,7 +282,6 @@ export default async function handler(
 
     if (displayCount === 1) {
       const best = top[0];
-      const rollNote = rollCount > 1 ? ` (${rollCount}x)` : "";
 
       text(
         res,
@@ -286,7 +289,7 @@ export default async function handler(
           name,
           best.aura.name,
           best.effectiveRarity
-        )}${rollNote}${suffix}`
+        )}${suffix}`
       );
 
       await runAfterCommandReply(() =>
@@ -302,8 +305,11 @@ export default async function handler(
       return;
     }
 
+    const bonusText =
+      bonusRolls > 0 ? ` (+${bonusRolls} achievement bonus)` : "";
+
     const msg =
-      `${name} rolled ${rollCount}x — top ${displayCount}: ` +
+      `${name} rolled ${rollCount}x${bonusText} — top ${displayCount}: ` +
       formatMultiRoll(
         top.map((r) => ({
           name: r.aura.name,
