@@ -8,8 +8,8 @@ import {
   calculateLevel,
   formatLevelSummary,
   formatRewardList,
-  getUpcomingLevelRewards,
   getUnlockedLevelRewards,
+  getUpcomingLevelRewards,
   markLevelRewardsClaimed,
   normalizeWeeklyXpState,
   type LevelReward,
@@ -98,6 +98,11 @@ export interface ViewerProfile {
 
   createdAt: number;
   updatedAt: number;
+}
+
+export interface LevelClaimResult {
+  profile: ViewerProfile;
+  claimedRewards: LevelReward[];
 }
 
 function profileKey(channelId: string, userId: string): string {
@@ -209,6 +214,7 @@ async function registerProfileKey(
   key: string
 ): Promise<void> {
   const r = getRedis();
+
   if (!r) return;
 
   const indexKey = profileIndexKey(channelId);
@@ -468,6 +474,67 @@ export function formatViewerLevelRewards(profile: ViewerProfile): string {
   const rewards = getUpcomingLevelRewards(profile.level, 5);
 
   return `${profile.displayName} upcoming rewards: ${formatRewardList(rewards)}`;
+}
+
+export async function claimViewerLevelRewards(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<LevelClaimResult> {
+  const profile = await getViewerProfile(channelId, user);
+
+  const rewards = getUnlockedLevelRewards(
+    profile.level,
+    profile.claimedLevelRewards
+  );
+
+  if (rewards.length === 0) {
+    return {
+      profile,
+      claimedRewards: [],
+    };
+  }
+
+  markLevelRewardsClaimed(profile.claimedLevelRewards, rewards);
+
+  await grantLevelRewardTokens({
+    channelId: profile.channelId,
+    user,
+    rewards,
+  });
+
+  await setViewerProfile(profile);
+
+  return {
+    profile,
+    claimedRewards: rewards,
+  };
+}
+
+export function formatLevelClaimResult(result: LevelClaimResult): string {
+  if (result.claimedRewards.length === 0) {
+    const next = getUpcomingLevelRewards(result.profile.level, 1)[0];
+
+    if (!next) {
+      return `${result.profile.displayName} has no level rewards to claim.`;
+    }
+
+    return `${result.profile.displayName} has no level rewards to claim. Next reward: Lv.${next.level}: ${next.name}`;
+  }
+
+  const grouped = new Map<number, string[]>();
+
+  for (const reward of result.claimedRewards) {
+    const list = grouped.get(reward.level) ?? [];
+    list.push(reward.name);
+    grouped.set(reward.level, list);
+  }
+
+  const body = [...grouped.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([level, rewards]) => `Lv.${level}: ${rewards.join(", ")}`)
+    .join(" | ");
+
+  return `🎁 ${result.profile.displayName} claimed level rewards: ${body}`;
 }
 
 export async function resetViewerProfiles(channelId: string): Promise<void> {
