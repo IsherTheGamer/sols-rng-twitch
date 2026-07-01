@@ -80,7 +80,11 @@ export interface ViewerProfile {
   displayName: string;
 
   rolls: number;
+  tokenRolls: number;
+
+  // Legacy field kept so old saved profiles do not break.
   potionRolls: number;
+
   rarityTotal: number;
 
   xp: number;
@@ -94,6 +98,9 @@ export interface ViewerProfile {
   ownedTiers: Record<string, number>;
 
   bestAura: BestAuraRecord | null;
+  bestTokenAura: BestAuraRecord | null;
+
+  // Legacy field kept so old saved profiles do not break.
   bestPotionAura: BestAuraRecord | null;
 
   createdAt: number;
@@ -151,7 +158,9 @@ export function createDefaultViewerProfile(
     displayName,
 
     rolls: 0,
+    tokenRolls: 0,
     potionRolls: 0,
+
     rarityTotal: 0,
 
     xp: 0,
@@ -165,6 +174,7 @@ export function createDefaultViewerProfile(
     ownedTiers: {},
 
     bestAura: null,
+    bestTokenAura: null,
     bestPotionAura: null,
 
     createdAt: now,
@@ -182,13 +192,18 @@ export function normalizeViewerProfile(
 
   if (!input) return base;
 
+  const legacyTokenRolls = input.tokenRolls ?? input.potionRolls ?? 0;
+  const legacyBestTokenAura = input.bestTokenAura ?? input.bestPotionAura ?? null;
+
   return {
     channelId: input.channelId ?? channelId,
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
 
     rolls: input.rolls ?? 0,
-    potionRolls: input.potionRolls ?? 0,
+    tokenRolls: legacyTokenRolls,
+    potionRolls: legacyTokenRolls,
+
     rarityTotal: input.rarityTotal ?? 0,
 
     xp: input.xp ?? 0,
@@ -202,7 +217,8 @@ export function normalizeViewerProfile(
     ownedTiers: input.ownedTiers ?? {},
 
     bestAura: input.bestAura ?? null,
-    bestPotionAura: input.bestPotionAura ?? null,
+    bestTokenAura: legacyBestTokenAura,
+    bestPotionAura: legacyBestTokenAura,
 
     createdAt: input.createdAt ?? base.createdAt,
     updatedAt: Date.now(),
@@ -353,27 +369,30 @@ export async function recordViewerRolls(
   channelId: string,
   user: NightbotUser | null,
   rolls: Array<{ aura: AuraDef; effectiveRarity: number }>,
-  source: "roll" | "potion"
+  source: "roll" | "token" | "potion"
 ): Promise<ViewerProfile> {
   const profile = await getViewerProfile(channelId, user);
+  const isTokenRoll = source === "token" || source === "potion";
 
   for (const roll of rolls) {
     const record = makeBestAuraRecord(roll.aura, roll.effectiveRarity);
 
     profile.rarityTotal += Math.max(0, Math.floor(roll.effectiveRarity));
 
-    if (source === "roll") {
+    if (isTokenRoll) {
+      profile.tokenRolls += 1;
+      profile.potionRolls = profile.tokenRolls;
+
+      if (isBetterAura(record, profile.bestTokenAura)) {
+        profile.bestTokenAura = record;
+        profile.bestPotionAura = record;
+      }
+    } else {
       profile.rolls += 1;
       updateOwnedTier(profile, record.tierId);
 
       if (isBetterAura(record, profile.bestAura)) {
         profile.bestAura = record;
-      }
-    } else {
-      profile.potionRolls += 1;
-
-      if (isBetterAura(record, profile.bestPotionAura)) {
-        profile.bestPotionAura = record;
       }
     }
   }
@@ -421,13 +440,17 @@ export function formatViewerProfile(profile: ViewerProfile): string {
     ? formatRarity(profile.bestAura.rarity)
     : "None";
 
+  const bestTokenRarity = profile.bestTokenAura
+    ? formatRarity(profile.bestTokenAura.rarity)
+    : "None";
+
   const msg =
     `${profile.displayName} | Level: ${profile.level} | XP: ${profile.xp.toLocaleString(
       "en-US"
-    )} | Rolls: ${profile.rolls} | ` +
+    )} | Rolls: ${profile.rolls} | Token Rolls: ${profile.tokenRolls} | ` +
     `Best Rarity: ${bestRarity} | ` +
     `Best Aura: ${formatBestAura(profile.bestAura)} | ` +
-    `Best Potion: ${formatBestAura(profile.bestPotionAura)}`;
+    `Best Token: ${formatBestAura(profile.bestTokenAura)} (${bestTokenRarity})`;
 
   return truncate(msg, 390);
 }
