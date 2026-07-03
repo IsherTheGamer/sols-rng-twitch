@@ -1270,8 +1270,30 @@ function formatTokenDefinitionShort(token: TokenDefinition): string {
   return `${name} +${formatLuckAmount(token.flatLuck ?? 0)} each roll`;
 }
 
+
+export function formatTokenDefinitionPage(
+  tokens: TokenDefinition[],
+  rawPage: string | undefined,
+  title: string,
+  pageSize = 8
+): string {
+  const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
+  const pageValue = Number(String(rawPage ?? "1").replace(/,/g, ""));
+  const page = Math.max(
+    1,
+    Math.min(totalPages, Number.isFinite(pageValue) ? Math.floor(pageValue) : 1)
+  );
+  const start = (page - 1) * pageSize;
+  const shown = tokens.slice(start, start + pageSize).map(formatTokenDefinitionShort);
+
+  return shorten(`${title} ${page}/${totalPages}: ${shown.join(" | ")}`);
+}
+
 export function formatTokenList(query = ""): string {
-  const mode = normalize(query);
+  const parts = normalize(query).split(" ").filter(Boolean);
+  const mode = parts.join(" ");
+  const last = parts[parts.length - 1];
+  const page = /^\\d+$/.test(last ?? "") ? last : "1";
 
   const timedTokens = TIMED_TOKENS;
   const normalTimedTokens = timedTokens.filter((token) => !isSpecialTimedToken(token));
@@ -1284,11 +1306,7 @@ export function formatTokenList(query = ""): string {
     mode.includes("final") ||
     mode.includes("flat")
   ) {
-    return shorten(
-      `✨ Special Tokens: ${specialTimedTokens
-        .map(formatTokenDefinitionShort)
-        .join(" | ")}`
-    );
+    return formatTokenDefinitionPage(specialTimedTokens, page, "✨ Special Tokens");
   }
 
   if (
@@ -1297,26 +1315,18 @@ export function formatTokenList(query = ""): string {
     mode.includes("%") ||
     mode.includes("timed")
   ) {
-    return shorten(
-      `🎟️ Timed Tokens: ${normalTimedTokens
-        .map(formatTokenDefinitionShort)
-        .join(" | ")}`
-    );
+    return formatTokenDefinitionPage(normalTimedTokens, page, "🎟️ Boost Tokens");
   }
 
   if (
     mode.includes("potion") ||
     mode.includes("roll")
   ) {
-    return shorten(
-      `🧪 Potion Tokens: ${potionTokens
-        .map(formatTokenDefinitionShort)
-        .join(" | ")}`
-    );
+    return formatTokenDefinitionPage(potionTokens, page, "🧪 Potion Tokens");
   }
 
   return shorten(
-    "🎟️ Token help: !tokens boosts = timed luck | !tokens special = rare/final/flat effects | !tokens potions = queued potion tokens. Same timed token stacks duration, not luck."
+    "🎟️ Token help: !token boosts [page] | !token special [page] | !token potions [page] | !token use <token> [amount] | !token refund."
   );
 }
 

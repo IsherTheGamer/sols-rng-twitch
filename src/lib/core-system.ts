@@ -2523,6 +2523,18 @@ function openOneBox(state: CoreSystemState, boxId: string): string {
   return "Unknown box rewards";
 }
 
+
+export async function formatBoxesStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  return truncate(
+    `Boxes: ${formatBag(state.lootboxes, lootboxName, 8)} | Use !box open <box> [amount]`
+  );
+}
+
 export async function openLootbox(
   channelId: string,
   user: NightbotUser | null,
