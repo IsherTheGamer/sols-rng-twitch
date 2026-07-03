@@ -1678,6 +1678,71 @@ export async function formatCoreRecipe(
   return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}${rollText}`);
 }
 
+
+export async function craftByIdAmount(
+  channelId: string,
+  user: NightbotUser | null,
+  rawId: string,
+  rawAmount: number
+): Promise<string> {
+  const batches = Math.max(1, Math.min(10000, Math.floor(rawAmount || 1)));
+  const id = normalizeCraftId(rawId);
+
+  if (id === "chassis" || id === "frame") {
+    if (batches > 1) {
+      return `${titleCase(id)} can only be crafted one at a time because it follows your next Core tier.`;
+    }
+
+    return craftById(channelId, user, rawId);
+  }
+
+  const state = await touchCoreState(channelId, user);
+  const recipe = COMPONENT_RECIPES[id];
+
+  if (!recipe) {
+    return `Unknown component. Try: basic_wire, basic_plate, copper_wire, refined_plate, basic_circuit, smd_resistor.`;
+  }
+
+  const scaleBag = (
+    bag: Record<string, number> | undefined
+  ): Record<string, number> | undefined => {
+    if (!bag) return undefined;
+
+    return Object.fromEntries(
+      Object.entries(bag).map(([key, value]) => [key, value * batches])
+    );
+  };
+
+  const scaledCosts: CraftCosts = {
+    stardust: recipe.costs.stardust
+      ? recipe.costs.stardust * batches
+      : undefined,
+    materials: scaleBag(recipe.costs.materials),
+    components: scaleBag(recipe.costs.components),
+    frames: scaleBag(recipe.costs.frames),
+    coreTierRequired: recipe.costs.coreTierRequired,
+    activeRolls: recipe.costs.activeRolls?.map((req) => ({
+      ...req,
+      amount: req.amount * batches,
+    })),
+  };
+
+  const missing = getMissingCosts(state, scaledCosts);
+
+  if (missing.length > 0) {
+    return `${recipe.name} x${formatAmount(batches)} missing: ${missing.join(" | ")}`;
+  }
+
+  consumeCosts(state, scaledCosts);
+
+  const outputAmount = (recipe.outputAmount ?? 1) * batches;
+  addToBag(state.components, recipe.id, outputAmount);
+
+  await saveCoreState(state);
+
+  return `✅ Crafted ${recipe.name} x${formatAmount(outputAmount)}.`;
+}
+
 export async function craftById(
   channelId: string,
   user: NightbotUser | null,
