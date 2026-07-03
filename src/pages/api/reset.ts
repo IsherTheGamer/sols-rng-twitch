@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { parseQuery, text } from "@/lib/api-helpers";
+import { text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
 
 let redis: Redis | null = null;
@@ -154,8 +154,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return text(res, "Reset failed: Redis is not connected.");
   }
 
-  const query = parseQuery(req);
-  const scope = normalizeScope(parseScope(query));
+  const rawScope =
+    clean(req.query.query, "") ||
+    clean(req.query.scope, "") ||
+    clean(req.query.mode, "") ||
+    "all";
+  const scope = normalizeScope(parseScope(rawScope));
 
   if (!scope) {
     return text(res, "Reset scopes: all, core, profile/rolls, inventory/tokens.");

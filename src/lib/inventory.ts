@@ -1293,7 +1293,7 @@ export function formatTokenList(query = ""): string {
   const parts = normalize(query).split(" ").filter(Boolean);
   const mode = parts.join(" ");
   const last = parts[parts.length - 1];
-  const page = /^\\d+$/.test(last ?? "") ? last : "1";
+  const page = /^\d+$/.test(last ?? "") ? last : "1";
 
   const timedTokens = TIMED_TOKENS;
   const normalTimedTokens = timedTokens.filter((token) => !isSpecialTimedToken(token));
