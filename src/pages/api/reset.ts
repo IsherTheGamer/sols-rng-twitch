@@ -25,15 +25,30 @@ function clean(input: string | string[] | undefined, fallback = ""): string {
   return (getFirst(input) ?? fallback).trim();
 }
 
-function cleanName(input: string | string[] | undefined, fallback = "Player"): string {
-  return clean(input, fallback)
-    .replace(/^@+/, "")
-    .replace(/[^a-zA-Z0-9_ -]/g, "")
-    .trim() || fallback;
-}
-
 function cleanId(input: string | string[] | undefined, fallback: string): string {
   return clean(input, fallback).replace(/[^a-zA-Z0-9_-]/g, "") || fallback;
+}
+
+function cleanName(input: string | string[] | undefined, fallback = "Player"): string {
+  return (
+    clean(input, fallback)
+      .replace(/^@+/, "")
+      .replace(/[^a-zA-Z0-9_ -]/g, "")
+      .trim() || fallback
+  );
+}
+
+function normalizeUsername(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function truthy(input: string | string[] | undefined): boolean {
+  const value = clean(input, "").toLowerCase();
+  return ["1", "true", "yes", "y", "on"].includes(value);
 }
 
 function isSecretValid(req: NextApiRequest): boolean {
@@ -48,13 +63,83 @@ function parseScope(query: string): string {
   return first || "all";
 }
 
-function normalizeScope(scope: string): string | null {
-  if (scope === "all") return "all";
-  if (scope === "core" || scope === "cores") return "core";
-  if (scope === "profile" || scope === "rolls" || scope === "level" || scope === "xp") return "profile";
-  if (scope === "inventory" || scope === "tokens" || scope === "token") return "inventory";
+function normalizeScope(scope: string): "all" | "core" | "profile" | "inventory" | null {
+  if (scope === "all" || scope === "everything" || scope === "full") return "all";
+  if (scope === "core" || scope === "cores" || scope === "mega") return "core";
+  if (
+    scope === "profile" ||
+    scope === "profiles" ||
+    scope === "roll" ||
+    scope === "rolls" ||
+    scope === "level" ||
+    scope === "xp"
+  ) {
+    return "profile";
+  }
+  if (
+    scope === "inventory" ||
+    scope === "inv" ||
+    scope === "token" ||
+    scope === "tokens" ||
+    scope === "buffs"
+  ) {
+    return "inventory";
+  }
 
   return null;
+}
+
+function allowedForScope(key: string, scope: "all" | "core" | "profile" | "inventory"): boolean {
+  if (scope === "all") {
+    return (
+      key.startsWith("core-system:") ||
+      key.startsWith("profile:") ||
+      key.startsWith("inventory:") ||
+      key.startsWith("inventory-grants:") ||
+      key.startsWith("viewer-profile:") ||
+      key.startsWith("viewer-inventory:") ||
+      key.startsWith("roll-profile:") ||
+      key.startsWith("rolls:")
+    );
+  }
+
+  if (scope === "core") {
+    return key.startsWith("core-system:");
+  }
+
+  if (scope === "profile") {
+    return (
+      key.startsWith("profile:") ||
+      key.startsWith("viewer-profile:") ||
+      key.startsWith("roll-profile:") ||
+      key.startsWith("rolls:")
+    );
+  }
+
+  return (
+    key.startsWith("inventory:") ||
+    key.startsWith("inventory-grants:") ||
+    key.startsWith("viewer-inventory:")
+  );
+}
+
+async function addKeysByPattern(
+  r: Redis,
+  out: Set<string>,
+  pattern: string,
+  scope: "all" | "core" | "profile" | "inventory"
+): Promise<void> {
+  try {
+    const found = await r.keys(pattern);
+
+    for (const key of found) {
+      if (allowedForScope(key, scope)) {
+        out.add(key);
+      }
+    }
+  } catch {
+    // Ignore pattern failures so reset still works with exact keys.
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -79,26 +164,78 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const channelId = cleanId(req.query.channelId, ctx.channelId);
   const userId = cleanId(req.query.userId, ctx.user?.providerId ?? "anon");
   const name = cleanName(req.query.name, ctx.user?.displayName ?? ctx.user?.name ?? "Player");
+  const username = normalizeUsername(name);
 
-  const keys: string[] = [];
+  const preview = truthy(req.query.preview) || truthy(req.query.dry);
+  const globalUser = truthy(req.query.global);
+
+  const keys = new Set<string>();
 
   if (scope === "all" || scope === "core") {
-    keys.push(`core-system:${channelId}:${userId}`);
+    keys.add(`core-system:${channelId}:${userId}`);
   }
 
   if (scope === "all" || scope === "profile") {
-    keys.push(`profile:${channelId}:${userId}`);
+    keys.add(`profile:${channelId}:${userId}`);
   }
 
   if (scope === "all" || scope === "inventory") {
-    keys.push(`inventory:${channelId}:${userId}`);
+    keys.add(`inventory:${channelId}:${userId}`);
+
+    if (username) {
+      keys.add(`inventory-grants:${channelId}:${username}`);
+    }
   }
 
-  await Promise.all(keys.map((key) => r.del(key)));
+  // Scoped search: safest normal reset.
+  await addKeysByPattern(r, keys, `*:${channelId}:${userId}`, scope);
+  await addKeysByPattern(r, keys, `*:${channelId}:${userId}:*`, scope);
+  await addKeysByPattern(r, keys, `*:${channelId}:*:${userId}`, scope);
+  await addKeysByPattern(r, keys, `*:${channelId}:*${userId}*`, scope);
+  await addKeysByPattern(r, keys, `*${channelId}*${userId}*`, scope);
+
+  if (username) {
+    await addKeysByPattern(r, keys, `*:${channelId}:${username}`, scope);
+    await addKeysByPattern(r, keys, `*:${channelId}:${username}:*`, scope);
+    await addKeysByPattern(r, keys, `*${channelId}*${username}*`, scope);
+  }
+
+  // Global search: use this if the channelId was wrong before.
+  if (globalUser) {
+    await addKeysByPattern(r, keys, `*:${userId}`, scope);
+    await addKeysByPattern(r, keys, `*:${userId}:*`, scope);
+    await addKeysByPattern(r, keys, `*${userId}*`, scope);
+
+    if (username) {
+      await addKeysByPattern(r, keys, `*:${username}`, scope);
+      await addKeysByPattern(r, keys, `*:${username}:*`, scope);
+      await addKeysByPattern(r, keys, `*${username}*`, scope);
+    }
+  }
+
+  const finalKeys = [...keys].filter((key) => allowedForScope(key, scope));
+
+  if (finalKeys.length === 0) {
+    return text(
+      res,
+      `No matching reset keys found for ${name}. ChannelId=${channelId} | UserId=${userId}. Try &global=1.`
+    );
+  }
+
+  if (preview) {
+    return text(
+      res,
+      `Preview reset ${scope} for ${name}: ${finalKeys.length} key(s): ${finalKeys
+        .slice(0, 8)
+        .join(", ")}${finalKeys.length > 8 ? "..." : ""}`
+    );
+  }
+
+  await Promise.all(finalKeys.map((key) => r.del(key)));
 
   return text(
     res,
-    `✅ Reset ${scope} for ${name}. ChannelId=${channelId} | UserId=${userId} | Deleted: ${keys
+    `✅ Reset ${scope} for ${name}. ChannelId=${channelId} | UserId=${userId} | Deleted ${finalKeys.length} key(s): ${finalKeys
       .map((k) => k.split(":")[0])
       .join(", ")}.`
   );
