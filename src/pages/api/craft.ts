@@ -22,16 +22,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let amount = 1;
   const last = args[args.length - 1];
 
-  if (/^\d{1,6}$/.test(last)) {
-    amount = Math.max(1, Math.min(10000, parseInt(last, 10)));
+  if (/^\d{1,7}(k|m)?$/i.test(last)) {
+    const raw = last.toLowerCase();
+    const match = raw.match(/^(\d+)(k|m)?$/);
+    const base = Number(match?.[1] ?? 1);
+    const suffix = match?.[2];
+    amount = suffix === "m" ? base * 1000000 : suffix === "k" ? base * 1000 : base;
+    amount = Math.max(1, Math.min(10000, amount));
     args.pop();
   }
 
   const item = args.join(" ");
-
-  if (!item) {
-    return text(res, "Use !craft <component> [amount]. Example: !craft basic wire 100");
-  }
+  if (!item) return text(res, "Use !craft <component> [amount]. Example: !craft wire_1 100");
 
   return text(res, await craftByIdAmount(channelId, user, item, amount));
 }

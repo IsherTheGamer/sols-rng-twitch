@@ -15,25 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const args = parseQuery(req).trim().split(/\s+/).filter(Boolean);
   const action = (args[0] ?? "").toLowerCase();
 
-  if (action === "upgrade") {
-    return text(res, await attemptCoreUpgrade(channelId, user));
-  }
-
-  if (action === "recipe") {
-    return text(res, await formatCoreRecipe(channelId, user));
-  }
-
-  if (action === "focus") {
-    return text(res, await setCoreFocus(channelId, user, args[1] ?? ""));
-  }
-
-  if (action === "choose") {
-    return text(res, await chooseCorePath(channelId, user, args[1] ?? ""));
-  }
-
-  if (action === "switch") {
-    return text(res, await switchCorePath(channelId, user, args[1] ?? ""));
-  }
+  if (action === "upgrade") return text(res, await attemptCoreUpgrade(channelId, user));
+  if (action === "recipe") return text(res, await formatCoreRecipe(channelId, user));
+  if (action === "focus") return text(res, await setCoreFocus(channelId, user, args[1] ?? ""));
+  if (action === "choose") return text(res, await chooseCorePath(channelId, user, args[1] ?? ""));
+  if (action === "switch") return text(res, await switchCorePath(channelId, user, args[1] ?? ""));
 
   return text(res, await formatCoreStatus(channelId, user));
 }

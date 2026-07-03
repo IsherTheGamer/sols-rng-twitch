@@ -8,15 +8,8 @@ import {
 } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { getChannelContext } from "@/lib/nightbot";
-import {
-  cooldownKey,
-  formatRemaining,
-} from "@/lib/state";
-import {
-  rollOnce,
-  topRarest,
-  type RollHitResult,
-} from "@/lib/roll-engine";
+import { cooldownKey, formatRemaining } from "@/lib/state";
+import { rollOnce, topRarest, type RollHitResult } from "@/lib/roll-engine";
 import {
   applyCooldown,
   checkCooldown,
@@ -33,10 +26,7 @@ import {
   formatConsumedRollTokenEffects,
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
-import {
-  getViewerCoreLuck,
-  recordCoreRolls,
-} from "@/lib/core-system";
+import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
 
 const VIEWER_MULTIROLL_LIMIT = 3;
 const VIP_MULTIROLL_LIMIT = 10;
@@ -66,23 +56,15 @@ const SPECIAL_BIOME_IDS = new Set([
 
 function parseAmount(rawArgs: string | undefined): number {
   const raw = (rawArgs ?? "").trim().toLowerCase();
-
   if (!raw) return 1;
-
   const first = raw.split(/\s+/)[0];
   const match = first.match(/^(\d+)(k|m)?$/);
-
   if (!match) return 1;
-
   const base = parseInt(match[1], 10);
-
   if (!Number.isFinite(base) || base < 1) return 1;
-
   const suffix = match[2];
-
   if (suffix === "k") return base * 1000;
   if (suffix === "m") return base * 1000000;
-
   return base;
 }
 
@@ -92,7 +74,6 @@ function getUserLevel(userLevel: string | undefined | null): string {
 
 function isVipUser(userLevel: string | undefined | null): boolean {
   const level = getUserLevel(userLevel);
-
   return level === "vip" || level === "regular" || level === "subscriber";
 }
 
@@ -104,7 +85,6 @@ function getRoleRollLimit(options: {
   if (options.trustedMultiroll) return TRUSTED_MULTIROLL_LIMIT;
   if (options.isMod) return MOD_MULTIROLL_LIMIT;
   if (isVipUser(options.userLevel)) return VIP_MULTIROLL_LIMIT;
-
   return VIEWER_MULTIROLL_LIMIT;
 }
 
@@ -116,7 +96,6 @@ function getRoleRollLimitName(options: {
   if (options.trustedMultiroll) return "trusted/broadcaster";
   if (options.isMod) return "mod";
   if (isVipUser(options.userLevel)) return "VIP";
-
   return "viewer";
 }
 
@@ -124,7 +103,6 @@ function isSpecialBiomeActive(state: ChannelState): boolean {
   if (state.biomeId && SPECIAL_BIOME_IDS.has(state.biomeId)) return true;
   if (state.bloodRainExpiresAt > Date.now()) return true;
   if (state.activeDevBiome && state.devExpiresAt > Date.now()) return true;
-
   return false;
 }
 
@@ -150,21 +128,11 @@ function calculateRollLuck(options: {
   );
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const {
-    channel,
-    channelId,
-    channelName,
-    channelLoginName,
-    user,
-    isMod,
-  } = getChannelContext(req);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { channel, channelId, channelName, channelLoginName, user, isMod } =
+    getChannelContext(req);
 
   const amount = parseAmount(req.query.args as string | undefined);
-
   const broadcaster = isBroadcasterUser(user, channel);
   const allowlisted = isRollMultiAllowlisted(user, channelLoginName);
   const trustedMultiroll = broadcaster || allowlisted;
@@ -190,8 +158,7 @@ export default async function handler(
 
   const cooldownMs = Math.max(
     1000,
-    ROLL_COOLDOWN_MS -
-      achievementBonuses.cooldownReductionSeconds * 1000
+    ROLL_COOLDOWN_MS - achievementBonuses.cooldownReductionSeconds * 1000
   );
 
   if (!isMod && !trustedMultiroll) {
@@ -199,10 +166,7 @@ export default async function handler(
     const cd = await checkCooldown(key, cooldownMs);
 
     if (!cd.allowed) {
-      return text(
-        res,
-        `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`
-      );
+      return text(res, `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`);
     }
 
     await applyCooldown(key, cooldownMs);
@@ -211,12 +175,7 @@ export default async function handler(
   const baseRollCount = amount > 1 ? Math.min(amount, maxAllowed) : 1;
   const bonusRolls = Math.floor(achievementBonuses.extraRolls);
   const rollCount = baseRollCount + bonusRolls;
-
-  // Important:
-  // If achievement bonus rolls make !roll become 2x, show both rolls.
-  // Old behavior showed only the best result with "(2x)", which made it look duplicated.
-  const displayCount =
-    rollCount > 1 ? Math.min(rollCount, MAX_DISPLAY_RESULTS) : 1;
+  const displayCount = rollCount > 1 ? Math.min(rollCount, MAX_DISPLAY_RESULTS) : 1;
 
   const tokenPlan = await consumeRollTokenBuffsForRolls({
     channelId,
@@ -234,7 +193,6 @@ export default async function handler(
   return withTick(channelId, channelName, async (state) => {
     const name = user?.displayName ?? user?.name ?? "Player";
     const rareBiomeActive = isSpecialBiomeActive(state);
-
     const results: RollHitResult[] = [];
 
     for (let i = 0; i < rollCount; i++) {
@@ -247,8 +205,7 @@ export default async function handler(
         used: [],
       };
 
-      const baseLuck =
-        getGlobalLuck(firstGlobalRoll + i) * coreLuck.multiplier;
+      const baseLuck = getGlobalLuck(firstGlobalRoll + i) * coreLuck.multiplier;
 
       const luck = calculateRollLuck({
         baseLuck,
@@ -283,22 +240,13 @@ export default async function handler(
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
-
     const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
     const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
     const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}`;
 
     if (displayCount === 1) {
       const best = top[0];
-
-      text(
-        res,
-        `${formatRollResult(
-          name,
-          best.aura.name,
-          best.effectiveRarity
-        )}${suffix}`
-      );
+      text(res, `${formatRollResult(name, best.aura.name, best.effectiveRarity)}${suffix}`);
 
       await runAfterCommandReply(() =>
         announceAuraResults({
@@ -313,17 +261,10 @@ export default async function handler(
       return;
     }
 
-    const bonusText =
-      bonusRolls > 0 ? ` (+${bonusRolls} achievement bonus)` : "";
-
+    const bonusText = bonusRolls > 0 ? ` (+${bonusRolls} achievement bonus)` : "";
     const msg =
       `${name} rolled ${rollCount}x${bonusText} — top ${displayCount}: ` +
-      formatMultiRoll(
-        top.map((r) => ({
-          name: r.aura.name,
-          rarity: r.effectiveRarity,
-        }))
-      );
+      formatMultiRoll(top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity })));
 
     text(res, `${msg}${suffix}`);
 

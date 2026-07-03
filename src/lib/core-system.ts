@@ -28,35 +28,46 @@ export type CorePath =
 
 export type CoreFocus = "main" | "sub";
 
-export interface CoreSystemState {
-  channelId: string;
-  userId: string;
-  displayName: string;
+type QuestKind = "daily" | "weekly" | "story";
+type QuestType =
+  | "rolls"
+  | "rarity"
+  | "crafts"
+  | "components"
+  | "core"
+  | "shd"
+  | "reactor"
+  | "boxes"
+  | "materials"
+  | "stardust";
 
-  coreTier: number;
-  corePath: CorePath;
-  coreFocus: CoreFocus;
+type RewardBag = {
+  materials?: Record<string, number>;
+  components?: Record<string, number>;
+  tokens?: Record<string, number>;
+  lootboxes?: Record<string, number>;
+  stardust?: number;
+};
 
-  shdLevel: number;
-  stardust: number;
-
-  wallSeed: string;
-  materials: Record<string, number>;
-  components: Record<string, number>;
-  frames: Record<string, number>;
-  subCores: Record<string, boolean>;
-  activeSubCoreId: string | null;
-
-  reactor: ReactorState;
-
-  activeJobs: Record<string, ActiveJob | undefined>;
-
-  createdAt: number;
-  updatedAt: number;
-  lastActiveAt: number;
+interface QuestDef {
+  id: string;
+  kind: QuestKind;
+  title: string;
+  description: string;
+  type: QuestType;
+  target: number;
+  reward: RewardBag;
 }
 
-export interface ActiveJob {
+interface AchievementDef {
+  id: string;
+  title: string;
+  description: string;
+  reward: RewardBag;
+  check: (state: CoreSystemState) => boolean;
+}
+
+interface ActiveJob {
   id: string;
   progress: Record<string, number>;
 }
@@ -96,8 +107,10 @@ interface CraftCosts {
   materials?: Record<string, number>;
   components?: Record<string, number>;
   frames?: Record<string, number>;
+  tokens?: Record<string, number>;
   activeRolls?: RollRequirement[];
   coreTierRequired?: number;
+  shdLevelRequired?: number;
 }
 
 interface ComponentRecipe {
@@ -107,8 +120,64 @@ interface ComponentRecipe {
   costs: CraftCosts;
 }
 
+export interface CoreSystemStats {
+  totalRollsTracked: number;
+  totalCrafts: number;
+  totalComponentsCrafted: number;
+  coresCrafted: number;
+  shdCrafted: number;
+  reactorClaims: number;
+  questsCompleted: number;
+  boxesOpened: number;
+  pathSwitches: number;
+  highestRarity: number;
+  rareRolls100k: number;
+  rareRolls1m: number;
+  rareRolls10m: number;
+  materialsCollected: number;
+  stardustCollected: number;
+}
+
+export interface CoreSystemState {
+  channelId: string;
+  userId: string;
+  displayName: string;
+
+  coreTier: number;
+  corePath: CorePath;
+  coreFocus: CoreFocus;
+
+  shdLevel: number;
+  stardust: number;
+
+  wallSeed: string;
+  materials: Record<string, number>;
+  components: Record<string, number>;
+  frames: Record<string, number>;
+  subCores: Record<string, boolean>;
+  activeSubCoreId: string | null;
+
+  reactor: ReactorState;
+
+  tokens: Record<string, number>;
+  lootboxes: Record<string, number>;
+  questProgress: Record<string, number>;
+  questClaimed: Record<string, boolean>;
+  achievementsClaimed: Record<string, boolean>;
+  unlocks: Record<string, boolean>;
+
+  stats: CoreSystemStats;
+
+  activeJobs: Record<string, ActiveJob | undefined>;
+
+  createdAt: number;
+  updatedAt: number;
+  lastActiveAt: number;
+}
+
 const TOTAL_CORES = 250;
 const PATH_SPLIT_CORE = 15;
+const REACTOR_LOCK_MS = 12 * 60 * 60 * 1000;
 
 const SHD_CAPS: Record<number, number> = {
   0: 500,
@@ -137,8 +206,6 @@ const SHD_CORE_REQUIREMENTS: Record<number, number> = {
   10: 225,
 };
 
-const REACTOR_LOCK_MS = 12 * 60 * 60 * 1000;
-
 const MATERIAL_NAMES: Record<string, string> = {
   scrap: "Scrap",
   metal_bits: "Metal Bits",
@@ -149,157 +216,47 @@ const MATERIAL_NAMES: Record<string, string> = {
   quantum_residue: "Quantum Residue",
   reality_thread: "Reality Thread",
   singularity_shard: "Singularity Shard",
+  dimensional_seal: "Dimensional Seal",
+  anomaly_matter: "Anomaly Matter",
+  forbidden_circuit: "Forbidden Circuit",
+  debug_fragment: "Debug Fragment",
+  thermal_paste: "Thermal Paste",
+  conductive_gel: "Conductive Gel",
+  energy_cell: "Energy Cell",
+  glitched_alloy: "Glitched Alloy",
+  chrono_dust: "Chrono Dust",
+  void_glass: "Void Glass",
+  stellar_ink: "Stellar Ink",
 };
 
-const COMPONENT_RECIPES: Record<string, ComponentRecipe> = {
-  basic_wire: {
-    id: "basic_wire",
-    name: "Basic Wire",
-    costs: { materials: { scrap: 20 } },
-  },
-  basic_plate: {
-    id: "basic_plate",
-    name: "Basic Plate",
-    costs: { materials: { scrap: 25, metal_bits: 5 } },
-  },
-  copper_wire: {
-    id: "copper_wire",
-    name: "Copper Wire",
-    costs: { materials: { scrap: 30 }, components: { basic_wire: 2 } },
-  },
-  refined_plate: {
-    id: "refined_plate",
-    name: "Refined Plate",
-    costs: { materials: { refined_alloy: 3 }, components: { basic_plate: 2 } },
-  },
-  basic_circuit: {
-    id: "basic_circuit",
-    name: "Basic Circuit",
-    costs: {
-      materials: { circuit_scrap: 20 },
-      components: { basic_wire: 3, basic_plate: 2 },
-    },
-  },
-  basic_resistor: {
-    id: "basic_resistor",
-    name: "Basic Resistor",
-    costs: {
-      materials: { circuit_scrap: 15, signal_fragment: 2 },
-      components: { basic_wire: 1 },
-    },
-  },
-  smd_resistor: {
-    id: "smd_resistor",
-    name: "SMD Resistor",
-    costs: {
-      materials: { circuit_scrap: 75, signal_fragment: 15 },
-      components: { basic_resistor: 3 },
-    },
-  },
-  basic_capacitor: {
-    id: "basic_capacitor",
-    name: "Basic Capacitor",
-    costs: {
-      materials: { circuit_scrap: 15 },
-      components: { basic_plate: 1 },
-    },
-  },
-  basic_transistor: {
-    id: "basic_transistor",
-    name: "Basic Transistor",
-    costs: {
-      materials: { signal_fragment: 10 },
-      components: { basic_resistor: 2, basic_circuit: 1 },
-    },
-  },
-  power_cell: {
-    id: "power_cell",
-    name: "Power Cell",
-    costs: {
-      materials: { signal_fragment: 15 },
-      components: { basic_capacitor: 2, refined_plate: 2 },
-    },
-  },
-  realignment_matrix: {
-    id: "realignment_matrix",
-    name: "Realignment Matrix",
-    costs: {
-      materials: { stabilized_flux: 100, quantum_residue: 10 },
-      components: { divergence_matrix: 1, smd_resistor: 10, power_cell: 5 },
-    },
-  },
-  stellar_regulator: {
-    id: "stellar_regulator",
-    name: "Stellar Regulator",
-    costs: {
-      materials: { signal_fragment: 250, refined_alloy: 100 },
-      components: { power_cell: 3, basic_transistor: 3, smd_resistor: 5 },
-    },
-  },
-  divergence_matrix: {
-    id: "divergence_matrix",
-    name: "Divergence Matrix",
-    costs: {
-      materials: { refined_alloy: 50, signal_fragment: 100 },
-      components: { smd_resistor: 5, basic_circuit: 5, power_cell: 2 },
-    },
-  },
-  stability_lock: {
-    id: "stability_lock",
-    name: "Stability Lock",
-    costs: {
-      materials: { stabilized_flux: 25, refined_alloy: 75 },
-      components: { smd_resistor: 4, power_cell: 2 },
-    },
-  },
-  anomaly_compressor: {
-    id: "anomaly_compressor",
-    name: "Anomaly Compressor",
-    costs: {
-      materials: { quantum_residue: 5, stabilized_flux: 50 },
-      components: { smd_resistor: 6, basic_transistor: 3 },
-    },
-  },
-  support_regulator: {
-    id: "support_regulator",
-    name: "Support Regulator",
-    costs: {
-      materials: { signal_fragment: 150, refined_alloy: 60 },
-      components: { basic_circuit: 8, power_cell: 2 },
-    },
-  },
-  biome_lens: {
-    id: "biome_lens",
-    name: "Biome Lens",
-    costs: {
-      materials: { stabilized_flux: 40, signal_fragment: 120 },
-      components: { refined_plate: 8, basic_circuit: 5 },
-    },
-  },
-  precision_filter: {
-    id: "precision_filter",
-    name: "Precision Filter",
-    costs: {
-      materials: { signal_fragment: 180, refined_alloy: 75 },
-      components: { smd_resistor: 7, basic_circuit: 6 },
-    },
-  },
-  token_amplifier: {
-    id: "token_amplifier",
-    name: "Token Amplifier",
-    costs: {
-      materials: { stabilized_flux: 40, circuit_scrap: 250 },
-      components: { basic_transistor: 4, power_cell: 3 },
-    },
-  },
-  null_processor: {
-    id: "null_processor",
-    name: "Null Processor",
-    costs: {
-      materials: { quantum_residue: 10, reality_thread: 2 },
-      components: { smd_resistor: 8, basic_transistor: 5, power_cell: 4 },
-    },
-  },
+const TOKEN_NAMES: Record<string, string> = {
+  recipe_token: "Recipe Token",
+  path_token: "Path Token",
+  reactor_token: "Reactor Token",
+  crafting_token: "Crafting Token",
+  quest_token: "Quest Token",
+  wall_token: "Wall Token",
+  anomaly_token: "Anomaly Token",
+};
+
+const LOOTBOX_NAMES: Record<string, string> = {
+  starter_box: "Starter Box",
+  core_box: "Core Box",
+  quest_box: "Quest Box",
+  reactor_box: "Reactor Box",
+  anomaly_box: "Anomaly Box",
+  dev_box: "Dev Box",
+};
+
+const CORE_LUCK_TARGET_PERCENT: Record<CorePath, number> = {
+  universal: 3900,
+  safe: 3900,
+  risk: 2200,
+  support: 2500,
+  biome: 2200,
+  precision: 3000,
+  token: 2300,
+  anomaly: 2600,
 };
 
 const WALL_COMPONENT_BY_PATH: Record<CorePath, string> = {
@@ -313,15 +270,72 @@ const WALL_COMPONENT_BY_PATH: Record<CorePath, string> = {
   anomaly: "null_processor",
 };
 
-const CORE_LUCK_TARGET_PERCENT: Record<CorePath, number> = {
-  universal: 3900,
-  safe: 3900,
-  risk: 2200,
-  support: 2500,
-  biome: 2200,
-  precision: 3000,
-  token: 2300,
-  anomaly: 2600,
+const COMPONENT_FAMILIES = [
+  "wire",
+  "cable",
+  "plate",
+  "rod",
+  "screw",
+  "bolt",
+  "coil",
+  "resistor",
+  "smd_resistor",
+  "transistor",
+  "smd_transistor",
+  "capacitor",
+  "smd_capacitor",
+  "diode",
+  "smd_diode",
+  "fuse",
+  "relay",
+  "sensor",
+  "emitter",
+  "lens",
+  "heat_sink",
+  "battery_cell",
+  "power_cell",
+  "circuit_board",
+  "processor",
+  "logic_chip",
+  "regulator",
+  "stabilizer",
+  "conduit",
+  "matrix",
+] as const;
+
+const TIER_NAMES = [
+  "Basic",
+  "Copper",
+  "Refined",
+  "Stabilized",
+  "Quantum",
+  "Reality",
+  "Singularity",
+  "Dimensional",
+  "Anomaly",
+  "Forbidden",
+] as const;
+
+const LEGACY_RECIPE_ALIASES: Record<string, string> = {
+  basic_wire: "wire_1",
+  copper_wire: "wire_2",
+  basic_plate: "plate_1",
+  refined_plate: "plate_3",
+  basic_circuit: "circuit_board_1",
+  basic_resistor: "resistor_1",
+  smd_resistor: "smd_resistor_1",
+  basic_capacitor: "capacitor_1",
+  basic_transistor: "transistor_1",
+  divergence_matrix: "divergence_matrix",
+  realignment_matrix: "realignment_matrix",
+  stability_lock: "stability_lock",
+  anomaly_compressor: "anomaly_compressor",
+  support_regulator: "support_regulator",
+  biome_lens: "biome_lens",
+  precision_filter: "precision_filter",
+  token_amplifier: "token_amplifier",
+  null_processor: "null_processor",
+  stellar_regulator: "stellar_regulator",
 };
 
 function stateKey(channelId: string, userId: string): string {
@@ -342,6 +356,26 @@ function getDisplayName(user: NightbotUser | null): string {
 
 function makeSeed(channelId: string, userId: string): string {
   return `${channelId}:${userId}:${Date.now()}:${Math.random()}`;
+}
+
+function defaultStats(): CoreSystemStats {
+  return {
+    totalRollsTracked: 0,
+    totalCrafts: 0,
+    totalComponentsCrafted: 0,
+    coresCrafted: 0,
+    shdCrafted: 0,
+    reactorClaims: 0,
+    questsCompleted: 0,
+    boxesOpened: 0,
+    pathSwitches: 0,
+    highestRarity: 0,
+    rareRolls100k: 0,
+    rareRolls1m: 0,
+    rareRolls10m: 0,
+    materialsCollected: 0,
+    stardustCollected: 0,
+  };
 }
 
 function createDefaultCoreState(
@@ -366,15 +400,25 @@ function createDefaultCoreState(
     frames: {},
     subCores: {},
     activeSubCoreId: null,
-    reactor: {
-      level: 0,
-      activeDeposit: null,
-    },
+    reactor: { level: 0, activeDeposit: null },
+    tokens: {},
+    lootboxes: {},
+    questProgress: {},
+    questClaimed: {},
+    achievementsClaimed: {},
+    unlocks: {},
+    stats: defaultStats(),
     activeJobs: {},
     createdAt: now,
     updatedAt: now,
     lastActiveAt: now,
   };
+}
+
+function normalizeCorePath(path: unknown): CorePath {
+  const value = String(path ?? "universal").toLowerCase();
+  const allowed = ["universal", "safe", "risk", "support", "biome", "precision", "token", "anomaly"];
+  return allowed.includes(value) ? (value as CorePath) : "universal";
 }
 
 function normalizeCoreState(
@@ -384,6 +428,7 @@ function normalizeCoreState(
   displayName: string
 ): CoreSystemState {
   const base = createDefaultCoreState(channelId, userId, displayName);
+  const stats = { ...defaultStats(), ...(input?.stats ?? {}) };
 
   if (!input) return base;
 
@@ -391,10 +436,10 @@ function normalizeCoreState(
     channelId: input.channelId ?? channelId,
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
-    coreTier: Math.max(0, Math.floor(input.coreTier ?? 0)),
-    corePath: input.corePath ?? "universal",
-    coreFocus: input.coreFocus ?? "main",
-    shdLevel: Math.max(-1, Math.floor(input.shdLevel ?? -1)),
+    coreTier: Math.max(0, Math.min(TOTAL_CORES, Math.floor(input.coreTier ?? 0))),
+    corePath: normalizeCorePath(input.corePath),
+    coreFocus: input.coreFocus === "sub" ? "sub" : "main",
+    shdLevel: Math.max(-1, Math.min(10, Math.floor(input.shdLevel ?? -1))),
     stardust: Math.max(0, Math.floor(input.stardust ?? 0)),
     wallSeed: input.wallSeed ?? base.wallSeed,
     materials: input.materials ?? {},
@@ -406,6 +451,13 @@ function normalizeCoreState(
       level: Math.max(0, Math.min(25, Math.floor(input.reactor?.level ?? 0))),
       activeDeposit: input.reactor?.activeDeposit ?? null,
     },
+    tokens: input.tokens ?? {},
+    lootboxes: input.lootboxes ?? {},
+    questProgress: input.questProgress ?? {},
+    questClaimed: input.questClaimed ?? {},
+    achievementsClaimed: input.achievementsClaimed ?? {},
+    unlocks: input.unlocks ?? {},
+    stats,
     activeJobs: input.activeJobs ?? {},
     createdAt: input.createdAt ?? base.createdAt,
     updatedAt: Date.now(),
@@ -424,7 +476,6 @@ export async function getCoreState(
   if (!r) return createDefaultCoreState(channelId, userId, displayName);
 
   const data = await r.get<CoreSystemState>(stateKey(channelId, userId));
-
   return normalizeCoreState(data, channelId, userId, displayName);
 }
 
@@ -461,70 +512,6 @@ function hashString(value: string): number {
   return hash >>> 0;
 }
 
-export function isWallCore(state: CoreSystemState, coreTier: number): boolean {
-  if (coreTier > TOTAL_CORES) return false;
-  if (coreTier > TOTAL_CORES - 5) return true;
-  if (coreTier <= PATH_SPLIT_CORE) return false;
-
-  const batchStart = 16 + Math.floor((coreTier - 16) / 10) * 10;
-  const wallOffset = hashString(`${state.wallSeed}:${batchStart}`) % 10;
-
-  return coreTier === batchStart + wallOffset;
-}
-
-function shdCapacity(level: number): number {
-  return SHD_CAPS[level] ?? 0;
-}
-
-export function getShdCapacity(state: CoreSystemState): number {
-  return shdCapacity(state.shdLevel);
-}
-
-function addToBag(bag: Record<string, number>, id: string, amount: number): void {
-  if (amount <= 0) return;
-  bag[id] = Math.max(0, Math.floor((bag[id] ?? 0) + amount));
-}
-
-function removeFromBag(
-  bag: Record<string, number>,
-  id: string,
-  amount: number
-): void {
-  if (amount <= 0) return;
-  bag[id] = Math.max(0, Math.floor((bag[id] ?? 0) - amount));
-
-  if (bag[id] <= 0) {
-    delete bag[id];
-  }
-}
-
-function consumeBagCosts(
-  bag: Record<string, number>,
-  costs: Record<string, number> | undefined
-): void {
-  for (const [id, amount] of Object.entries(costs ?? {})) {
-    removeFromBag(bag, id, amount);
-  }
-}
-
-function materialName(id: string): string {
-  return MATERIAL_NAMES[id] ?? titleCase(id);
-}
-
-function componentName(id: string): string {
-  if (id.startsWith("chassis_")) {
-    const [, path, tier] = id.split("_");
-    return `${titleCase(path)} Chassis ${tier}`;
-  }
-
-  return COMPONENT_RECIPES[id]?.name ?? titleCase(id);
-}
-
-function frameName(id: string): string {
-  const [, path, tier] = id.split(":");
-  return `${titleCase(path)} Frame ${tier}`;
-}
-
 function titleCase(id: string): string {
   return id
     .split(/[_\-:]+/g)
@@ -539,6 +526,219 @@ function formatAmount(value: number): string {
 
 function formatPercent(value: number): string {
   return `+${Math.floor(value).toLocaleString("en-US")}%`;
+}
+
+function parseAmount(raw: string): number {
+  const cleaned = raw.trim().toLowerCase().replace(/,/g, "");
+  const match = cleaned.match(/^(\d+)(k|m|b)?$/);
+  if (!match) return NaN;
+
+  const base = Number(match[1]);
+  const suffix = match[2];
+  if (suffix === "k") return base * 1000;
+  if (suffix === "m") return base * 1000000;
+  if (suffix === "b") return base * 1000000000;
+  return base;
+}
+
+function addToBag(bag: Record<string, number>, id: string, amount: number): void {
+  if (amount <= 0) return;
+  bag[id] = Math.max(0, Math.floor((bag[id] ?? 0) + amount));
+}
+
+function removeFromBag(bag: Record<string, number>, id: string, amount: number): void {
+  if (amount <= 0) return;
+  bag[id] = Math.max(0, Math.floor((bag[id] ?? 0) - amount));
+  if (bag[id] <= 0) delete bag[id];
+}
+
+function consumeBagCosts(bag: Record<string, number>, costs: Record<string, number> | undefined): void {
+  for (const [id, amount] of Object.entries(costs ?? {})) {
+    removeFromBag(bag, id, amount);
+  }
+}
+
+function materialName(id: string): string {
+  return MATERIAL_NAMES[id] ?? titleCase(id);
+}
+
+function tokenName(id: string): string {
+  return TOKEN_NAMES[id] ?? titleCase(id);
+}
+
+function lootboxName(id: string): string {
+  return LOOTBOX_NAMES[id] ?? titleCase(id);
+}
+
+function normalizeCraftId(raw: string): string {
+  const id = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return LEGACY_RECIPE_ALIASES[id] ?? id;
+}
+
+function tieredComponentName(id: string): string {
+  const match = id.match(/^(.+)_(\d+)$/);
+  if (!match) return titleCase(id);
+  const family = match[1];
+  const tier = Math.max(1, Math.min(10, Number(match[2])));
+  return `${TIER_NAMES[tier - 1] ?? `Tier ${tier}`} ${titleCase(family)}`;
+}
+
+function buildComponentRecipes(): Record<string, ComponentRecipe> {
+  const recipes: Record<string, ComponentRecipe> = {};
+
+  COMPONENT_FAMILIES.forEach((family, familyIndex) => {
+    for (let tier = 1; tier <= 10; tier++) {
+      const id = `${family}_${tier}`;
+      const baseScale = Math.max(1, familyIndex + 1);
+      const materialCosts: Record<string, number> = {
+        scrap: Math.ceil(baseScale * tier * 6),
+        metal_bits: Math.ceil(baseScale * tier * 2),
+      };
+      const componentCosts: Record<string, number> = {};
+
+      if (tier >= 2) componentCosts[`${family}_${tier - 1}`] = Math.max(1, Math.ceil(tier / 2));
+      if (tier >= 3) materialCosts.circuit_scrap = baseScale * tier * 3;
+      if (tier >= 4) materialCosts.signal_fragment = Math.ceil(baseScale * tier * 1.5);
+      if (tier >= 5) materialCosts.refined_alloy = Math.ceil(baseScale * tier);
+      if (tier >= 6) materialCosts.stabilized_flux = Math.ceil(baseScale * tier / 2);
+      if (tier >= 7) materialCosts.quantum_residue = Math.ceil(baseScale * tier / 4);
+      if (tier >= 8) materialCosts.reality_thread = Math.ceil(baseScale * tier / 6);
+      if (tier >= 9) materialCosts.dimensional_seal = Math.ceil(baseScale * tier / 8);
+      if (tier >= 10) materialCosts.anomaly_matter = Math.ceil(baseScale * tier / 10);
+
+      if (family.includes("smd") && tier >= 2) {
+        componentCosts[family.replace("smd_", "") + `_${Math.max(1, tier - 1)}`] = 2;
+      }
+
+      if (["processor", "logic_chip", "regulator", "stabilizer", "conduit", "matrix"].includes(family)) {
+        componentCosts[`circuit_board_${Math.max(1, Math.min(10, tier))}`] = Math.max(1, Math.ceil(tier / 3));
+      }
+
+      const costs: CraftCosts = {
+        materials: materialCosts,
+        components: Object.keys(componentCosts).length > 0 ? componentCosts : undefined,
+      };
+
+      if (tier >= 7) {
+        costs.tokens = { recipe_token: Math.ceil((tier - 6) / 2) };
+      }
+
+      recipes[id] = {
+        id,
+        name: tieredComponentName(id),
+        outputAmount: tier <= 3 ? 4 : tier <= 6 ? 2 : 1,
+        costs,
+      };
+    }
+  });
+
+  Object.assign(recipes, {
+    divergence_matrix: {
+      id: "divergence_matrix",
+      name: "Divergence Matrix",
+      costs: {
+        materials: { stabilized_flux: 50, quantum_residue: 5 },
+        components: { matrix_3: 1, logic_chip_3: 2, circuit_board_3: 3 },
+      },
+    },
+    realignment_matrix: {
+      id: "realignment_matrix",
+      name: "Realignment Matrix",
+      costs: {
+        materials: { stabilized_flux: 100, quantum_residue: 10, reality_thread: 2 },
+        components: { divergence_matrix: 1, matrix_4: 1, power_cell_3: 3 },
+        tokens: { path_token: 1 },
+      },
+    },
+    stellar_regulator: {
+      id: "stellar_regulator",
+      name: "Stellar Regulator",
+      costs: {
+        materials: { signal_fragment: 250, refined_alloy: 100, thermal_paste: 25 },
+        components: { power_cell_3: 2, transistor_3: 3, smd_resistor_2: 5 },
+      },
+    },
+    stability_lock: {
+      id: "stability_lock",
+      name: "Stability Lock",
+      costs: {
+        materials: { stabilized_flux: 40 },
+        components: { stabilizer_3: 1, plate_4: 2 },
+      },
+    },
+    anomaly_compressor: {
+      id: "anomaly_compressor",
+      name: "Anomaly Compressor",
+      costs: {
+        materials: { anomaly_matter: 20, glitched_alloy: 10 },
+        components: { processor_4: 1, conduit_3: 2 },
+      },
+    },
+    support_regulator: {
+      id: "support_regulator",
+      name: "Support Regulator",
+      costs: {
+        materials: { refined_alloy: 150, conductive_gel: 50 },
+        components: { regulator_4: 1, relay_3: 2 },
+      },
+    },
+    biome_lens: {
+      id: "biome_lens",
+      name: "Biome Lens",
+      costs: {
+        materials: { stellar_ink: 30, void_glass: 25 },
+        components: { lens_4: 2, sensor_3: 2 },
+      },
+    },
+    precision_filter: {
+      id: "precision_filter",
+      name: "Precision Filter",
+      costs: {
+        materials: { quantum_residue: 20, thermal_paste: 40 },
+        components: { sensor_4: 2, logic_chip_4: 1 },
+      },
+    },
+    token_amplifier: {
+      id: "token_amplifier",
+      name: "Token Amplifier",
+      costs: {
+        materials: { signal_fragment: 300, energy_cell: 40 },
+        components: { emitter_4: 2, power_cell_4: 1 },
+        tokens: { recipe_token: 2 },
+      },
+    },
+    null_processor: {
+      id: "null_processor",
+      name: "Null Processor",
+      costs: {
+        materials: { anomaly_matter: 25, forbidden_circuit: 3 },
+        components: { processor_5: 1, matrix_5: 1 },
+        tokens: { anomaly_token: 1 },
+      },
+    },
+  } satisfies Record<string, ComponentRecipe>);
+
+  return recipes;
+}
+
+const COMPONENT_RECIPES = buildComponentRecipes();
+
+function componentName(id: string): string {
+  if (id.startsWith("chassis_")) {
+    const [, path, tier] = id.split("_");
+    return `${titleCase(path)} Chassis ${tier}`;
+  }
+
+  return COMPONENT_RECIPES[id]?.name ?? tieredComponentName(id);
+}
+
+function frameName(id: string): string {
+  const [, path, tier] = id.split(":");
+  return `${titleCase(path)} Frame ${tier}`;
 }
 
 function formatBag(
@@ -577,11 +777,16 @@ function formatCosts(costs: CraftCosts): string {
     parts.push(`${frameName(id)} x${formatAmount(amount)}`);
   }
 
+  for (const [id, amount] of Object.entries(costs.tokens ?? {})) {
+    parts.push(`${tokenName(id)} x${formatAmount(amount)}`);
+  }
+
   for (const req of costs.activeRolls ?? []) {
     parts.push(`${req.label} 0/${req.amount}`);
   }
 
   if (costs.coreTierRequired) parts.push(`Core ${costs.coreTierRequired}`);
+  if (costs.shdLevelRequired) parts.push(`SHD Lv.${costs.shdLevelRequired}`);
 
   return parts.length > 0 ? parts.join(", ") : "Free";
 }
@@ -609,6 +814,10 @@ function getMissingCosts(
     missing.push(`Core ${state.coreTier}/${costs.coreTierRequired}`);
   }
 
+  if (costs.shdLevelRequired && state.shdLevel < costs.shdLevelRequired) {
+    missing.push(`SHD Lv.${state.shdLevel < 0 ? "None" : state.shdLevel}/${costs.shdLevelRequired}`);
+  }
+
   if (costs.stardust && state.stardust < costs.stardust) {
     missing.push(`Stardust ${formatAmount(state.stardust)}/${formatAmount(costs.stardust)}`);
   }
@@ -628,6 +837,11 @@ function getMissingCosts(
     if (have < amount) missing.push(`${frameName(id)} ${formatAmount(have)}/${formatAmount(amount)}`);
   }
 
+  for (const [id, amount] of Object.entries(costs.tokens ?? {})) {
+    const have = state.tokens[id] ?? 0;
+    if (have < amount) missing.push(`${tokenName(id)} ${formatAmount(have)}/${formatAmount(amount)}`);
+  }
+
   for (const req of costs.activeRolls ?? []) {
     const have = getProgress(job, req.key);
     if (have < req.amount) missing.push(`${req.label} ${have}/${req.amount}`);
@@ -638,10 +852,55 @@ function getMissingCosts(
 
 function consumeCosts(state: CoreSystemState, costs: CraftCosts): void {
   if (costs.stardust) state.stardust = Math.max(0, state.stardust - costs.stardust);
-
   consumeBagCosts(state.materials, costs.materials);
   consumeBagCosts(state.components, costs.components);
   consumeBagCosts(state.frames, costs.frames);
+  consumeBagCosts(state.tokens, costs.tokens);
+}
+
+function scaleBag(
+  bag: Record<string, number> | undefined,
+  amount: number
+): Record<string, number> | undefined {
+  if (!bag) return undefined;
+
+  const out: Record<string, number> = {};
+  for (const [id, value] of Object.entries(bag)) out[id] = value * amount;
+  return out;
+}
+
+function hashPick<T>(seed: string, items: T[]): T {
+  return items[hashString(seed) % items.length];
+}
+
+function getDateKey(kind: QuestKind): string {
+  const d = new Date();
+  if (kind === "weekly") {
+    const first = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const dayMs = 24 * 60 * 60 * 1000;
+    const week = Math.floor((d.getTime() - first.getTime()) / dayMs / 7);
+    return `${d.getUTCFullYear()}-W${week}`;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+function isWallCore(state: CoreSystemState, coreTier: number): boolean {
+  if (coreTier > TOTAL_CORES) return false;
+  if (coreTier > TOTAL_CORES - 5) return true;
+  if (coreTier <= PATH_SPLIT_CORE) return false;
+
+  const batchStart = 16 + Math.floor((coreTier - 16) / 10) * 10;
+  const wallOffset = hashString(`${state.wallSeed}:${batchStart}`) % 10;
+
+  return coreTier === batchStart + wallOffset;
+}
+
+function shdCapacity(level: number): number {
+  return SHD_CAPS[level] ?? 0;
+}
+
+export function getShdCapacity(state: CoreSystemState): number {
+  return shdCapacity(state.shdLevel);
 }
 
 function normalizePathForTier(state: CoreSystemState, tier: number): CorePath {
@@ -657,20 +916,143 @@ function frameId(path: CorePath, tier: number): string {
   return `frame:${path}:${tier}`;
 }
 
+function getPathPower(state: CoreSystemState): number {
+  return Math.max(0, state.coreTier - PATH_SPLIT_CORE);
+}
+
+function getPathModifiers(state: CoreSystemState): {
+  luckBonus: number;
+  materialMultiplier: number;
+  craftDiscount: number;
+  stardustMultiplier: number;
+  questRewardMultiplier: number;
+  reactorBonus: number;
+  tokenBonusChance: number;
+  wallReduction: number;
+} {
+  const power = getPathPower(state);
+  const small = Math.min(0.35, power / 500);
+
+  switch (state.corePath) {
+    case "safe":
+      return {
+        luckBonus: power * 0.5,
+        materialMultiplier: 1.05,
+        craftDiscount: 0.05,
+        stardustMultiplier: 1.05,
+        questRewardMultiplier: 1,
+        reactorBonus: 0,
+        tokenBonusChance: 0,
+        wallReduction: 0.25,
+      };
+    case "risk":
+      return {
+        luckBonus: power * 2.2,
+        materialMultiplier: 1.15,
+        craftDiscount: 0,
+        stardustMultiplier: 1.25,
+        questRewardMultiplier: 1.05,
+        reactorBonus: 0,
+        tokenBonusChance: 0,
+        wallReduction: -0.15,
+      };
+    case "support":
+      return {
+        luckBonus: power * 0.8,
+        materialMultiplier: 1.1,
+        craftDiscount: 0.12,
+        stardustMultiplier: 1.05,
+        questRewardMultiplier: 1.2,
+        reactorBonus: 0,
+        tokenBonusChance: 0,
+        wallReduction: 0.05,
+      };
+    case "biome":
+      return {
+        luckBonus: power * 0.9,
+        materialMultiplier: 1.2,
+        craftDiscount: 0,
+        stardustMultiplier: 1.1,
+        questRewardMultiplier: 1.1,
+        reactorBonus: 0,
+        tokenBonusChance: 0.02,
+        wallReduction: 0,
+      };
+    case "precision":
+      return {
+        luckBonus: power * 1.4,
+        materialMultiplier: 1.05,
+        craftDiscount: 0.04,
+        stardustMultiplier: 1.05,
+        questRewardMultiplier: 1.05,
+        reactorBonus: 0,
+        tokenBonusChance: 0.01,
+        wallReduction: 0.08,
+      };
+    case "token":
+      return {
+        luckBonus: power * 0.7,
+        materialMultiplier: 1.05,
+        craftDiscount: 0,
+        stardustMultiplier: 1.05,
+        questRewardMultiplier: 1.15,
+        reactorBonus: 0,
+        tokenBonusChance: 0.06,
+        wallReduction: 0,
+      };
+    case "anomaly":
+      return {
+        luckBonus: power * 1.6,
+        materialMultiplier: 1.25,
+        craftDiscount: 0,
+        stardustMultiplier: 1.2,
+        questRewardMultiplier: 1.05,
+        reactorBonus: 0.1 + small,
+        tokenBonusChance: 0.03,
+        wallReduction: -0.05,
+      };
+    default:
+      return {
+        luckBonus: 0,
+        materialMultiplier: 1,
+        craftDiscount: 0,
+        stardustMultiplier: 1,
+        questRewardMultiplier: 1,
+        reactorBonus: 0,
+        tokenBonusChance: 0,
+        wallReduction: 0,
+      };
+  }
+}
+
+function discountedCosts(state: CoreSystemState, costs: CraftCosts): CraftCosts {
+  const discount = getPathModifiers(state).craftDiscount;
+  if (discount <= 0) return costs;
+
+  const scale = (value: number) => Math.max(1, Math.floor(value * (1 - discount)));
+  const mapCosts = (bag: Record<string, number> | undefined): Record<string, number> | undefined => {
+    if (!bag) return undefined;
+    const out: Record<string, number> = {};
+    for (const [id, value] of Object.entries(bag)) out[id] = scale(value);
+    return out;
+  };
+
+  return {
+    ...costs,
+    stardust: costs.stardust ? scale(costs.stardust) : undefined,
+    materials: mapCosts(costs.materials),
+    components: mapCosts(costs.components),
+    tokens: mapCosts(costs.tokens),
+  };
+}
+
 function getCoreStardustCost(tier: number): number {
   if (tier <= 7) return 0;
-
-  return Math.floor(100 * Math.pow(tier - 7, 1.4) * Math.pow(1.045, tier - 8));
+  return Math.floor(100 * Math.pow(tier - 7, 1.52) * Math.pow(1.078, tier - 8));
 }
 
 function activeReq(key: string, label: string, rarity: number, amount: number): RollRequirement {
-  return {
-    key,
-    label,
-    amount,
-    type: "rarityAtLeast",
-    rarity,
-  };
+  return { key, label, amount, type: "rarityAtLeast", rarity };
 }
 
 function getCoreRollRequirements(
@@ -678,6 +1060,9 @@ function getCoreRollRequirements(
   tier: number
 ): RollRequirement[] {
   const reqs: RollRequirement[] = [];
+  const mods = getPathModifiers(state);
+
+  const adjust = (amount: number) => Math.max(1, Math.ceil(amount * (1 - mods.wallReduction)));
 
   if (tier === 5) reqs.push(activeReq("rarity_10000", "Roll any 1/10k+ aura", 10000, 1));
   if (tier === 10) reqs.push(activeReq("rarity_100000", "Roll any 1/100k+ aura", 100000, 1));
@@ -685,60 +1070,68 @@ function getCoreRollRequirements(
 
   if (isWallCore(state, tier)) {
     const rarity = Math.min(50000000, Math.max(50000, Math.floor(tier * tier * 250)));
-    reqs.push(activeReq(`wall_rarity_${tier}`, `Wall roll ${formatRarity(rarity)}+`, rarity, 1));
+    reqs.push(activeReq(`wall_rarity_${tier}`, `Wall roll ${formatRarity(rarity)}+`, rarity, adjust(1)));
+  }
+
+  if (tier >= 100 && tier % 25 === 0) {
+    reqs.push(activeReq(`milestone_${tier}`, `Milestone roll ${formatRarity(tier * 100000)}+`, tier * 100000, 1));
   }
 
   return reqs;
 }
 
+function tierForCore(tier: number): number {
+  return Math.max(1, Math.min(10, Math.ceil(tier / 25)));
+}
+
 function getChassisRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   const path = normalizePathForTier(state, tier);
+  const compTier = tierForCore(tier);
   const scale = Math.max(1, tier);
-  const group = Math.floor((tier - 1) / 25);
   const costs: CraftCosts = {
     materials: {
-      scrap: 40 * scale,
+      scrap: 35 * scale,
       metal_bits: 8 * scale,
+      circuit_scrap: tier >= 8 ? 5 * scale : 0,
     },
     components: {
-      basic_plate: Math.max(1, Math.ceil(tier / 3)),
-      basic_wire: Math.max(1, Math.ceil(tier / 4)),
+      [`plate_${Math.max(1, Math.min(10, compTier))}`]: Math.max(1, Math.ceil(tier / 4)),
+      [`wire_${Math.max(1, Math.min(10, compTier))}`]: Math.max(1, Math.ceil(tier / 5)),
+      [`rod_${Math.max(1, Math.min(10, compTier))}`]: Math.max(1, Math.ceil(tier / 8)),
     },
   };
-
-  if (tier >= 8) {
-    costs.components = {
-      ...(costs.components ?? {}),
-      copper_wire: Math.ceil(tier / 5),
-      refined_plate: Math.ceil(tier / 8),
-    };
-  }
 
   if (tier >= 16) {
     costs.materials = {
       ...(costs.materials ?? {}),
-      refined_alloy: 10 + group * 15,
+      refined_alloy: 10 + Math.floor(tier / 3),
     };
     costs.components = {
       ...(costs.components ?? {}),
-      basic_circuit: Math.max(1, Math.ceil(tier / 12)),
+      [`circuit_board_${compTier}`]: Math.max(1, Math.ceil(tier / 14)),
     };
+  }
+
+  if (tier >= 75) {
+    costs.tokens = { recipe_token: Math.ceil(tier / 75) };
   }
 
   return {
     id: chassisId(path, tier),
     name: `${titleCase(path)} Chassis ${tier}`,
-    costs,
+    costs: discountedCosts(state, costs),
   };
 }
 
 function getFrameRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   const path = normalizePathForTier(state, tier);
+  const compTier = tierForCore(tier);
   const costs: CraftCosts = {
     components: {
       [chassisId(path, tier)]: 1,
-      basic_wire: Math.max(1, Math.ceil(tier / 3)),
-      basic_plate: Math.max(1, Math.ceil(tier / 4)),
+      [`wire_${compTier}`]: Math.max(1, Math.ceil(tier / 3)),
+      [`plate_${compTier}`]: Math.max(1, Math.ceil(tier / 4)),
+      [`bolt_${Math.max(1, compTier)}`]: Math.max(1, Math.ceil(tier / 5)),
     },
     materials: {
       circuit_scrap: Math.max(5, tier * 5),
@@ -748,70 +1141,102 @@ function getFrameRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   if (tier >= 8) {
     costs.components = {
       ...(costs.components ?? {}),
-      basic_circuit: Math.max(1, Math.ceil(tier / 10)),
+      [`circuit_board_${compTier}`]: Math.max(1, Math.ceil(tier / 10)),
+    };
+  }
+
+  if (tier >= 50) {
+    costs.components = {
+      ...(costs.components ?? {}),
+      [`conduit_${compTier}`]: Math.max(1, Math.ceil(tier / 40)),
     };
   }
 
   return {
     id: frameId(path, tier),
     name: `${titleCase(path)} Frame ${tier}`,
-    costs,
+    costs: discountedCosts(state, costs),
   };
 }
 
 function getCoreRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   const path = normalizePathForTier(state, tier);
+  const compTier = tierForCore(tier);
   const costs: CraftCosts = {
     stardust: getCoreStardustCost(tier),
-    frames: {
-      [frameId(path, tier)]: 1,
-    },
+    frames: { [frameId(path, tier)]: 1 },
     activeRolls: getCoreRollRequirements(state, tier),
   };
+
+  if (tier >= 40 && (tier % 20 === 0 || isWallCore(state, tier))) {
+    costs.tokens = { recipe_token: Math.max(1, Math.floor(tier / 40)) };
+  }
+
+  if (tier >= 25) {
+    costs.components = {
+      [`processor_${Math.max(1, compTier)}`]: Math.max(1, Math.ceil(tier / 35)),
+    };
+  }
 
   if (isWallCore(state, tier)) {
     costs.components = {
       ...(costs.components ?? {}),
       [WALL_COMPONENT_BY_PATH[path]]: 1,
     };
+    costs.tokens = {
+      ...(costs.tokens ?? {}),
+      wall_token: Math.max(1, Math.ceil(tier / 80)),
+    };
+  }
+
+  if (tier > TOTAL_CORES - 5) {
+    costs.materials = {
+      ...(costs.materials ?? {}),
+      forbidden_circuit: tier - (TOTAL_CORES - 5),
+      anomaly_matter: 50 * (tier - (TOTAL_CORES - 5)),
+    };
   }
 
   return {
     id: `core_${path}_${tier}`,
     name: `${titleCase(path)} Core ${tier}`,
-    costs,
+    costs: discountedCosts(state, costs),
   };
 }
 
 function getSubCoreRecipe(state: CoreSystemState): ComponentRecipe | null {
   const nextTier = state.coreTier + 1;
-
   if (nextTier > TOTAL_CORES) return null;
   if (state.corePath === "universal") return null;
   if (!isWallCore(state, nextTier)) return null;
 
   const path = normalizePathForTier(state, nextTier);
+  const compTier = tierForCore(nextTier);
   const coreCost = getCoreStardustCost(nextTier);
   const rarity = Math.min(25000000, Math.max(25000, Math.floor(nextTier * nextTier * 125)));
 
   return {
     id: `sub_${path}_${state.coreTier}`,
     name: `${titleCase(path)} Aux Core ${state.coreTier}-A`,
-    costs: {
-      stardust: Math.floor(coreCost * 0.55),
+    costs: discountedCosts(state, {
+      stardust: Math.floor(coreCost * 0.45),
       materials: {
-        scrap: 80 * nextTier,
-        circuit_scrap: 30 * nextTier,
+        scrap: 60 * nextTier,
+        circuit_scrap: 25 * nextTier,
         signal_fragment: Math.max(10, Math.floor(nextTier / 2)),
       },
       components: {
-        smd_resistor: Math.max(1, Math.ceil(nextTier / 15)),
-        power_cell: Math.max(1, Math.ceil(nextTier / 30)),
+        [`smd_resistor_${compTier}`]: Math.max(1, Math.ceil(nextTier / 18)),
+        [`power_cell_${compTier}`]: Math.max(1, Math.ceil(nextTier / 35)),
+        [WALL_COMPONENT_BY_PATH[path]]: 1,
+      },
+      tokens: {
+        wall_token: Math.max(1, Math.ceil(nextTier / 100)),
       },
       activeRolls: [
         activeReq(`sub_wall_${nextTier}`, `Aux roll ${formatRarity(rarity)}+`, rarity, 1),
       ],
-    },
+    }),
   };
 }
 
@@ -819,7 +1244,7 @@ function getSubCoreBonusPercent(state: CoreSystemState): number {
   let bonus = 0;
 
   for (const id of Object.keys(state.subCores ?? {})) {
-    const rawTier = id.split("_").at(-1) ?? "0";
+    const rawTier = id.split("_")[2] ?? "0";
     const tier = Number(rawTier.split("-")[0] ?? 0);
     bonus += Math.max(10, Math.min(75, Math.floor(tier * 0.35)));
   }
@@ -853,22 +1278,26 @@ function getPathSwitchRecipe(state: CoreSystemState, targetPath: CorePath): Comp
         realignment_matrix: 1,
         [WALL_COMPONENT_BY_PATH[targetPath]]: Math.max(1, Math.ceil(scale / 5)),
       },
+      tokens: {
+        path_token: Math.max(1, Math.ceil(scale / 4)),
+      },
     },
   };
 }
 
-function getReactorRate(level: number): number {
-  if (level <= 0) return 2;
-  return Math.min(20, 2 + level * 0.72);
+function getReactorRate(state: CoreSystemState): number {
+  const pathBonus = getPathModifiers(state).reactorBonus;
+  const level = state.reactor.level;
+  return Math.min(35, (level <= 0 ? 2 : 2 + level * 0.72) * (1 + pathBonus));
 }
 
 function getReactorCap(level: number): number {
   if (level <= 0) return 5000;
-
   return Math.min(300000000, Math.floor(5000 * Math.pow(1.55, level)));
 }
 
 function getReactorUpgradeRecipe(nextLevel: number): ComponentRecipe {
+  const compTier = Math.max(1, Math.min(10, Math.ceil(nextLevel / 3)));
   const costs: CraftCosts = {
     stardust: Math.floor(2500 * Math.pow(1.65, nextLevel)),
     materials: {
@@ -877,21 +1306,22 @@ function getReactorUpgradeRecipe(nextLevel: number): ComponentRecipe {
       refined_alloy: 10 * nextLevel,
     },
     components: {
-      basic_circuit: Math.max(1, Math.ceil(nextLevel / 2)),
-      power_cell: Math.max(1, Math.ceil(nextLevel / 4)),
+      [`circuit_board_${compTier}`]: Math.max(1, Math.ceil(nextLevel / 2)),
+      [`power_cell_${compTier}`]: Math.max(1, Math.ceil(nextLevel / 4)),
     },
   };
 
   if (nextLevel >= 10) {
     costs.components = {
       ...(costs.components ?? {}),
-      smd_resistor: Math.ceil(nextLevel / 3),
+      smd_resistor_3: Math.ceil(nextLevel / 3),
       stellar_regulator: 1,
     };
     costs.materials = {
       ...(costs.materials ?? {}),
       stabilized_flux: 25 * nextLevel,
     };
+    costs.tokens = { reactor_token: 1 };
   }
 
   if (nextLevel >= 20) {
@@ -915,9 +1345,9 @@ function getShdCraftRecipe(): ComponentRecipe {
     name: "Stellar Hard-Drive",
     costs: {
       components: {
-        basic_circuit: 2,
-        copper_wire: 15,
-        refined_plate: 5,
+        circuit_board_1: 2,
+        wire_2: 15,
+        plate_3: 5,
       },
       materials: {
         signal_fragment: 10,
@@ -939,6 +1369,7 @@ function getShdCraftRecipe(): ComponentRecipe {
 
 function getShdUpgradeRecipe(nextLevel: number): ComponentRecipe {
   const coreRequired = SHD_CORE_REQUIREMENTS[nextLevel] ?? TOTAL_CORES;
+  const compTier = Math.max(1, Math.min(10, Math.ceil(nextLevel / 2)));
   const costs: CraftCosts = {
     stardust: shdCapacity(nextLevel - 1),
     coreTierRequired: coreRequired,
@@ -948,16 +1379,16 @@ function getShdUpgradeRecipe(nextLevel: number): ComponentRecipe {
       signal_fragment: 20 * nextLevel,
     },
     components: {
-      basic_circuit: Math.max(1, nextLevel * 2),
-      refined_plate: Math.max(1, nextLevel * 3),
+      [`circuit_board_${compTier}`]: Math.max(1, nextLevel * 2),
+      [`plate_${compTier}`]: Math.max(1, nextLevel * 3),
     },
   };
 
   if (nextLevel >= 5) {
     costs.components = {
       ...(costs.components ?? {}),
-      smd_resistor: nextLevel,
-      power_cell: Math.ceil(nextLevel / 2),
+      [`smd_resistor_${compTier}`]: nextLevel,
+      [`power_cell_${compTier}`]: Math.ceil(nextLevel / 2),
     };
     costs.materials = {
       ...(costs.materials ?? {}),
@@ -971,6 +1402,7 @@ function getShdUpgradeRecipe(nextLevel: number): ComponentRecipe {
       quantum_residue: 10 * nextLevel,
       reality_thread: nextLevel,
     };
+    costs.tokens = { recipe_token: nextLevel - 7 };
   }
 
   return {
@@ -982,7 +1414,6 @@ function getShdUpgradeRecipe(nextLevel: number): ComponentRecipe {
 
 function ensureJob(state: CoreSystemState, slot: string, recipeId: string): ActiveJob {
   const current = state.activeJobs[slot];
-
   if (current?.id === recipeId) return current;
 
   const next = { id: recipeId, progress: {} };
@@ -995,20 +1426,16 @@ function clearJob(state: CoreSystemState, slot: string): void {
 }
 
 function matchesRequirement(req: RollRequirement, roll: RollHitForCore): boolean {
-  if (req.type === "rarityAtLeast") {
-    return roll.effectiveRarity >= (req.rarity ?? Number.MAX_SAFE_INTEGER);
+  if (req.type === "rarityAtLeast") return roll.effectiveRarity >= (req.rarity ?? Infinity);
+  if (req.type === "specificAura") {
+    const auraId = roll.aura.id.toLowerCase();
+    const auraName = roll.aura.name.toLowerCase();
+    const wanted = (req.auraId ?? req.auraName ?? "").toLowerCase();
+
+    return auraId === wanted || auraName === wanted || roll.effectiveRarity >= (req.rarity ?? Infinity);
   }
 
-  const auraId = roll.aura.id.toLowerCase();
-  const auraName = roll.aura.name.toLowerCase();
-  const wantedId = (req.auraId ?? "").toLowerCase();
-  const wantedName = (req.auraName ?? "").toLowerCase();
-
-  const matchedAura =
-    (wantedId && auraId === wantedId) ||
-    (wantedName && auraName.includes(wantedName));
-
-  return matchedAura || roll.effectiveRarity >= (req.rarity ?? Number.MAX_SAFE_INTEGER);
+  return false;
 }
 
 function progressJobWithRolls(
@@ -1016,33 +1443,95 @@ function progressJobWithRolls(
   reqs: RollRequirement[],
   rolls: RollHitForCore[]
 ): void {
-  if (!job || reqs.length === 0) return;
+  if (!job) return;
 
   for (const roll of rolls) {
     for (const req of reqs) {
       const current = getProgress(job, req.key);
       if (current >= req.amount) continue;
       if (!matchesRequirement(req, roll)) continue;
-
       job.progress[req.key] = current + 1;
     }
   }
 }
 
-function addMaterialDrops(state: CoreSystemState, roll: RollHitForCore): void {
-  addToBag(state.materials, "scrap", 1);
-  addToBag(state.materials, "metal_bits", 1);
-
-  if (roll.effectiveRarity >= 1000) addToBag(state.materials, "circuit_scrap", 1);
-  if (roll.effectiveRarity >= 10000) addToBag(state.materials, "signal_fragment", 1);
-  if (roll.effectiveRarity >= 50000) addToBag(state.materials, "refined_alloy", 1);
-  if (roll.effectiveRarity >= 1000000) addToBag(state.materials, "stabilized_flux", 1);
-  if (roll.effectiveRarity >= 10000000) addToBag(state.materials, "quantum_residue", 1);
-  if (roll.effectiveRarity >= 100000000) addToBag(state.materials, "reality_thread", 1);
-  if (roll.effectiveRarity >= 1000000000) addToBag(state.materials, "singularity_shard", 1);
+function progressQuest(state: CoreSystemState, type: QuestType, amount: number): void {
+  const active = getActiveQuests(state);
+  for (const quest of active) {
+    if (quest.type !== type) continue;
+    if (state.questClaimed[quest.id]) continue;
+    state.questProgress[quest.id] = Math.min(
+      quest.target,
+      Math.max(0, (state.questProgress[quest.id] ?? 0) + amount)
+    );
+  }
 }
 
-function getStardustGain(roll: RollHitForCore): number {
+function grantReward(state: CoreSystemState, reward: RewardBag, multiplier = 1): void {
+  const scale = (v: number) => Math.max(1, Math.floor(v * multiplier));
+
+  for (const [id, amount] of Object.entries(reward.materials ?? {})) {
+    addToBag(state.materials, id, scale(amount));
+  }
+
+  for (const [id, amount] of Object.entries(reward.components ?? {})) {
+    addToBag(state.components, id, scale(amount));
+  }
+
+  for (const [id, amount] of Object.entries(reward.tokens ?? {})) {
+    addToBag(state.tokens, id, scale(amount));
+  }
+
+  for (const [id, amount] of Object.entries(reward.lootboxes ?? {})) {
+    addToBag(state.lootboxes, id, scale(amount));
+  }
+
+  if (reward.stardust && state.shdLevel >= 0) {
+    const cap = getShdCapacity(state);
+    const add = scale(reward.stardust);
+    state.stardust = Math.min(cap, state.stardust + add);
+    state.stats.stardustCollected += add;
+  }
+}
+
+function materialDropMultiplier(state: CoreSystemState): number {
+  return getPathModifiers(state).materialMultiplier;
+}
+
+function addMaterialDrops(state: CoreSystemState, roll: RollHitForCore): void {
+  const mult = materialDropMultiplier(state);
+  const add = (id: string, amount: number) => {
+    const value = Math.max(1, Math.floor(amount * mult));
+    addToBag(state.materials, id, value);
+    state.stats.materialsCollected += value;
+  };
+
+  add("scrap", 1);
+  add("metal_bits", 1);
+
+  if (roll.effectiveRarity >= 1000) add("circuit_scrap", 1);
+  if (roll.effectiveRarity >= 10000) add("signal_fragment", 1);
+  if (roll.effectiveRarity >= 50000) add("refined_alloy", 1);
+  if (roll.effectiveRarity >= 1000000) add("stabilized_flux", 1);
+  if (roll.effectiveRarity >= 10000000) add("quantum_residue", 1);
+  if (roll.effectiveRarity >= 100000000) add("reality_thread", 1);
+  if (roll.effectiveRarity >= 1000000000) add("singularity_shard", 1);
+
+  if (roll.effectiveRarity >= 5000000) add("chrono_dust", 1);
+  if (roll.effectiveRarity >= 25000000) add("void_glass", 1);
+  if (roll.effectiveRarity >= 75000000) add("stellar_ink", 1);
+  if (roll.effectiveRarity >= 250000000) add("dimensional_seal", 1);
+  if (roll.effectiveRarity >= 500000000) add("anomaly_matter", 1);
+  if (roll.effectiveRarity >= 1000000000) add("glitched_alloy", 1);
+  if (roll.effectiveRarity >= 5000000000) add("forbidden_circuit", 1);
+
+  const tokenChance = getPathModifiers(state).tokenBonusChance;
+  if (tokenChance > 0 && (hashString(`${state.wallSeed}:${Date.now()}:${roll.aura.id}`) % 10000) / 10000 < tokenChance) {
+    addToBag(state.tokens, "quest_token", 1);
+  }
+}
+
+function getStardustGain(state: CoreSystemState, roll: RollHitForCore): number {
   let amount = 1;
 
   if (roll.effectiveRarity >= 10000) amount += 10;
@@ -1051,7 +1540,209 @@ function getStardustGain(roll: RollHitForCore): number {
   if (roll.effectiveRarity >= 10000000) amount += 10000;
   if (roll.effectiveRarity >= 100000000) amount += 100000;
 
-  return amount;
+  return Math.floor(amount * getPathModifiers(state).stardustMultiplier);
+}
+
+function getActiveQuests(state: CoreSystemState): QuestDef[] {
+  const dailyKey = getDateKey("daily");
+  const weeklyKey = getDateKey("weekly");
+
+  return [
+    ...buildDailyQuests(state, dailyKey),
+    ...buildWeeklyQuests(state, weeklyKey),
+    ...buildStoryQuests(),
+  ];
+}
+
+function buildDailyQuests(state: CoreSystemState, key: string): QuestDef[] {
+  const seed = `${state.userId}:${key}`;
+  const bonusMat = hashPick(`${seed}:mat`, ["signal_fragment", "circuit_scrap", "refined_alloy"]);
+  const rareTarget = [10000, 50000, 100000][hashString(`${seed}:rare`) % 3];
+
+  return [
+    {
+      id: `daily:${key}:rolls`,
+      kind: "daily",
+      title: "Daily Rolling",
+      description: "Roll 100 times",
+      type: "rolls",
+      target: 100,
+      reward: { materials: { scrap: 250, [bonusMat]: 25 }, tokens: { quest_token: 1 } },
+    },
+    {
+      id: `daily:${key}:rare`,
+      kind: "daily",
+      title: "Daily Rare Hunt",
+      description: `Roll a ${formatRarity(rareTarget)}+ aura`,
+      type: "rarity",
+      target: 1,
+      reward: { materials: { signal_fragment: 35, refined_alloy: 10 }, lootboxes: { quest_box: 1 } },
+    },
+    {
+      id: `daily:${key}:craft`,
+      kind: "daily",
+      title: "Daily Crafting",
+      description: "Craft 20 components",
+      type: "components",
+      target: 20,
+      reward: { materials: { circuit_scrap: 75 }, tokens: { crafting_token: 1 } },
+    },
+  ];
+}
+
+function buildWeeklyQuests(state: CoreSystemState, key: string): QuestDef[] {
+  const seed = `${state.userId}:${key}`;
+
+  return [
+    {
+      id: `weekly:${key}:rolls`,
+      kind: "weekly",
+      title: "Weekly Rolling",
+      description: "Roll 2,500 times",
+      type: "rolls",
+      target: 2500,
+      reward: { materials: { refined_alloy: 250, stabilized_flux: 50 }, tokens: { recipe_token: 2 }, lootboxes: { core_box: 2 } },
+    },
+    {
+      id: `weekly:${key}:core`,
+      kind: "weekly",
+      title: "Weekly Core Push",
+      description: "Upgrade 3 Cores",
+      type: "core",
+      target: 3,
+      reward: { tokens: { recipe_token: 2, wall_token: 1 }, lootboxes: { core_box: 1 } },
+    },
+    {
+      id: `weekly:${key}:rare`,
+      kind: "weekly",
+      title: "Weekly Rare Hunt",
+      description: `Roll a ${formatRarity(hashString(seed) % 2 === 0 ? 1000000 : 500000)}+ aura`,
+      type: "rarity",
+      target: 1,
+      reward: { materials: { quantum_residue: 25, reality_thread: 5 }, tokens: { quest_token: 3 } },
+    },
+  ];
+}
+
+function buildStoryQuests(): QuestDef[] {
+  return [
+    {
+      id: "story:shd",
+      kind: "story",
+      title: "Build the SHD",
+      description: "Craft your Stellar Hard-Drive",
+      type: "shd",
+      target: 1,
+      reward: { lootboxes: { starter_box: 2 }, tokens: { recipe_token: 1 } },
+    },
+    {
+      id: "story:core15",
+      kind: "story",
+      title: "Reach Divergence",
+      description: "Reach Core 15",
+      type: "core",
+      target: 15,
+      reward: { components: { divergence_matrix: 1 }, tokens: { path_token: 1 } },
+    },
+    {
+      id: "story:reactor",
+      kind: "story",
+      title: "Start the Reactor",
+      description: "Claim the Reactor once",
+      type: "reactor",
+      target: 1,
+      reward: { lootboxes: { reactor_box: 1 }, tokens: { reactor_token: 1 } },
+    },
+    {
+      id: "story:core100",
+      kind: "story",
+      title: "Deep Core",
+      description: "Reach Core 100",
+      type: "core",
+      target: 100,
+      reward: { lootboxes: { anomaly_box: 1 }, tokens: { recipe_token: 5, wall_token: 3 } },
+    },
+  ];
+}
+
+function getQuestProgressValue(state: CoreSystemState, quest: QuestDef): number {
+  if (quest.type === "core") return Math.min(quest.target, state.coreTier);
+  if (quest.type === "shd") return state.shdLevel >= 0 ? 1 : 0;
+  if (quest.type === "stardust") return Math.min(quest.target, state.stardust);
+  return Math.min(quest.target, state.questProgress[quest.id] ?? 0);
+}
+
+function getAchievements(): AchievementDef[] {
+  return [
+    {
+      id: "rolls_100",
+      title: "First Hundred",
+      description: "Track 100 rolls",
+      check: (s) => s.stats.totalRollsTracked >= 100,
+      reward: { materials: { scrap: 500 }, lootboxes: { starter_box: 1 } },
+    },
+    {
+      id: "rolls_10000",
+      title: "Rolling Machine",
+      description: "Track 10,000 rolls",
+      check: (s) => s.stats.totalRollsTracked >= 10000,
+      reward: { tokens: { recipe_token: 2 }, lootboxes: { quest_box: 2 } },
+    },
+    {
+      id: "rare_1m",
+      title: "Million Hunter",
+      description: "Roll a 1/1M+ aura",
+      check: (s) => s.stats.rareRolls1m >= 1,
+      reward: { materials: { stabilized_flux: 100, quantum_residue: 10 }, tokens: { quest_token: 2 } },
+    },
+    {
+      id: "core_10",
+      title: "Core Initiate",
+      description: "Reach Core 10",
+      check: (s) => s.coreTier >= 10,
+      reward: { components: { circuit_board_2: 5 }, tokens: { recipe_token: 1 } },
+    },
+    {
+      id: "core_50",
+      title: "Core Engineer",
+      description: "Reach Core 50",
+      check: (s) => s.coreTier >= 50,
+      reward: { lootboxes: { core_box: 3 }, tokens: { recipe_token: 3, wall_token: 1 } },
+    },
+    {
+      id: "core_100",
+      title: "Core Architect",
+      description: "Reach Core 100",
+      check: (s) => s.coreTier >= 100,
+      reward: { lootboxes: { anomaly_box: 1 }, tokens: { recipe_token: 5, wall_token: 2 } },
+    },
+    {
+      id: "shd_1",
+      title: "Stardust Carrier",
+      description: "Craft an SHD",
+      check: (s) => s.shdLevel >= 0,
+      reward: { lootboxes: { starter_box: 1 }, materials: { signal_fragment: 50 } },
+    },
+    {
+      id: "reactor_1",
+      title: "Reactor Online",
+      description: "Claim the Reactor once",
+      check: (s) => s.stats.reactorClaims >= 1,
+      reward: { tokens: { reactor_token: 1 }, lootboxes: { reactor_box: 1 } },
+    },
+  ];
+}
+
+function shdUnlockText(level: number): string {
+  const unlocks: Record<number, string> = {
+    0: "Stardust storage unlocked",
+    2: "Better Stardust tracking",
+    4: "Stardust Reactor unlocked",
+    6: "Extra quest reward scaling",
+    8: "Late-game recipe token crafting unlocked",
+    10: "Max SHD storage unlocked",
+  };
+  return unlocks[level] ?? "Higher capacity unlocked";
 }
 
 export async function recordCoreRolls(
@@ -1092,38 +1783,44 @@ export async function recordCoreRolls(
   const shdRecipe = shdJob?.id === "shd_craft" ? getShdCraftRecipe() : null;
 
   for (const roll of rolls) {
+    state.stats.totalRollsTracked += 1;
+    state.stats.highestRarity = Math.max(state.stats.highestRarity, roll.effectiveRarity);
+    if (roll.effectiveRarity >= 100000) state.stats.rareRolls100k += 1;
+    if (roll.effectiveRarity >= 1000000) state.stats.rareRolls1m += 1;
+    if (roll.effectiveRarity >= 10000000) state.stats.rareRolls10m += 1;
+
     addMaterialDrops(state, roll);
+
+    if (roll.effectiveRarity >= 10000) progressQuest(state, "rarity", 1);
 
     if (state.shdLevel >= 0) {
       const cap = getShdCapacity(state);
-      const gain = getStardustGain(roll);
-      state.stardust = Math.min(cap, state.stardust + gain);
+      const gain = getStardustGain(state, roll);
+      const added = Math.max(0, Math.min(gain, cap - state.stardust));
+      state.stardust += added;
+      state.stats.stardustCollected += added;
     }
   }
 
-  if (coreRecipe) {
-    progressJobWithRolls(coreJob, coreRecipe.costs.activeRolls ?? [], rolls);
-  }
+  progressQuest(state, "rolls", rolls.length);
 
-  if (subRecipe) {
-    progressJobWithRolls(subJob, subRecipe.costs.activeRolls ?? [], rolls);
-  }
-
-  if (shdRecipe) {
-    progressJobWithRolls(shdJob, shdRecipe.costs.activeRolls ?? [], rolls);
-  }
+  if (coreRecipe) progressJobWithRolls(coreJob, coreRecipe.costs.activeRolls ?? [], rolls);
+  if (subRecipe) progressJobWithRolls(subJob, subRecipe.costs.activeRolls ?? [], rolls);
+  if (shdRecipe) progressJobWithRolls(shdJob, shdRecipe.costs.activeRolls ?? [], rolls);
 
   await saveCoreState(state);
   return state;
 }
 
 export function getCoreLuckBonusPercent(state: CoreSystemState): number {
-  if (state.coreTier <= 0) return 0;
+  const sub = getSubCoreBonusPercent(state);
+  const path = getPathModifiers(state).luckBonus;
+  if (state.coreTier <= 0) return Math.floor(sub + path);
 
   const target = CORE_LUCK_TARGET_PERCENT[state.corePath] ?? CORE_LUCK_TARGET_PERCENT.universal;
   const ratio = Math.min(1, state.coreTier / TOTAL_CORES);
 
-  return Math.floor(target * Math.pow(ratio, 1.08)) + getSubCoreBonusPercent(state);
+  return Math.floor(target * Math.pow(ratio, 1.08) + sub + path);
 }
 
 export async function getViewerCoreLuck(
@@ -1140,29 +1837,65 @@ export async function getViewerCoreLuck(
   };
 }
 
+export async function craftByIdAmount(
+  channelId: string,
+  user: NightbotUser | null,
+  rawId: string,
+  rawAmount: number
+): Promise<string> {
+  const batches = Math.max(1, Math.min(10000, Math.floor(rawAmount || 1)));
+  const id = normalizeCraftId(rawId);
+
+  if (id === "chassis" || id === "frame") {
+    if (batches > 1) {
+      return `${titleCase(id)} can only be crafted one at a time because it follows your next Core tier.`;
+    }
+    return craftById(channelId, user, rawId);
+  }
+
+  const state = await touchCoreState(channelId, user);
+  const recipe = COMPONENT_RECIPES[id];
+
+  if (!recipe) {
+    return `Unknown component: ${id}. Try !craft recipe wire_1, !craft recipe circuit_board_1, or !craft recipe divergence_matrix.`;
+  }
+
+  const scaledCosts: CraftCosts = {
+    stardust: recipe.costs.stardust ? recipe.costs.stardust * batches : undefined,
+    materials: scaleBag(recipe.costs.materials, batches),
+    components: scaleBag(recipe.costs.components, batches),
+    frames: scaleBag(recipe.costs.frames, batches),
+    tokens: scaleBag(recipe.costs.tokens, batches),
+    coreTierRequired: recipe.costs.coreTierRequired,
+    shdLevelRequired: recipe.costs.shdLevelRequired,
+    activeRolls: recipe.costs.activeRolls?.map((req) => ({ ...req, amount: req.amount * batches })),
+  };
+
+  const missing = getMissingCosts(state, scaledCosts);
+  if (missing.length > 0) return `${recipe.name} x${formatAmount(batches)} missing: ${missing.join(" | ")}`;
+
+  consumeCosts(state, scaledCosts);
+
+  let outputAmount = (recipe.outputAmount ?? 1) * batches;
+  if (state.corePath === "support" && outputAmount >= 10) outputAmount += Math.floor(outputAmount * 0.1);
+
+  addToBag(state.components, recipe.id, outputAmount);
+  state.stats.totalCrafts += 1;
+  state.stats.totalComponentsCrafted += outputAmount;
+  progressQuest(state, "crafts", 1);
+  progressQuest(state, "components", outputAmount);
+
+  await saveCoreState(state);
+
+  return `✅ Crafted ${recipe.name} x${formatAmount(outputAmount)}.`;
+}
+
 export async function craftComponent(
   channelId: string,
   user: NightbotUser | null,
   componentId: string
 ): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-  const recipe = COMPONENT_RECIPES[componentId];
-
-  if (!recipe) {
-    return `Unknown component. Try: basic_wire, basic_plate, copper_wire, refined_plate, basic_circuit, smd_resistor.`;
-  }
-
-  const missing = getMissingCosts(state, recipe.costs);
-
-  if (missing.length > 0) {
-    return `${recipe.name} missing: ${missing.join(" | ")}`;
-  }
-
-  consumeCosts(state, recipe.costs);
-  addToBag(state.components, recipe.id, recipe.outputAmount ?? 1);
-  await saveCoreState(state);
-
-  return `✅ Crafted ${recipe.name} x${recipe.outputAmount ?? 1}.`;
+  return craftByIdAmount(channelId, user, componentId, 1);
 }
 
 export async function craftNextChassis(
@@ -1179,11 +1912,12 @@ export async function craftNextChassis(
 
   const recipe = getChassisRecipe(state, tier);
   const missing = getMissingCosts(state, recipe.costs);
-
   if (missing.length > 0) return `${recipe.name} missing: ${missing.join(" | ")}`;
 
   consumeCosts(state, recipe.costs);
   addToBag(state.components, recipe.id, 1);
+  state.stats.totalCrafts += 1;
+  progressQuest(state, "crafts", 1);
   await saveCoreState(state);
 
   return `✅ Crafted ${recipe.name}.`;
@@ -1203,14 +1937,28 @@ export async function craftNextFrame(
 
   const recipe = getFrameRecipe(state, tier);
   const missing = getMissingCosts(state, recipe.costs);
-
   if (missing.length > 0) return `${recipe.name} missing: ${missing.join(" | ")}`;
 
   consumeCosts(state, recipe.costs);
   addToBag(state.frames, recipe.id, 1);
+  state.stats.totalCrafts += 1;
+  progressQuest(state, "crafts", 1);
   await saveCoreState(state);
 
   return `✅ Crafted ${recipe.name}.`;
+}
+
+export async function craftById(
+  channelId: string,
+  user: NightbotUser | null,
+  rawId: string
+): Promise<string> {
+  const id = normalizeCraftId(rawId);
+
+  if (id === "chassis") return craftNextChassis(channelId, user);
+  if (id === "frame") return craftNextFrame(channelId, user);
+
+  return craftByIdAmount(channelId, user, id, 1);
 }
 
 export async function attemptCoreUpgrade(
@@ -1224,9 +1972,7 @@ export async function attemptCoreUpgrade(
   if (tier > PATH_SPLIT_CORE && state.corePath === "universal") {
     return `Core ${tier} requires a path. Craft Divergence Matrix, then use !core choose safe/risk/support/biome/precision/token/anomaly.`;
   }
-  if (tier >= 8 && state.shdLevel < 0) {
-    return `Core ${tier} needs Stardust. Craft SHD first with !shd craft.`;
-  }
+  if (tier >= 8 && state.shdLevel < 0) return `Core ${tier} needs Stardust. Craft SHD first with !shd craft.`;
 
   const recipe = getCoreRecipe(state, tier);
   const job = ensureJob(state, "core", recipe.id);
@@ -1236,7 +1982,12 @@ export async function attemptCoreUpgrade(
 
   consumeCosts(state, recipe.costs);
   state.coreTier = tier;
+  state.stats.coresCrafted += 1;
   clearJob(state, "core");
+  progressQuest(state, "core", 1);
+
+  if (tier % 10 === 0) addToBag(state.lootboxes, "core_box", 1);
+  if (tier === PATH_SPLIT_CORE) addToBag(state.tokens, "path_token", 1);
 
   await saveCoreState(state);
 
@@ -1254,9 +2005,7 @@ export async function chooseCorePath(
   const wanted = path.toLowerCase().trim() as CorePath;
   const allowed: CorePath[] = ["safe", "risk", "support", "biome", "precision", "token", "anomaly"];
 
-  if (!allowed.includes(wanted)) {
-    return `Choose: safe, risk, support, biome, precision, token, or anomaly.`;
-  }
+  if (!allowed.includes(wanted)) return `Choose: safe, risk, support, biome, precision, token, or anomaly.`;
 
   const state = await touchCoreState(channelId, user);
 
@@ -1265,10 +2014,10 @@ export async function chooseCorePath(
   }
 
   if (state.corePath !== "universal") {
-    return `You already chose ${titleCase(state.corePath)}. Path switching with Realignment Matrix comes later.`;
+    return `You already chose ${titleCase(state.corePath)}. Use !core switch <path> with Realignment Matrix.`;
   }
 
-  const cost: CraftCosts = { components: { divergence_matrix: 1 } };
+  const cost: CraftCosts = { components: { divergence_matrix: 1 }, tokens: { path_token: 1 } };
   const missing = getMissingCosts(state, cost);
 
   if (missing.length > 0) return `Path choice missing: ${missing.join(" | ")}`;
@@ -1288,9 +2037,7 @@ export async function setCoreFocus(
 ): Promise<string> {
   const wanted = focus.toLowerCase().trim();
 
-  if (wanted !== "main" && wanted !== "sub") {
-    return `Use !core focus main or !core focus sub.`;
-  }
+  if (wanted !== "main" && wanted !== "sub") return `Use !core focus main or !core focus sub.`;
 
   const state = await touchCoreState(channelId, user);
   state.coreFocus = wanted;
@@ -1322,10 +2069,12 @@ export async function attemptShdCraft(
   consumeCosts(state, recipe.costs);
   state.shdLevel = 0;
   state.stardust = 0;
+  state.stats.shdCrafted += 1;
   clearJob(state, "shd");
+  progressQuest(state, "shd", 1);
   await saveCoreState(state);
 
-  return `✅ Crafted Stellar Hard-Drive! SHD Lv.0 | Capacity: 0/500 Stardust.`;
+  return `✅ Crafted Stellar Hard-Drive! SHD Lv.0 | Capacity: 0/500 Stardust | ${shdUnlockText(0)}.`;
 }
 
 export async function attemptShdUpgrade(
@@ -1346,7 +2095,6 @@ export async function attemptShdUpgrade(
   }
 
   const missing = getMissingCosts(state, recipe.costs);
-
   if (missing.length > 0) return `SHD Lv.${nextLevel} missing: ${missing.join(" | ")}`;
 
   consumeCosts(state, recipe.costs);
@@ -1354,9 +2102,8 @@ export async function attemptShdUpgrade(
   state.stardust = 0;
   await saveCoreState(state);
 
-  return `✅ SHD upgraded to Lv.${nextLevel}! Capacity: ${formatAmount(shdCapacity(nextLevel))} Stardust.`;
+  return `✅ SHD upgraded to Lv.${nextLevel}! Capacity: ${formatAmount(shdCapacity(nextLevel))} Stardust | ${shdUnlockText(nextLevel)}.`;
 }
-
 
 export async function attemptSubCoreCraft(
   channelId: string,
@@ -1382,32 +2129,7 @@ export async function attemptSubCoreCraft(
   clearJob(state, "sub");
   await saveCoreState(state);
 
-  return `✅ Crafted ${recipe.name}! Bonus Core luck is now active.`;
-}
-
-export async function formatSubCoreStatus(
-  channelId: string,
-  user: NightbotUser | null
-): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-  const recipe = getSubCoreRecipe(state);
-
-  if (!recipe) {
-    return `No Sub-Core available. They appear when your next Core is one of your randomized wall cores.`;
-  }
-
-  if (state.subCores[recipe.id]) {
-    return `${recipe.name} already crafted. Current Sub-Core bonus total: +${getSubCoreBonusPercent(state)}% luck.`;
-  }
-
-  const job = ensureJob(state, "sub", recipe.id);
-  const missing = getMissingCosts(state, recipe.costs, job);
-  await saveCoreState(state);
-
-  const progress = formatRollProgress(job, recipe.costs.activeRolls ?? []);
-  const progressText = progress ? ` | Progress: ${progress}` : "";
-
-  return truncate(`${recipe.name} | Missing: ${missing.join(" | ")}${progressText}`);
+  return `✅ Crafted ${recipe.name}! Wall support and bonus Core luck are now active.`;
 }
 
 export async function switchCorePath(
@@ -1418,9 +2140,7 @@ export async function switchCorePath(
   const wanted = path.toLowerCase().trim() as CorePath;
   const allowed: CorePath[] = ["safe", "risk", "support", "biome", "precision", "token", "anomaly"];
 
-  if (!allowed.includes(wanted)) {
-    return `Switch to: safe, risk, support, biome, precision, token, or anomaly.`;
-  }
+  if (!allowed.includes(wanted)) return `Switch to: safe, risk, support, biome, precision, token, or anomaly.`;
 
   const state = await touchCoreState(channelId, user);
 
@@ -1434,11 +2154,141 @@ export async function switchCorePath(
 
   consumeCosts(state, recipe.costs);
   state.corePath = wanted;
+  state.stats.pathSwitches += 1;
   clearJob(state, "core");
   clearJob(state, "sub");
   await saveCoreState(state);
 
   return `✅ Realigned to ${titleCase(wanted)} Core path. Switching cost scale was ${getSwitchCostScale(state.coreTier)}x.`;
+}
+
+export async function formatCoreStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const nextTier = Math.min(TOTAL_CORES, state.coreTier + 1);
+  const bonus = getCoreLuckBonusPercent(state);
+  const wall = isWallCore(state, nextTier) ? " | Next wall: Sub-Core available" : "";
+  const pathText = titleCase(state.corePath);
+
+  if (nextTier > PATH_SPLIT_CORE && state.corePath === "universal") {
+    return truncate(`${state.displayName} | Core ${state.coreTier}/${TOTAL_CORES} | Path ready. Craft Divergence Matrix, then !core choose safe/risk/support/biome/precision/token/anomaly.`);
+  }
+
+  const recipe = getCoreRecipe(state, nextTier);
+  const job = ensureJob(state, "core", recipe.id);
+  const missing = getMissingCosts(state, recipe.costs, job);
+  await saveCoreState(state);
+
+  const missingText = missing.length > 0 ? ` | Missing: ${missing.join(" | ")}` : ` | Ready: !core upgrade`;
+  return truncate(`${state.displayName} | ${pathText} Core ${state.coreTier}/${TOTAL_CORES} | Luck ${formatPercent(bonus)} | Focus: ${state.coreFocus}${wall}${missingText}`);
+}
+
+export async function formatCoreRecipe(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const tier = state.coreTier + 1;
+
+  if (tier > TOTAL_CORES) return `Max Core reached.`;
+
+  const recipe = getCoreRecipe(state, tier);
+  const job = ensureJob(state, "core", recipe.id);
+  await saveCoreState(state);
+
+  const progress = formatRollProgress(job, recipe.costs.activeRolls ?? []);
+  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}${progress ? ` | Progress: ${progress}` : ""}`);
+}
+
+export async function formatShdStatus(
+  channelId: string,
+  user: NightbotUser | null,
+  totalRolls: number
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  if (state.shdLevel < 0) {
+    const recipe = getShdCraftRecipe();
+    const job = ensureJob(state, "shd", recipe.id);
+    const missing = getMissingCosts(state, recipe.costs, job);
+    if (totalRolls < 250) missing.unshift(`Rolls ${totalRolls}/250`);
+    await saveCoreState(state);
+
+    if (missing.length === 0) {
+      return truncate(`💾 No SHD. Ready to craft! Use !stardust craft or !shd craft.`);
+    }
+
+    return truncate(`💾 No SHD. Craft missing: ${missing.join(" | ")}`);
+  }
+
+  const cap = getShdCapacity(state);
+  const next = state.shdLevel < 10 ? ` | Next: Lv.${state.shdLevel + 1} requires full SHD` : " | Max level";
+  const unlock = shdUnlockText(state.shdLevel);
+
+  return truncate(`💾 SHD Lv.${state.shdLevel} | Stardust: ${formatAmount(state.stardust)}/${formatAmount(cap)} | ${unlock}${next}`);
+}
+
+export async function formatSubCoreStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const recipe = getSubCoreRecipe(state);
+
+  if (!recipe) return `No Sub-Core available. They appear when your next Core is one of your randomized wall cores.`;
+  if (state.subCores[recipe.id]) return `${recipe.name} already crafted. Current Sub-Core bonus total: +${getSubCoreBonusPercent(state)}% luck.`;
+
+  const job = ensureJob(state, "sub", recipe.id);
+  const missing = getMissingCosts(state, recipe.costs, job);
+  await saveCoreState(state);
+
+  const progress = formatRollProgress(job, recipe.costs.activeRolls ?? []);
+  if (missing.length === 0) return `${recipe.name} ready! Use !subcore craft.`;
+  return truncate(`${recipe.name} | Missing: ${missing.join(" | ")}${progress ? ` | Progress: ${progress}` : ""}`);
+}
+
+export async function formatComponentsStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  return truncate(
+    `Materials: ${formatBag(state.materials, materialName, 5)} | Components: ${formatBag(state.components, componentName, 5)} | Frames: ${formatBag(state.frames, frameName, 3)}`
+  );
+}
+
+export async function formatTokensStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  return truncate(`Tokens: ${formatBag(state.tokens, tokenName, 8)} | Boxes: ${formatBag(state.lootboxes, lootboxName, 5)}`);
+}
+
+export async function formatCraftRecipe(
+  channelId: string,
+  user: NightbotUser | null,
+  rawId: string
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const id = normalizeCraftId(rawId);
+
+  if (id === "chassis") {
+    const recipe = getChassisRecipe(state, state.coreTier + 1);
+    return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
+  }
+
+  if (id === "frame") {
+    const recipe = getFrameRecipe(state, state.coreTier + 1);
+    return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
+  }
+
+  const recipe = COMPONENT_RECIPES[id];
+  if (!recipe) return `Unknown recipe: ${id}. Try wire_1, plate_1, circuit_board_1, divergence_matrix.`;
+
+  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)} | Makes x${recipe.outputAmount ?? 1}`);
 }
 
 export async function formatReactorStatus(
@@ -1452,7 +2302,7 @@ export async function formatReactorStatus(
   }
 
   const reactor = state.reactor;
-  const rate = getReactorRate(reactor.level);
+  const rate = getReactorRate(state);
   const cap = getReactorCap(reactor.level);
 
   if (reactor.activeDeposit) {
@@ -1460,7 +2310,6 @@ export async function formatReactorStatus(
     const hours = Math.floor(left / 3600000);
     const minutes = Math.floor((left % 3600000) / 60000);
     const profit = Math.floor(reactor.activeDeposit.amount * reactor.activeDeposit.bonusPercent / 100);
-
     return truncate(`🌌 Reactor Lv.${reactor.level} | Active: ${formatAmount(reactor.activeDeposit.amount)} → ${formatAmount(reactor.activeDeposit.amount + profit)} | Ready in ${hours}h ${minutes}m`);
   }
 
@@ -1477,13 +2326,12 @@ export async function reactorDeposit(
   if (state.shdLevel < 4) return `Reactor unlocks at SHD Lv.4.`;
   if (state.reactor.activeDeposit) return `Your Reactor already has an active deposit. Use !reactor claim when ready.`;
 
-  const amount = Math.floor(Number(amountRaw.replace(/,/g, "")));
-
+  const amount = Math.floor(parseAmount(amountRaw));
   if (!Number.isFinite(amount) || amount < 100) return `Deposit at least 100 Stardust.`;
   if (amount > getReactorCap(state.reactor.level)) return `Deposit exceeds Reactor cap: ${formatAmount(getReactorCap(state.reactor.level))}.`;
   if (amount > state.stardust) return `Not enough Stardust: ${formatAmount(state.stardust)}/${formatAmount(amount)}.`;
 
-  const rate = getReactorRate(state.reactor.level);
+  const rate = getReactorRate(state);
   state.stardust -= amount;
   state.reactor.activeDeposit = {
     amount,
@@ -1493,7 +2341,6 @@ export async function reactorDeposit(
   };
 
   await saveCoreState(state);
-
   return `🌌 Deposited ${formatAmount(amount)} Stardust. Claim in 12h for ${formatAmount(amount + Math.floor(amount * rate / 100))} (+${rate.toFixed(1)}%).`;
 }
 
@@ -1520,6 +2367,8 @@ export async function reactorClaim(
 
   state.stardust += added;
   state.reactor.activeDeposit = null;
+  state.stats.reactorClaims += 1;
+  progressQuest(state, "reactor", 1);
   await saveCoreState(state);
 
   return lost > 0
@@ -1546,7 +2395,7 @@ export async function reactorUpgrade(
   state.reactor.level = nextLevel;
   await saveCoreState(state);
 
-  return `✅ Reactor upgraded to Lv.${nextLevel}! Rate: +${getReactorRate(nextLevel).toFixed(1)}% / 12h | Cap: ${formatAmount(getReactorCap(nextLevel))}.`;
+  return `✅ Reactor upgraded to Lv.${nextLevel}! Rate: +${getReactorRate(state).toFixed(1)}% / 12h | Cap: ${formatAmount(getReactorCap(nextLevel))}.`;
 }
 
 export async function formatReactorRecipe(
@@ -1554,7 +2403,6 @@ export async function formatReactorRecipe(
   user: NightbotUser | null
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
-
   if (state.shdLevel < 4) return `Reactor unlocks at SHD Lv.4.`;
   if (state.reactor.level >= 25) return `Reactor is max level.`;
 
@@ -1562,41 +2410,145 @@ export async function formatReactorRecipe(
   return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
 }
 
-export function normalizeCraftId(raw: string): string {
-  return raw
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+export async function formatQuestStatus(
+  channelId: string,
+  user: NightbotUser | null,
+  kind: QuestKind = "daily"
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const quests = getActiveQuests(state).filter((q) => q.kind === kind);
+  const next = quests.find((q) => !state.questClaimed[q.id]) ?? quests[0];
+
+  if (!next) return `No ${kind} quests found.`;
+
+  const progress = getQuestProgressValue(state, next);
+  const ready = progress >= next.target && !state.questClaimed[next.id];
+  const claimed = state.questClaimed[next.id] ? "Claimed" : ready ? "Ready: !quest claim" : `${formatAmount(progress)}/${formatAmount(next.target)}`;
+
+  return truncate(`${titleCase(kind)} Quest: ${next.title} | ${next.description} | ${claimed}`);
 }
 
-export async function formatCoreStatus(
+export async function claimQuest(
+  channelId: string,
+  user: NightbotUser | null,
+  kindRaw = ""
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const kind = (["daily", "weekly", "story"].includes(kindRaw) ? kindRaw : "") as QuestKind | "";
+  const quests = getActiveQuests(state).filter((q) => !kind || q.kind === kind);
+
+  const ready = quests.find((q) => !state.questClaimed[q.id] && getQuestProgressValue(state, q) >= q.target);
+  if (!ready) return `No quest ready to claim. Try !quest daily, !quest weekly, or !quest story.`;
+
+  state.questClaimed[ready.id] = true;
+  state.stats.questsCompleted += 1;
+
+  grantReward(state, ready.reward, getPathModifiers(state).questRewardMultiplier);
+  progressQuest(state, "materials", 1);
+
+  await saveCoreState(state);
+  return `✅ Claimed ${ready.title}! Rewards added.`;
+}
+
+export async function formatAchievementsStatus(
   channelId: string,
   user: NightbotUser | null
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
-  const nextTier = Math.min(TOTAL_CORES, state.coreTier + 1);
-  const bonus = getCoreLuckBonusPercent(state);
-  const wall = isWallCore(state, nextTier) ? " | Next is a wall | Sub-Core available" : "";
-  const pathText = titleCase(state.corePath);
+  const achievements = getAchievements();
+  const ready = achievements.find((a) => !state.achievementsClaimed[a.id] && a.check(state));
+  const next = ready ?? achievements.find((a) => !state.achievementsClaimed[a.id]);
 
-  if (nextTier > PATH_SPLIT_CORE && state.corePath === "universal") {
-    return truncate(`${state.displayName} | Core ${state.coreTier}/${TOTAL_CORES} | Path ready. Craft Divergence Matrix, then !core choose safe/risk/support/biome/precision/token/anomaly.`);
-  }
+  if (!next) return `All achievements claimed. Huge W.`;
 
-  const recipe = getCoreRecipe(state, nextTier);
-  const job = ensureJob(state, "core", recipe.id);
-  const missing = getMissingCosts(state, recipe.costs, job);
-  await saveCoreState(state);
-
-  const missingText = missing.length > 0 ? ` | Missing: ${missing.join(" | ")}` : ` | Ready: !core upgrade`;
-
-  return truncate(`${state.displayName} | ${pathText} Core ${state.coreTier}/${TOTAL_CORES} | Luck ${formatPercent(bonus)} | Focus: ${state.coreFocus}${wall}${missingText}`);
+  return truncate(`${ready ? "Ready achievement" : "Next achievement"}: ${next.title} | ${next.description}${ready ? " | Use !achievements claim" : ""}`);
 }
 
-export async function formatShdStatus(
+export async function claimAchievements(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const ready = getAchievements().filter((a) => !state.achievementsClaimed[a.id] && a.check(state));
+
+  if (ready.length === 0) return `No achievements ready to claim.`;
+
+  for (const achievement of ready) {
+    state.achievementsClaimed[achievement.id] = true;
+    grantReward(state, achievement.reward);
+  }
+
+  await saveCoreState(state);
+  return `✅ Claimed ${ready.length} achievement reward(s): ${ready.map((a) => a.title).slice(0, 3).join(", ")}${ready.length > 3 ? "..." : ""}`;
+}
+
+function openOneBox(state: CoreSystemState, boxId: string): string {
+  const seed = `${state.userId}:${boxId}:${Date.now()}:${state.stats.boxesOpened}`;
+  const roll = hashString(seed) % 100;
+
+  state.stats.boxesOpened += 1;
+  progressQuest(state, "boxes", 1);
+
+  if (boxId === "starter_box") {
+    grantReward(state, { materials: { scrap: 500, circuit_scrap: 80, signal_fragment: 15 }, tokens: { quest_token: 1 } });
+    return "Starter rewards";
+  }
+
+  if (boxId === "core_box") {
+    grantReward(state, { materials: { refined_alloy: 100, stabilized_flux: 20 }, tokens: { recipe_token: roll > 70 ? 2 : 1, wall_token: roll > 85 ? 1 : 0 } });
+    return "Core rewards";
+  }
+
+  if (boxId === "quest_box") {
+    grantReward(state, { materials: { signal_fragment: 120, refined_alloy: 30 }, tokens: { quest_token: 2, crafting_token: 1 } });
+    return "Quest rewards";
+  }
+
+  if (boxId === "reactor_box") {
+    grantReward(state, { materials: { quantum_residue: 20, reality_thread: 5 }, tokens: { reactor_token: 1, recipe_token: roll > 75 ? 1 : 0 } });
+    return "Reactor rewards";
+  }
+
+  if (boxId === "anomaly_box") {
+    grantReward(state, { materials: { anomaly_matter: 40, dimensional_seal: 20, forbidden_circuit: roll > 85 ? 2 : 1 }, tokens: { anomaly_token: 1, recipe_token: 3 } });
+    return "Anomaly rewards";
+  }
+
+  if (boxId === "dev_box") {
+    grantReward(state, { materials: { debug_fragment: 10, anomaly_matter: 100 }, tokens: { recipe_token: 10, wall_token: 5, path_token: 3 }, lootboxes: { anomaly_box: 1 } });
+    return "Dev rewards";
+  }
+
+  grantReward(state, { materials: { scrap: 100 } });
+  return "Unknown box rewards";
+}
+
+export async function openLootbox(
   channelId: string,
   user: NightbotUser | null,
-  totalRolls: number
+  boxRaw: string,
+  amountRaw = "1"
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const boxId = normalizeCraftId(boxRaw || "quest_box");
+  const amount = Math.max(1, Math.min(25, Math.floor(parseAmount(amountRaw || "1") || 1)));
+  const have = state.lootboxes[boxId] ?? 0;
+
+  if (have < amount) return `Need ${lootboxName(boxId)} ${have}/${amount}.`;
+
+  removeFromBag(state.lootboxes, boxId, amount);
+
+  const summaries: string[] = [];
+  for (let i = 0; i < amount; i++) summaries.push(openOneBox(state, boxId));
+
+  await saveCoreState(state);
+  return truncate(`✅ Opened ${lootboxName(boxId)} x${amount}: ${summaries.slice(0, 3).join(", ")}${amount > 3 ? "..." : ""}`);
+}
+
+export async function formatNextStep(
+  channelId: string,
+  user: NightbotUser | null,
+  totalRolls = 0
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
 
@@ -1606,152 +2558,87 @@ export async function formatShdStatus(
     const missing = getMissingCosts(state, recipe.costs, job);
     if (totalRolls < 250) missing.unshift(`Rolls ${totalRolls}/250`);
     await saveCoreState(state);
-
-    return truncate(`💾 No SHD. Craft missing: ${missing.join(" | ")}`);
+    return missing.length === 0
+      ? `Next: craft SHD with !shd craft.`
+      : truncate(`Next: build SHD. Missing: ${missing.join(" | ")}`);
   }
 
-  const cap = getShdCapacity(state);
-  const next = state.shdLevel < 10 ? ` | Next: Lv.${state.shdLevel + 1} requires full SHD` : " | Max level";
-
-  return truncate(`💾 SHD Lv.${state.shdLevel} | Stardust: ${formatAmount(state.stardust)}/${formatAmount(cap)}${next}`);
-}
-
-export async function formatComponentsStatus(
-  channelId: string,
-  user: NightbotUser | null
-): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-
-  return truncate(
-    `Materials: ${formatBag(state.materials, materialName, 5)} | Components: ${formatBag(
-      state.components,
-      componentName,
-      5
-    )} | Frames: ${formatBag(state.frames, frameName, 3)}`
-  );
-}
-
-export async function formatCraftRecipe(
-  channelId: string,
-  user: NightbotUser | null,
-  rawId: string
-): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-  const id = normalizeCraftId(rawId);
-
-  if (id === "chassis") {
-    const recipe = getChassisRecipe(state, state.coreTier + 1);
-    return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
+  const nextTier = state.coreTier + 1;
+  if (nextTier > PATH_SPLIT_CORE && state.corePath === "universal") {
+    return `Next: craft Divergence Matrix, then !core choose safe/risk/support/biome/precision/token/anomaly.`;
   }
 
-  if (id === "frame") {
-    const recipe = getFrameRecipe(state, state.coreTier + 1);
-    return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
-  }
-
-  const recipe = COMPONENT_RECIPES[id];
-
-  if (!recipe) return `Unknown recipe.`;
-
-  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
-}
-
-export async function formatCoreRecipe(
-  channelId: string,
-  user: NightbotUser | null
-): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-  const tier = state.coreTier + 1;
-
-  if (tier > TOTAL_CORES) return `Max Core reached.`;
-  if (tier > PATH_SPLIT_CORE && state.corePath === "universal") {
-    return `Next Core needs a path. Craft Divergence Matrix, then !core choose <path>.`;
-  }
-
-  const recipe = getCoreRecipe(state, tier);
-  const job = ensureJob(state, "core", recipe.id);
-  await saveCoreState(state);
-
-  const rollProgress = formatRollProgress(job, recipe.costs.activeRolls ?? []);
-  const rollText = rollProgress ? ` | Progress: ${rollProgress}` : "";
-
-  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}${rollText}`);
-}
-
-
-export async function craftByIdAmount(
-  channelId: string,
-  user: NightbotUser | null,
-  rawId: string,
-  rawAmount: number
-): Promise<string> {
-  const batches = Math.max(1, Math.min(10000, Math.floor(rawAmount || 1)));
-  const id = normalizeCraftId(rawId);
-
-  if (id === "chassis" || id === "frame") {
-    if (batches > 1) {
-      return `${titleCase(id)} can only be crafted one at a time because it follows your next Core tier.`;
+  const frame = getFrameRecipe(state, nextTier);
+  const frameMissing = getMissingCosts(state, frame.costs);
+  if ((state.frames[frame.id] ?? 0) < 1) {
+    const chassis = getChassisRecipe(state, nextTier);
+    const chassisMissing = getMissingCosts(state, chassis.costs);
+    if ((state.components[chassis.id] ?? 0) < 1) {
+      return chassisMissing.length === 0
+        ? `Next: !craft chassis`
+        : truncate(`Next: craft chassis. Missing: ${chassisMissing.join(" | ")}`);
     }
 
-    return craftById(channelId, user, rawId);
+    return frameMissing.length === 0 ? `Next: !craft frame` : truncate(`Next: craft frame. Missing: ${frameMissing.join(" | ")}`);
   }
 
-  const state = await touchCoreState(channelId, user);
-  const recipe = COMPONENT_RECIPES[id];
-
-  if (!recipe) {
-    return `Unknown component. Try: basic_wire, basic_plate, copper_wire, refined_plate, basic_circuit, smd_resistor.`;
-  }
-
-  const scaleBag = (
-    bag: Record<string, number> | undefined
-  ): Record<string, number> | undefined => {
-    if (!bag) return undefined;
-
-    return Object.fromEntries(
-      Object.entries(bag).map(([key, value]) => [key, value * batches])
-    );
-  };
-
-  const scaledCosts: CraftCosts = {
-    stardust: recipe.costs.stardust
-      ? recipe.costs.stardust * batches
-      : undefined,
-    materials: scaleBag(recipe.costs.materials),
-    components: scaleBag(recipe.costs.components),
-    frames: scaleBag(recipe.costs.frames),
-    coreTierRequired: recipe.costs.coreTierRequired,
-    activeRolls: recipe.costs.activeRolls?.map((req) => ({
-      ...req,
-      amount: req.amount * batches,
-    })),
-  };
-
-  const missing = getMissingCosts(state, scaledCosts);
-
-  if (missing.length > 0) {
-    return `${recipe.name} x${formatAmount(batches)} missing: ${missing.join(" | ")}`;
-  }
-
-  consumeCosts(state, scaledCosts);
-
-  const outputAmount = (recipe.outputAmount ?? 1) * batches;
-  addToBag(state.components, recipe.id, outputAmount);
-
+  const coreRecipe = getCoreRecipe(state, nextTier);
+  const coreMissing = getMissingCosts(state, coreRecipe.costs, ensureJob(state, "core", coreRecipe.id));
   await saveCoreState(state);
-
-  return `✅ Crafted ${recipe.name} x${formatAmount(outputAmount)}.`;
+  return coreMissing.length === 0 ? `Next: !core upgrade` : truncate(`Next: Core ${nextTier}. Missing: ${coreMissing.join(" | ")}`);
 }
 
-export async function craftById(
+export async function debugCoreSystem(
   channelId: string,
   user: NightbotUser | null,
-  rawId: string
+  query: string,
+  token: string | undefined
 ): Promise<string> {
-  const id = normalizeCraftId(rawId);
+  const secret = process.env.CORE_DEBUG_SECRET ?? process.env.CRON_SECRET;
+  if (!secret || token !== secret) return `Debug locked.`;
 
-  if (id === "chassis") return craftNextChassis(channelId, user);
-  if (id === "frame") return craftNextFrame(channelId, user);
+  const state = await touchCoreState(channelId, user);
+  const args = query.trim().split(/\s+/).filter(Boolean);
+  const action = (args[0] ?? "").toLowerCase();
 
-  return craftComponent(channelId, user, id);
+  if (action === "reset") {
+    const fresh = createDefaultCoreState(state.channelId, state.userId, state.displayName);
+    await saveCoreState(fresh);
+    return `Debug: reset ${state.displayName}.`;
+  }
+
+  if (action === "setcore") {
+    state.coreTier = Math.max(0, Math.min(TOTAL_CORES, Math.floor(Number(args[1] ?? 0))));
+    await saveCoreState(state);
+    return `Debug: Core set to ${state.coreTier}.`;
+  }
+
+  if (action === "setshd") {
+    state.shdLevel = Math.max(-1, Math.min(10, Math.floor(Number(args[1] ?? 0))));
+    await saveCoreState(state);
+    return `Debug: SHD set to ${state.shdLevel}.`;
+  }
+
+  if (action === "stardust") {
+    state.stardust = Math.max(0, Math.min(getShdCapacity(state), Math.floor(Number(args[1] ?? 0))));
+    await saveCoreState(state);
+    return `Debug: Stardust set to ${formatAmount(state.stardust)}.`;
+  }
+
+  if (action === "give") {
+    const bagType = (args[1] ?? "").toLowerCase();
+    const id = normalizeCraftId(args[2] ?? "");
+    const amount = Math.max(1, Math.floor(Number(args[3] ?? 1)));
+
+    if (bagType === "mat" || bagType === "material") addToBag(state.materials, id, amount);
+    else if (bagType === "comp" || bagType === "component") addToBag(state.components, id, amount);
+    else if (bagType === "token") addToBag(state.tokens, id, amount);
+    else if (bagType === "box") addToBag(state.lootboxes, id, amount);
+    else return `Debug give: use mat/component/token/box <id> <amount>.`;
+
+    await saveCoreState(state);
+    return `Debug: gave ${id} x${amount}.`;
+  }
+
+  return `Debug commands: reset, setcore N, setshd N, stardust N, give mat scrap 1000, give comp wire_1 20, give token recipe_token 5, give box dev_box 1.`;
 }

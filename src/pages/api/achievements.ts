@@ -1,25 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getAchievementMenuLine } from "@/lib/global-stats";
-import { text } from "@/lib/api-helpers";
+import { parseQuery, text } from "@/lib/api-helpers";
+import { getChannelContext } from "@/lib/nightbot";
+import { claimAchievements, formatAchievementsStatus } from "@/lib/core-system";
 
-function getArgs(req: NextApiRequest): string[] {
-  const raw = ((req.query.args as string) ?? "").trim();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { channelId, user } = getChannelContext(req);
+  const action = (parseQuery(req).trim().split(/\s+/)[0] ?? "").toLowerCase();
 
-  if (!raw) return [];
-
-  return raw.split(/\s+/).filter(Boolean);
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const args = getArgs(req);
-
-  const category = args[0];
-  const page = args[1];
-
-  const msg = await getAchievementMenuLine(category, page);
-
-  return text(res, msg);
+  if (action === "claim") return text(res, await claimAchievements(channelId, user));
+  return text(res, await formatAchievementsStatus(channelId, user));
 }

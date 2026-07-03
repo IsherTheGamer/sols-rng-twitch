@@ -14,21 +14,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const args = parseQuery(req).trim().split(/\s+/).filter(Boolean);
   const action = (args[0] ?? "").toLowerCase();
 
-  if (action === "deposit") {
-    return text(res, await reactorDeposit(channelId, user, args[1] ?? ""));
-  }
-
-  if (action === "claim") {
-    return text(res, await reactorClaim(channelId, user));
-  }
-
-  if (action === "upgrade") {
-    return text(res, await reactorUpgrade(channelId, user));
-  }
-
-  if (action === "recipe") {
-    return text(res, await formatReactorRecipe(channelId, user));
-  }
+  if (action === "deposit") return text(res, await reactorDeposit(channelId, user, args[1] ?? ""));
+  if (action === "claim") return text(res, await reactorClaim(channelId, user));
+  if (action === "upgrade") return text(res, await reactorUpgrade(channelId, user));
+  if (action === "recipe") return text(res, await formatReactorRecipe(channelId, user));
 
   return text(res, await formatReactorStatus(channelId, user));
 }
