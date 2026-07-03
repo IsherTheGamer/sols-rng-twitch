@@ -11,5 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (action === "claim") return text(res, await claimQuest(channelId, user, args[1] ?? ""));
 
   const kind = action === "weekly" || action === "story" || action === "daily" ? action : "daily";
-  return text(res, await formatQuestStatus(channelId, user, kind));
+  const page = kind === action ? args[1] ?? "1" : args[0] ?? "1";
+
+  return text(res, await formatQuestStatus(channelId, user, kind, page));
 }

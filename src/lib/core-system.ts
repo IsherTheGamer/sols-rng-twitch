@@ -496,9 +496,9 @@ export async function touchCoreState(
   channelId: string,
   user: NightbotUser | null
 ): Promise<CoreSystemState> {
-  const state = await getCoreState(channelId, user);
-  await saveCoreState(state);
-  return state;
+  // Performance: this used to save on every read-only command.
+  // Mutating commands already call saveCoreState after changing data.
+  return getCoreState(channelId, user);
 }
 
 function hashString(value: string): number {
@@ -797,6 +797,37 @@ function formatBag(
   const hidden = entries.length - shown.length;
 
   return hidden > 0 ? `${shown.join(", ")} (+${hidden} more)` : shown.join(", ");
+}
+
+function parsePage(raw: string | undefined | null, totalPages: number): number {
+  const n = Number(String(raw ?? "1").replace(/,/g, ""));
+  return Math.max(1, Math.min(totalPages, Number.isFinite(n) ? Math.floor(n) : 1));
+}
+
+function formatPagedItems(
+  title: string,
+  items: string[],
+  rawPage: string | undefined | null,
+  pageSize = 6
+): string {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const page = parsePage(rawPage, totalPages);
+  const shown = items.slice((page - 1) * pageSize, page * pageSize);
+
+  return truncate(
+    `${title} ${page}/${totalPages}: ${shown.length ? shown.join(" | ") : "None"}`
+  );
+}
+
+function bagItems(
+  bag: Record<string, number>,
+  nameFn: (id: string) => string,
+  prefix = ""
+): string[] {
+  return Object.entries(bag)
+    .filter(([, amount]) => amount > 0)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([id, amount]) => `${prefix}${nameFn(id)} x${formatAmount(amount)}`);
 }
 
 function formatCosts(costs: CraftCosts): string {
@@ -2290,20 +2321,31 @@ export async function formatSubCoreStatus(
 
 export async function formatComponentsStatus(
   channelId: string,
-  user: NightbotUser | null
+  user: NightbotUser | null,
+  rawPage = "1"
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
-  return truncate(
-    `Materials: ${formatBag(state.materials, materialName, 5)} | Components: ${formatBag(state.components, componentName, 5)} | Frames: ${formatBag(state.frames, frameName, 3)}`
-  );
+  const items = [
+    ...bagItems(state.materials, materialName, "Mat "),
+    ...bagItems(state.components, componentName, "Comp "),
+    ...bagItems(state.frames, frameName, "Frame "),
+  ];
+
+  return formatPagedItems("🧰 Components/Materials", items, rawPage, 6);
 }
 
 export async function formatTokensStatus(
   channelId: string,
-  user: NightbotUser | null
+  user: NightbotUser | null,
+  rawPage = "1"
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
-  return truncate(`Tokens: ${formatBag(state.tokens, tokenName, 8)} | Boxes: ${formatBag(state.lootboxes, lootboxName, 5)}`);
+  const items = [
+    ...bagItems(state.tokens, tokenName, "Token "),
+    ...bagItems(state.lootboxes, lootboxName, "Box "),
+  ];
+
+  return formatPagedItems("🎟️ Core Tokens/Boxes", items, rawPage, 7);
 }
 
 export async function formatCraftRecipe(
@@ -2452,19 +2494,27 @@ export async function formatReactorRecipe(
 export async function formatQuestStatus(
   channelId: string,
   user: NightbotUser | null,
-  kind: QuestKind = "daily"
+  kind: QuestKind = "daily",
+  rawPage = "1"
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
   const quests = getActiveQuests(state).filter((q) => q.kind === kind);
-  const next = quests.find((q) => !state.questClaimed[q.id]) ?? quests[0];
 
-  if (!next) return `No ${kind} quests found.`;
+  if (quests.length === 0) return `No ${kind} quests found.`;
 
-  const progress = getQuestProgressValue(state, next);
-  const ready = progress >= next.target && !state.questClaimed[next.id];
-  const claimed = state.questClaimed[next.id] ? "Claimed" : ready ? "Ready: !quest claim" : `${formatAmount(progress)}/${formatAmount(next.target)}`;
+  const items = quests.map((quest) => {
+    const progress = getQuestProgressValue(state, quest);
+    const ready = progress >= quest.target && !state.questClaimed[quest.id];
+    const status = state.questClaimed[quest.id]
+      ? "✅ claimed"
+      : ready
+      ? "🎁 ready"
+      : `${formatAmount(progress)}/${formatAmount(quest.target)}`;
 
-  return truncate(`${titleCase(kind)} Quest: ${next.title} | ${next.description} | ${claimed}`);
+    return `${quest.title}: ${quest.description} (${status})`;
+  });
+
+  return formatPagedItems(`${titleCase(kind)} Quests`, items, rawPage, 2);
 }
 
 export async function claimQuest(
@@ -2491,16 +2541,21 @@ export async function claimQuest(
 
 export async function formatAchievementsStatus(
   channelId: string,
-  user: NightbotUser | null
+  user: NightbotUser | null,
+  rawPage = "1"
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
   const achievements = getAchievements();
-  const ready = achievements.find((a) => !state.achievementsClaimed[a.id] && a.check(state));
-  const next = ready ?? achievements.find((a) => !state.achievementsClaimed[a.id]);
 
-  if (!next) return `All achievements claimed. Huge W.`;
+  const items = achievements.map((achievement) => {
+    const claimed = state.achievementsClaimed[achievement.id];
+    const ready = !claimed && achievement.check(state);
+    const status = claimed ? "✅" : ready ? "🎁" : "🔒";
 
-  return truncate(`${ready ? "Ready achievement" : "Next achievement"}: ${next.title} | ${next.description}${ready ? " | Use !achievements claim" : ""}`);
+    return `${status} ${achievement.title}: ${achievement.description}`;
+  });
+
+  return `${formatPagedItems("🏆 Achievements", items, rawPage, 3)} | Use !achievements claim`;
 }
 
 export async function claimAchievements(
@@ -2565,13 +2620,13 @@ function openOneBox(state: CoreSystemState, boxId: string): string {
 
 export async function formatBoxesStatus(
   channelId: string,
-  user: NightbotUser | null
+  user: NightbotUser | null,
+  rawPage = "1"
 ): Promise<string> {
   const state = await touchCoreState(channelId, user);
+  const items = bagItems(state.lootboxes, lootboxName);
 
-  return truncate(
-    `Boxes: ${formatBag(state.lootboxes, lootboxName, 8)} | Use !box open <box> [amount]`
-  );
+  return `${formatPagedItems("📦 Boxes", items, rawPage, 6)} | Use !box open <box> [amount]`;
 }
 
 export async function openLootbox(

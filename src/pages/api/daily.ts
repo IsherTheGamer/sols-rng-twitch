@@ -7,5 +7,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { channelId, user } = getChannelContext(req);
   const args = parseQuery(req).trim().split(/\s+/).filter(Boolean);
   if ((args[0] ?? "").toLowerCase() === "claim") return text(res, await claimQuest(channelId, user, "daily"));
-  return text(res, await formatQuestStatus(channelId, user, "daily"));
+  return text(res, await formatQuestStatus(channelId, user, "daily", args[0] ?? "1"));
 }

@@ -36,5 +36,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
   }
 
-  return text(res, await formatBoxesStatus(channelId, user));
+  return text(res, await formatBoxesStatus(channelId, user, args[0] ?? "1"));
 }
