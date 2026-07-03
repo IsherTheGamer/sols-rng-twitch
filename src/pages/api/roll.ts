@@ -33,6 +33,10 @@ import {
   formatConsumedRollTokenEffects,
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
+import {
+  getViewerCoreLuck,
+  recordCoreRolls,
+} from "@/lib/core-system";
 
 const VIEWER_MULTIROLL_LIMIT = 3;
 const VIP_MULTIROLL_LIMIT = 10;
@@ -182,6 +186,7 @@ export default async function handler(
   }
 
   const achievementBonuses = await getAchievementBonuses();
+  const coreLuck = await getViewerCoreLuck(channelId, user);
 
   const cooldownMs = Math.max(
     1000,
@@ -242,7 +247,8 @@ export default async function handler(
         used: [],
       };
 
-      const baseLuck = getGlobalLuck(firstGlobalRoll + i);
+      const baseLuck =
+        getGlobalLuck(firstGlobalRoll + i) * coreLuck.multiplier;
 
       const luck = calculateRollLuck({
         baseLuck,
@@ -272,6 +278,8 @@ export default async function handler(
       results,
       oneTimeTokenAssisted ? "token" : "roll"
     );
+
+    await recordCoreRolls(channelId, user, results);
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
