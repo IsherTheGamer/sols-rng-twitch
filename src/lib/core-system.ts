@@ -576,7 +576,46 @@ function normalizeCraftId(raw: string): string {
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-  return LEGACY_RECIPE_ALIASES[id] ?? id;
+  const aliases: Record<string, string> = {
+    // Lootbox aliases
+    starter: "starter_box",
+    start: "starter_box",
+    beginner: "starter_box",
+    beginner_box: "starter_box",
+
+    quest: "quest_box",
+    daily: "quest_box",
+    weekly: "quest_box",
+    reward: "quest_box",
+    reward_box: "quest_box",
+
+    core: "core_box",
+    cores: "core_box",
+    core_reward: "core_box",
+
+    reactor: "reactor_box",
+    stardust_reactor: "reactor_box",
+
+    anomaly: "anomaly_box",
+    anomalous: "anomaly_box",
+
+    dev: "dev_box",
+    developer: "dev_box",
+    admin: "dev_box",
+
+    // Token aliases
+    recipe: "recipe_token",
+    recipe_tokens: "recipe_token",
+    path: "path_token",
+    wall: "wall_token",
+    reactor_token_box: "reactor_token",
+    anomaly_token_box: "anomaly_token",
+
+    // Keep old crafting aliases too
+    ...LEGACY_RECIPE_ALIASES,
+  };
+
+  return aliases[id] ?? id;
 }
 
 function tieredComponentName(id: string): string {
