@@ -2,7 +2,6 @@ import { Redis } from "@upstash/redis";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { parseQuery, text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
-import { isBroadcasterUser } from "@/lib/profile";
 
 let redis: Redis | null = null;
 
@@ -26,8 +25,13 @@ function getDisplayName(user: { displayName?: string; name?: string } | null): s
   return user?.displayName ?? user?.name ?? "Player";
 }
 
+function cleanId(input: string | string[] | undefined, fallback: string): string {
+  const raw = Array.isArray(input) ? input[0] : input;
+  return (raw ?? fallback).trim();
+}
+
 function isSecretValid(req: NextApiRequest): boolean {
-  const secret = process.env.CORE_DEBUG_SECRET ?? process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET;
   const token = typeof req.query.token === "string" ? req.query.token : "";
 
   return Boolean(secret && token === secret);
@@ -39,23 +43,23 @@ function parseScope(query: string): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { channel, channelId, user } = getChannelContext(req);
-  const broadcaster = isBroadcasterUser(user, channel);
-  const secretOk = isSecretValid(req);
-
-  if (!broadcaster && !secretOk) {
-    return text(res, "Reset locked. Use broadcaster account or ?token=CORE_DEBUG_SECRET.");
+  if (!isSecretValid(req)) {
+    return text(res, "Reset locked. Use ?token=CRON_SECRET.");
   }
 
+  const ctx = getChannelContext(req);
   const r = getRedis();
 
   if (!r) {
     return text(res, "Reset failed: Redis is not connected.");
   }
 
-  const scope = parseScope(parseQuery(req));
-  const userId = getUserId(user);
-  const name = getDisplayName(user);
+  const query = parseQuery(req);
+  const scope = parseScope(query);
+
+  const channelId = cleanId(req.query.channelId, ctx.channelId);
+  const userId = cleanId(req.query.userId, getUserId(ctx.user));
+  const name = cleanId(req.query.name, getDisplayName(ctx.user));
 
   const keys: string[] = [];
 
@@ -79,6 +83,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return text(
     res,
-    `✅ Reset ${scope} for ${name}. Deleted: ${keys.map((k) => k.split(":")[0]).join(", ")}.`
+    `✅ Reset ${scope} for ${name}. Channel: ${channelId} | User: ${userId} | Deleted: ${keys
+      .map((k) => k.split(":")[0])
+      .join(", ")}.`
   );
 }
