@@ -44,6 +44,10 @@ export interface CoreSystemState {
   materials: Record<string, number>;
   components: Record<string, number>;
   frames: Record<string, number>;
+  subCores: Record<string, boolean>;
+  activeSubCoreId: string | null;
+
+  reactor: ReactorState;
 
   activeJobs: Record<string, ActiveJob | undefined>;
 
@@ -55,6 +59,18 @@ export interface CoreSystemState {
 export interface ActiveJob {
   id: string;
   progress: Record<string, number>;
+}
+
+export interface ReactorDeposit {
+  amount: number;
+  bonusPercent: number;
+  startedAt: number;
+  unlockAt: number;
+}
+
+export interface ReactorState {
+  level: number;
+  activeDeposit: ReactorDeposit | null;
 }
 
 export interface RollHitForCore {
@@ -120,6 +136,8 @@ const SHD_CORE_REQUIREMENTS: Record<number, number> = {
   9: 200,
   10: 225,
 };
+
+const REACTOR_LOCK_MS = 12 * 60 * 60 * 1000;
 
 const MATERIAL_NAMES: Record<string, string> = {
   scrap: "Scrap",
@@ -200,6 +218,22 @@ const COMPONENT_RECIPES: Record<string, ComponentRecipe> = {
     costs: {
       materials: { signal_fragment: 15 },
       components: { basic_capacitor: 2, refined_plate: 2 },
+    },
+  },
+  realignment_matrix: {
+    id: "realignment_matrix",
+    name: "Realignment Matrix",
+    costs: {
+      materials: { stabilized_flux: 100, quantum_residue: 10 },
+      components: { divergence_matrix: 1, smd_resistor: 10, power_cell: 5 },
+    },
+  },
+  stellar_regulator: {
+    id: "stellar_regulator",
+    name: "Stellar Regulator",
+    costs: {
+      materials: { signal_fragment: 250, refined_alloy: 100 },
+      components: { power_cell: 3, basic_transistor: 3, smd_resistor: 5 },
     },
   },
   divergence_matrix: {
@@ -330,6 +364,12 @@ function createDefaultCoreState(
     materials: {},
     components: {},
     frames: {},
+    subCores: {},
+    activeSubCoreId: null,
+    reactor: {
+      level: 0,
+      activeDeposit: null,
+    },
     activeJobs: {},
     createdAt: now,
     updatedAt: now,
@@ -360,6 +400,12 @@ function normalizeCoreState(
     materials: input.materials ?? {},
     components: input.components ?? {},
     frames: input.frames ?? {},
+    subCores: input.subCores ?? {},
+    activeSubCoreId: input.activeSubCoreId ?? null,
+    reactor: {
+      level: Math.max(0, Math.min(25, Math.floor(input.reactor?.level ?? 0))),
+      activeDeposit: input.reactor?.activeDeposit ?? null,
+    },
     activeJobs: input.activeJobs ?? {},
     createdAt: input.createdAt ?? base.createdAt,
     updatedAt: Date.now(),
@@ -737,6 +783,132 @@ function getCoreRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   };
 }
 
+function getSubCoreRecipe(state: CoreSystemState): ComponentRecipe | null {
+  const nextTier = state.coreTier + 1;
+
+  if (nextTier > TOTAL_CORES) return null;
+  if (state.corePath === "universal") return null;
+  if (!isWallCore(state, nextTier)) return null;
+
+  const path = normalizePathForTier(state, nextTier);
+  const coreCost = getCoreStardustCost(nextTier);
+  const rarity = Math.min(25000000, Math.max(25000, Math.floor(nextTier * nextTier * 125)));
+
+  return {
+    id: `sub_${path}_${state.coreTier}`,
+    name: `${titleCase(path)} Aux Core ${state.coreTier}-A`,
+    costs: {
+      stardust: Math.floor(coreCost * 0.55),
+      materials: {
+        scrap: 80 * nextTier,
+        circuit_scrap: 30 * nextTier,
+        signal_fragment: Math.max(10, Math.floor(nextTier / 2)),
+      },
+      components: {
+        smd_resistor: Math.max(1, Math.ceil(nextTier / 15)),
+        power_cell: Math.max(1, Math.ceil(nextTier / 30)),
+      },
+      activeRolls: [
+        activeReq(`sub_wall_${nextTier}`, `Aux roll ${formatRarity(rarity)}+`, rarity, 1),
+      ],
+    },
+  };
+}
+
+function getSubCoreBonusPercent(state: CoreSystemState): number {
+  let bonus = 0;
+
+  for (const id of Object.keys(state.subCores ?? {})) {
+    const rawTier = id.split("_").at(-1) ?? "0";
+    const tier = Number(rawTier.split("-")[0] ?? 0);
+    bonus += Math.max(10, Math.min(75, Math.floor(tier * 0.35)));
+  }
+
+  return Math.min(900, bonus);
+}
+
+function getSwitchCostScale(coreTier: number): number {
+  if (coreTier >= 226) return 15;
+  if (coreTier >= 201) return 12;
+  if (coreTier >= 151) return 10;
+  if (coreTier >= 101) return 7;
+  if (coreTier >= 51) return 4;
+  return 2;
+}
+
+function getPathSwitchRecipe(state: CoreSystemState, targetPath: CorePath): ComponentRecipe {
+  const scale = getSwitchCostScale(state.coreTier);
+  const stardustBase = Math.max(1000, getCoreStardustCost(Math.max(8, state.coreTier)));
+
+  return {
+    id: `switch_${state.corePath}_to_${targetPath}_${state.coreTier}`,
+    name: `${titleCase(targetPath)} Realignment`,
+    costs: {
+      stardust: stardustBase * scale,
+      materials: {
+        refined_alloy: 25 * Math.max(1, state.coreTier) * scale,
+        stabilized_flux: Math.max(10, Math.floor(state.coreTier / 2)) * scale,
+      },
+      components: {
+        realignment_matrix: 1,
+        [WALL_COMPONENT_BY_PATH[targetPath]]: Math.max(1, Math.ceil(scale / 5)),
+      },
+    },
+  };
+}
+
+function getReactorRate(level: number): number {
+  if (level <= 0) return 2;
+  return Math.min(20, 2 + level * 0.72);
+}
+
+function getReactorCap(level: number): number {
+  if (level <= 0) return 5000;
+
+  return Math.min(300000000, Math.floor(5000 * Math.pow(1.55, level)));
+}
+
+function getReactorUpgradeRecipe(nextLevel: number): ComponentRecipe {
+  const costs: CraftCosts = {
+    stardust: Math.floor(2500 * Math.pow(1.65, nextLevel)),
+    materials: {
+      circuit_scrap: 75 * nextLevel,
+      signal_fragment: 20 * nextLevel,
+      refined_alloy: 10 * nextLevel,
+    },
+    components: {
+      basic_circuit: Math.max(1, Math.ceil(nextLevel / 2)),
+      power_cell: Math.max(1, Math.ceil(nextLevel / 4)),
+    },
+  };
+
+  if (nextLevel >= 10) {
+    costs.components = {
+      ...(costs.components ?? {}),
+      smd_resistor: Math.ceil(nextLevel / 3),
+      stellar_regulator: 1,
+    };
+    costs.materials = {
+      ...(costs.materials ?? {}),
+      stabilized_flux: 25 * nextLevel,
+    };
+  }
+
+  if (nextLevel >= 20) {
+    costs.materials = {
+      ...(costs.materials ?? {}),
+      quantum_residue: 8 * nextLevel,
+      reality_thread: Math.ceil(nextLevel / 2),
+    };
+  }
+
+  return {
+    id: `reactor_upgrade_${nextLevel}`,
+    name: `Stardust Reactor Lv.${nextLevel}`,
+    costs,
+  };
+}
+
 function getShdCraftRecipe(): ComponentRecipe {
   return {
     id: "shd_craft",
@@ -897,10 +1069,23 @@ export async function recordCoreRolls(
     }
   }
 
+  if (state.coreFocus === "sub") {
+    const subRecipe = getSubCoreRecipe(state);
+    if (subRecipe && !state.subCores[subRecipe.id]) {
+      ensureJob(state, "sub", subRecipe.id);
+    }
+  }
+
   const coreJob = state.activeJobs.core;
   const coreRecipe =
     coreJob && state.coreFocus === "main"
       ? getCoreRecipe(state, state.coreTier + 1)
+      : null;
+
+  const subJob = state.activeJobs.sub;
+  const subRecipe =
+    subJob && state.coreFocus === "sub"
+      ? getSubCoreRecipe(state)
       : null;
 
   const shdJob = state.activeJobs.shd;
@@ -920,6 +1105,10 @@ export async function recordCoreRolls(
     progressJobWithRolls(coreJob, coreRecipe.costs.activeRolls ?? [], rolls);
   }
 
+  if (subRecipe) {
+    progressJobWithRolls(subJob, subRecipe.costs.activeRolls ?? [], rolls);
+  }
+
   if (shdRecipe) {
     progressJobWithRolls(shdJob, shdRecipe.costs.activeRolls ?? [], rolls);
   }
@@ -934,7 +1123,7 @@ export function getCoreLuckBonusPercent(state: CoreSystemState): number {
   const target = CORE_LUCK_TARGET_PERCENT[state.corePath] ?? CORE_LUCK_TARGET_PERCENT.universal;
   const ratio = Math.min(1, state.coreTier / TOTAL_CORES);
 
-  return Math.floor(target * Math.pow(ratio, 1.08));
+  return Math.floor(target * Math.pow(ratio, 1.08)) + getSubCoreBonusPercent(state);
 }
 
 export async function getViewerCoreLuck(
@@ -1168,6 +1357,211 @@ export async function attemptShdUpgrade(
   return `✅ SHD upgraded to Lv.${nextLevel}! Capacity: ${formatAmount(shdCapacity(nextLevel))} Stardust.`;
 }
 
+
+export async function attemptSubCoreCraft(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const recipe = getSubCoreRecipe(state);
+
+  if (!recipe) return `No Sub-Core is available right now. Sub-Cores appear when your next Core is a wall.`;
+  if (state.subCores[recipe.id]) return `You already crafted ${recipe.name}.`;
+
+  const job = ensureJob(state, "sub", recipe.id);
+  const missing = getMissingCosts(state, recipe.costs, job);
+
+  if (missing.length > 0) {
+    await saveCoreState(state);
+    return `${recipe.name} missing: ${missing.join(" | ")}`;
+  }
+
+  consumeCosts(state, recipe.costs);
+  state.subCores[recipe.id] = true;
+  state.activeSubCoreId = recipe.id;
+  clearJob(state, "sub");
+  await saveCoreState(state);
+
+  return `✅ Crafted ${recipe.name}! Bonus Core luck is now active.`;
+}
+
+export async function formatSubCoreStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const recipe = getSubCoreRecipe(state);
+
+  if (!recipe) {
+    return `No Sub-Core available. They appear when your next Core is one of your randomized wall cores.`;
+  }
+
+  if (state.subCores[recipe.id]) {
+    return `${recipe.name} already crafted. Current Sub-Core bonus total: +${getSubCoreBonusPercent(state)}% luck.`;
+  }
+
+  const job = ensureJob(state, "sub", recipe.id);
+  const missing = getMissingCosts(state, recipe.costs, job);
+  await saveCoreState(state);
+
+  const progress = formatRollProgress(job, recipe.costs.activeRolls ?? []);
+  const progressText = progress ? ` | Progress: ${progress}` : "";
+
+  return truncate(`${recipe.name} | Missing: ${missing.join(" | ")}${progressText}`);
+}
+
+export async function switchCorePath(
+  channelId: string,
+  user: NightbotUser | null,
+  path: string
+): Promise<string> {
+  const wanted = path.toLowerCase().trim() as CorePath;
+  const allowed: CorePath[] = ["safe", "risk", "support", "biome", "precision", "token", "anomaly"];
+
+  if (!allowed.includes(wanted)) {
+    return `Switch to: safe, risk, support, biome, precision, token, or anomaly.`;
+  }
+
+  const state = await touchCoreState(channelId, user);
+
+  if (state.corePath === "universal") return `Choose your first path with !core choose <path>.`;
+  if (state.corePath === wanted) return `You are already on ${titleCase(wanted)} path.`;
+
+  const recipe = getPathSwitchRecipe(state, wanted);
+  const missing = getMissingCosts(state, recipe.costs);
+
+  if (missing.length > 0) return `${recipe.name} missing: ${missing.join(" | ")}`;
+
+  consumeCosts(state, recipe.costs);
+  state.corePath = wanted;
+  clearJob(state, "core");
+  clearJob(state, "sub");
+  await saveCoreState(state);
+
+  return `✅ Realigned to ${titleCase(wanted)} Core path. Switching cost scale was ${getSwitchCostScale(state.coreTier)}x.`;
+}
+
+export async function formatReactorStatus(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  if (state.shdLevel < 4) {
+    return `🌌 Stardust Reactor unlocks at SHD Lv.4. Current SHD: ${state.shdLevel < 0 ? "None" : `Lv.${state.shdLevel}`}.`;
+  }
+
+  const reactor = state.reactor;
+  const rate = getReactorRate(reactor.level);
+  const cap = getReactorCap(reactor.level);
+
+  if (reactor.activeDeposit) {
+    const left = Math.max(0, reactor.activeDeposit.unlockAt - Date.now());
+    const hours = Math.floor(left / 3600000);
+    const minutes = Math.floor((left % 3600000) / 60000);
+    const profit = Math.floor(reactor.activeDeposit.amount * reactor.activeDeposit.bonusPercent / 100);
+
+    return truncate(`🌌 Reactor Lv.${reactor.level} | Active: ${formatAmount(reactor.activeDeposit.amount)} → ${formatAmount(reactor.activeDeposit.amount + profit)} | Ready in ${hours}h ${minutes}m`);
+  }
+
+  return `🌌 Reactor Lv.${reactor.level} | Rate: +${rate.toFixed(1)}% / 12h | Cap: ${formatAmount(cap)} | Use !reactor deposit <amount>.`;
+}
+
+export async function reactorDeposit(
+  channelId: string,
+  user: NightbotUser | null,
+  amountRaw: string
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  if (state.shdLevel < 4) return `Reactor unlocks at SHD Lv.4.`;
+  if (state.reactor.activeDeposit) return `Your Reactor already has an active deposit. Use !reactor claim when ready.`;
+
+  const amount = Math.floor(Number(amountRaw.replace(/,/g, "")));
+
+  if (!Number.isFinite(amount) || amount < 100) return `Deposit at least 100 Stardust.`;
+  if (amount > getReactorCap(state.reactor.level)) return `Deposit exceeds Reactor cap: ${formatAmount(getReactorCap(state.reactor.level))}.`;
+  if (amount > state.stardust) return `Not enough Stardust: ${formatAmount(state.stardust)}/${formatAmount(amount)}.`;
+
+  const rate = getReactorRate(state.reactor.level);
+  state.stardust -= amount;
+  state.reactor.activeDeposit = {
+    amount,
+    bonusPercent: rate,
+    startedAt: Date.now(),
+    unlockAt: Date.now() + REACTOR_LOCK_MS,
+  };
+
+  await saveCoreState(state);
+
+  return `🌌 Deposited ${formatAmount(amount)} Stardust. Claim in 12h for ${formatAmount(amount + Math.floor(amount * rate / 100))} (+${rate.toFixed(1)}%).`;
+}
+
+export async function reactorClaim(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+  const deposit = state.reactor.activeDeposit;
+
+  if (!deposit) return `No active Reactor deposit.`;
+  if (Date.now() < deposit.unlockAt) {
+    const left = deposit.unlockAt - Date.now();
+    const hours = Math.floor(left / 3600000);
+    const minutes = Math.floor((left % 3600000) / 60000);
+    return `⏳ Reactor still stabilizing: ${hours}h ${minutes}m left.`;
+  }
+
+  const profit = Math.floor(deposit.amount * deposit.bonusPercent / 100);
+  const total = deposit.amount + profit;
+  const cap = getShdCapacity(state);
+  const added = Math.max(0, Math.min(total, cap - state.stardust));
+  const lost = total - added;
+
+  state.stardust += added;
+  state.reactor.activeDeposit = null;
+  await saveCoreState(state);
+
+  return lost > 0
+    ? `✅ Reactor claimed ${formatAmount(added)} Stardust (+${formatAmount(profit)} profit). ${formatAmount(lost)} lost because SHD is full.`
+    : `✅ Reactor claimed ${formatAmount(total)} Stardust (+${formatAmount(profit)} profit).`;
+}
+
+export async function reactorUpgrade(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  if (state.shdLevel < 4) return `Reactor unlocks at SHD Lv.4.`;
+  if (state.reactor.level >= 25) return `Stardust Reactor is already max level.`;
+
+  const nextLevel = state.reactor.level + 1;
+  const recipe = getReactorUpgradeRecipe(nextLevel);
+  const missing = getMissingCosts(state, recipe.costs);
+
+  if (missing.length > 0) return `${recipe.name} missing: ${missing.join(" | ")}`;
+
+  consumeCosts(state, recipe.costs);
+  state.reactor.level = nextLevel;
+  await saveCoreState(state);
+
+  return `✅ Reactor upgraded to Lv.${nextLevel}! Rate: +${getReactorRate(nextLevel).toFixed(1)}% / 12h | Cap: ${formatAmount(getReactorCap(nextLevel))}.`;
+}
+
+export async function formatReactorRecipe(
+  channelId: string,
+  user: NightbotUser | null
+): Promise<string> {
+  const state = await touchCoreState(channelId, user);
+
+  if (state.shdLevel < 4) return `Reactor unlocks at SHD Lv.4.`;
+  if (state.reactor.level >= 25) return `Reactor is max level.`;
+
+  const recipe = getReactorUpgradeRecipe(state.reactor.level + 1);
+  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)}`);
+}
+
 export function normalizeCraftId(raw: string): string {
   return raw
     .toLowerCase()
@@ -1182,7 +1576,7 @@ export async function formatCoreStatus(
   const state = await touchCoreState(channelId, user);
   const nextTier = Math.min(TOTAL_CORES, state.coreTier + 1);
   const bonus = getCoreLuckBonusPercent(state);
-  const wall = isWallCore(state, nextTier) ? " | Next is a wall" : "";
+  const wall = isWallCore(state, nextTier) ? " | Next is a wall | Sub-Core available" : "";
   const pathText = titleCase(state.corePath);
 
   if (nextTier > PATH_SPLIT_CORE && state.corePath === "universal") {

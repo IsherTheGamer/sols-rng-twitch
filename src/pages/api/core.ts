@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { text } from "@/lib/api-helpers";
-import { parseQuery } from "@/lib/api-helpers";
+import { parseQuery, text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
 import {
   attemptCoreUpgrade,
@@ -8,6 +7,7 @@ import {
   formatCoreRecipe,
   formatCoreStatus,
   setCoreFocus,
+  switchCorePath,
 } from "@/lib/core-system";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -29,6 +29,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (action === "choose") {
     return text(res, await chooseCorePath(channelId, user, args[1] ?? ""));
+  }
+
+  if (action === "switch") {
+    return text(res, await switchCorePath(channelId, user, args[1] ?? ""));
   }
 
   return text(res, await formatCoreStatus(channelId, user));
