@@ -5,6 +5,7 @@ import { text, verifyCron } from "@/lib/api-helpers";
 import { recordBiomeVisit } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { sendNightbotMessage } from "@/lib/nightbot";
+import { sendDiscordBiomeAlert } from "@/lib/discord-alerts";
 
 function normalizeChannel(input: string): string {
   return input
