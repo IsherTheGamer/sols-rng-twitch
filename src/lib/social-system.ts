@@ -129,11 +129,12 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
-  "Mega Social v1: added !profile <user>, !recent, !lb, !update, !titles, !boost, !active, !merchant, !npc, !flex, and !raid.",
-  "Profile/social: you can now view other players by username, equip titles, check recent rare pulls, and compare flex battle auras.",
-  "Server systems: global boosts can come from rare pulls, raids, active chat, NPC quests, and merchant offers.",
-  "Economy/social: wandering merchant sells temporary stock for Stardust. NPC quests create channel-wide community objectives.",
-  "Performance note: social data is stored separately from core/profile data and short lists are capped to stay Nightbot-safe.",
+  "Mega Expansion v2: added Discord alerts/settings, replay, records, first discoveries, AOTD/BOTD, channel events, black market, player/global quests, and rebuilt leaderboards.",
+  "Quest expansion: !pquests and !gquests now support daily, weekly, monthly, and yearly pages with 3 quests per period.",
+  "Leaderboard rework: !lb now supports all-time plus daily/weekly/monthly/yearly rolls, best, rare, and value pages. !weeklylb is a shortcut.",
+  "Discord integration: !dcalerts controls alert status, aura rarity threshold, rare biome list, and test alerts. Browser admin endpoint can save per-channel webhooks.",
+  "Info update: !info sol commands and !info sol mega now explain the new command systems. !solinfo works as the same alias.",
+  "Event systems: !event can start temporary luck events, !blackmarket can spawn a rare Stardust shop, and !summary can post Discord recaps.",
 ];
 
 function recentKey(channelId: string): string { return `social:recent:${channelId}`; }

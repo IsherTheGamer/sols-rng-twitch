@@ -4,6 +4,36 @@ import { truncate } from "./format";
 
 const PAGE_SIZE = 8;
 
+const COMMAND_INFO = [
+  "!update [page]: latest bot update notes",
+  "!info sol commands [page]: command help pages",
+  "!info sol mega [page]: mega feature help",
+  "!dcalerts: Discord webhook alert settings",
+  "!replay [user/page]: major rare pull replay",
+  "!records: channel records and best pulls",
+  "!firsts / !firsts biomes: first discoveries",
+  "!aotd / !botd: aura/biome of the day",
+  "!event: channel event status/start/stop",
+  "!blackmarket: rare Stardust shop",
+  "!pquests daily/weekly/monthly/yearly: player quests",
+  "!gquests daily/weekly/monthly/yearly: global quests",
+  "!lb daily/weekly/monthly/yearly rolls/best/rare/value",
+  "!weeklylb: weekly leaderboard shortcut",
+  "!luckdetails: full luck breakdown and best luck history",
+];
+
+const MEGA_INFO = [
+  "Discord: !dcalerts test/on/off/aura/biome controls webhook alerts.",
+  "Replay/records: !replay shows 100M+ pulls, !records shows best aura, most rolls, rare pulls, and rare biomes.",
+  "Firsts: !firsts shows first aura discoveries, !firsts biomes shows first rare biome discoveries.",
+  "Quests: !pquests and !gquests have daily, weekly, monthly, yearly periods with 3 quests each.",
+  "Leaderboards: !lb all-time or period-based pages support rolls, best, rare, and value.",
+  "Events: !event start luckstorm 10 creates temporary luck. !event stop ends it.",
+  "Black Market: mods can use !blackmarket spawn; users buy with Stardust.",
+  "Discord summary: /api/summary posts daily/weekly/monthly/yearly Discord recaps.",
+];
+
+
 function normalize(raw: string | undefined | null): string {
   return (raw ?? "")
     .toLowerCase()
@@ -133,6 +163,14 @@ function tokenInfo(kind: string, pageRaw?: string): string {
 function coreTopic(topic: string, pageRaw?: string): string {
   const mode = normalize(topic);
 
+  if (mode === "commands" || mode === "cmds" || mode === "new_commands") {
+    return paginate(COMMAND_INFO, pageRaw, (x) => x, "🤖 Commands", 4);
+  }
+
+  if (mode === "mega" || mode === "expansion" || mode === "features") {
+    return paginate(MEGA_INFO, pageRaw, (x) => x, "✨ Mega Features", 4);
+  }
+
   if (mode === "paths" || mode === "path") {
     return paginate([
       "Safe: stable/easier walls", "Risk: harder/more rewards", "Support: crafting discounts", "Biome: biome/material scaling",
@@ -160,7 +198,7 @@ function coreTopic(topic: string, pageRaw?: string): string {
   if (mode === "dev" || mode === "devs") return paginate(devEvents as Array<{ name?: string; id: string }>, pageRaw, (d) => d.name ?? titleCase(d.id), "🛠️ Dev Biomes");
   if (mode === "devices" || mode === "device") return paginate(devices as Array<{ name: string }>, pageRaw, (d) => d.name, "📟 Devices");
 
-  return truncate("📘 !info sol <what> [page] | what: aura/auras, biome/biomes, potion/potions, token boosts/potions/special, paths, materials, components, events, dev, devices.", 390);
+  return truncate("📘 !info sol <what> [page] | what: commands, mega, aura/auras, biome/biomes, potion/potions, token boosts/potions/special, paths, materials, components, events, dev, devices.", 390);
 }
 
 export function formatSolInfo(rawQuery: string): string {
