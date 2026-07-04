@@ -7,7 +7,6 @@ import {
   potions,
 } from "./data";
 import { sendNightbotMessage } from "./nightbot";
-import { sendDiscordAuraAlert } from "./discord-alerts";
 import { formatRarity, truncate } from "./format";
 import {
   getProfileTierId,
@@ -439,17 +438,6 @@ export async function announceAuraResults(options: {
         });
 
     await sendNightbotMessage(msg, options.channelName);
-
-    await sendDiscordAuraAlert({
-      channelId: options.channelId,
-      channelName: options.channelName,
-      displayName: options.displayName,
-      aura: result.aura,
-      effectiveRarity: result.effectiveRarity,
-      tierId: result.tierId,
-      source: options.source,
-      potionName: options.potionName,
-    });
   }
 
   const hidden = qualifying.length - shown.length;

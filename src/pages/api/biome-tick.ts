@@ -5,7 +5,7 @@ import { text, verifyCron } from "@/lib/api-helpers";
 import { recordBiomeVisit } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { sendNightbotMessage } from "@/lib/nightbot";
-import { sendDiscordBiomeAlert } from "@/lib/discord-alerts";
+import { recordMegaBiome } from "@/lib/mega-feature-system";
 
 function normalizeChannel(input: string): string {
   return input
@@ -44,6 +44,16 @@ export default async function handler(
   );
 
   const unlockText = formatAchievementUnlocks(unlocked);
+
+  if (result.biomeChanged) {
+    await recordMegaBiome({
+      channelId,
+      channelName,
+      biomeId: result.state.biomeId,
+      timeOfDay: result.state.timeOfDay,
+      expiresAt: result.state.biomeExpiresAt,
+    });
+  }
 
   if (unlockText) {
     await sendNightbotMessage(unlockText, channelName);

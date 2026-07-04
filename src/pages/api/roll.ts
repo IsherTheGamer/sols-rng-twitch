@@ -28,6 +28,7 @@ import {
 import type { ChannelState } from "@/types/data";
 import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
 import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system";
+import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
 
 const VIEWER_MULTIROLL_LIMIT = 3;
 const VIP_MULTIROLL_LIMIT = 10;
@@ -157,6 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const achievementBonuses = await getAchievementBonuses();
   const coreLuck = await getViewerCoreLuck(channelId, user);
   const serverLuck = await getServerLuckMultiplier(channelId);
+  const megaLuck = await getMegaLuckMultiplier(channelId);
 
   const cooldownMs = Math.max(
     1000,
@@ -216,7 +218,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         tokenRareBiomePercentLuck: tokenEffect.rareBiomePercentLuck,
         tokenFinalLuckMultiplier: tokenEffect.finalLuckMultiplier,
         achievementFlatLuck: achievementBonuses.flatLuck,
-        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier * serverLuck.multiplier,
+        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier * serverLuck.multiplier * megaLuck.multiplier,
         rareBiomeActive,
       });
 
@@ -240,13 +242,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await recordCoreRolls(channelId, user, results);
     await recordSocialRolls(channelId, user, results, oneTimeTokenAssisted ? "token" : "roll");
+    await recordMegaRolls({
+      channelId,
+      channelName: channelLoginName,
+      user,
+      results,
+      source: oneTimeTokenAssisted ? "token" : "roll",
+    });
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
     const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
     const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
     const serverBoostText = serverLuck.percent > 0 ? ` | Server Boost +${Math.floor(serverLuck.percent)}%` : "";
-    const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}${serverBoostText}`;
+    const megaBoostText = megaLuck.percent > 0 ? ` | Event +${Math.floor(megaLuck.percent)}%` : "";
+    const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}${serverBoostText}${megaBoostText}`;
 
     if (displayCount === 1) {
       const best = top[0];

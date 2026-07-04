@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { parseQuery, text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
-import { formatMegaLeaderboard } from "@/lib/mega-feature-system";
+import { formatGlobalQuests } from "@/lib/mega-feature-system";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { channelId } = getChannelContext(req);
-  return text(res, await formatMegaLeaderboard(channelId, parseQuery(req)));
+  const { channelId, user } = getChannelContext(req);
+  return text(res, await formatGlobalQuests(channelId, user, parseQuery(req)));
 }
