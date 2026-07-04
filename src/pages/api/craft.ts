@@ -3,6 +3,24 @@ import { parseQuery, text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
 import { craftByIdAmount, formatCraftRecipe } from "@/lib/core-system";
 
+function isAmountToken(input: string | undefined): boolean {
+  return /^\d{1,7}(k|m)?$/i.test(input ?? "");
+}
+
+function parseRecipeItem(args: string[]): string {
+  if (args.length <= 2) return args.join(" ");
+
+  const last = args[args.length - 1];
+
+  // Allows: !craft recipe basic rod 1
+  // Keeps:   !craft recipe rod 1
+  if (isAmountToken(last)) {
+    return args.slice(0, -1).join(" ");
+  }
+
+  return args.join(" ");
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId, user } = getChannelContext(req);
   const args = parseQuery(req).trim().split(/\s+/).filter(Boolean);
@@ -14,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const action = args[0].toLowerCase();
 
   if (action === "recipe") {
-    const item = args.slice(1).join(" ");
+    const item = parseRecipeItem(args.slice(1));
     if (!item) return text(res, "Use !craft recipe <item>.");
     return text(res, await formatCraftRecipe(channelId, user, item));
   }

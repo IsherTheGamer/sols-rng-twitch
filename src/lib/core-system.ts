@@ -316,7 +316,18 @@ const TIER_NAMES = [
   "Forbidden",
 ] as const;
 
+const GENERATED_TIER_RECIPE_ALIASES: Record<string, string> =
+  Object.fromEntries(
+    TIER_NAMES.flatMap((tierName, tierIndex) =>
+      COMPONENT_FAMILIES.map((family) => [
+        `${tierName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${family}`,
+        `${family}_${tierIndex + 1}`,
+      ])
+    )
+  );
+
 const LEGACY_RECIPE_ALIASES: Record<string, string> = {
+  ...GENERATED_TIER_RECIPE_ALIASES,
   basic_wire: "wire_1",
   copper_wire: "wire_2",
   basic_plate: "plate_1",
