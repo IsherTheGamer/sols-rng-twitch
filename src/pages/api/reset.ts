@@ -63,9 +63,12 @@ function parseScope(query: string): string {
   return first || "all";
 }
 
-function normalizeScope(scope: string): "all" | "core" | "profile" | "inventory" | null {
+type ResetScope = "all" | "core" | "profile" | "inventory" | "global";
+
+function normalizeScope(scope: string): ResetScope | null {
   if (scope === "all" || scope === "everything" || scope === "full") return "all";
   if (scope === "core" || scope === "cores" || scope === "mega") return "core";
+
   if (
     scope === "profile" ||
     scope === "profiles" ||
@@ -76,6 +79,7 @@ function normalizeScope(scope: string): "all" | "core" | "profile" | "inventory"
   ) {
     return "profile";
   }
+
   if (
     scope === "inventory" ||
     scope === "inv" ||
@@ -86,20 +90,46 @@ function normalizeScope(scope: string): "all" | "core" | "profile" | "inventory"
     return "inventory";
   }
 
+  if (
+    scope === "global" ||
+    scope === "globals" ||
+    scope === "server" ||
+    scope === "social" ||
+    scope === "boost" ||
+    scope === "boosts"
+  ) {
+    return "global";
+  }
+
   return null;
 }
 
-function allowedForScope(key: string, scope: "all" | "core" | "profile" | "inventory"): boolean {
+function isGlobalKey(key: string): boolean {
+  return (
+    key === "global:rolls" ||
+    key === "global:achievement-state" ||
+    key.startsWith("social:recent:") ||
+    key.startsWith("social:boosts:") ||
+    key.startsWith("social:chat:") ||
+    key.startsWith("social:merchant:") ||
+    key.startsWith("social:npc:") ||
+    key.startsWith("social:flex:")
+  );
+}
+
+function allowedForScope(key: string, scope: ResetScope): boolean {
   if (scope === "all") {
     return (
       key.startsWith("core-system:") ||
       key.startsWith("profile:") ||
+      key.startsWith("profiles:") ||
       key.startsWith("inventory:") ||
       key.startsWith("inventory-grants:") ||
       key.startsWith("viewer-profile:") ||
       key.startsWith("viewer-inventory:") ||
       key.startsWith("roll-profile:") ||
-      key.startsWith("rolls:")
+      key.startsWith("rolls:") ||
+      isGlobalKey(key)
     );
   }
 
@@ -110,24 +140,29 @@ function allowedForScope(key: string, scope: "all" | "core" | "profile" | "inven
   if (scope === "profile") {
     return (
       key.startsWith("profile:") ||
+      key.startsWith("profiles:") ||
       key.startsWith("viewer-profile:") ||
       key.startsWith("roll-profile:") ||
       key.startsWith("rolls:")
     );
   }
 
-  return (
-    key.startsWith("inventory:") ||
-    key.startsWith("inventory-grants:") ||
-    key.startsWith("viewer-inventory:")
-  );
+  if (scope === "inventory") {
+    return (
+      key.startsWith("inventory:") ||
+      key.startsWith("inventory-grants:") ||
+      key.startsWith("viewer-inventory:")
+    );
+  }
+
+  return isGlobalKey(key);
 }
 
 async function addKeysByPattern(
   r: Redis,
   out: Set<string>,
   pattern: string,
-  scope: "all" | "core" | "profile" | "inventory"
+  scope: ResetScope
 ): Promise<void> {
   try {
     const found = await r.keys(pattern);
@@ -140,6 +175,31 @@ async function addKeysByPattern(
   } catch {
     // Ignore pattern failures so reset still works with exact keys.
   }
+}
+
+function addGlobalServerKeys(keys: Set<string>, channelId: string): void {
+  keys.add("global:rolls");
+  keys.add("global:achievement-state");
+
+  keys.add(`social:recent:${channelId}`);
+  keys.add(`social:boosts:${channelId}`);
+  keys.add(`social:chat:${channelId}`);
+  keys.add(`social:merchant:${channelId}`);
+  keys.add(`social:npc:${channelId}`);
+  keys.add(`social:flex:${channelId}`);
+}
+
+async function addAllChannelSocialKeys(
+  r: Redis,
+  keys: Set<string>,
+  scope: ResetScope
+): Promise<void> {
+  await addKeysByPattern(r, keys, "social:recent:*", scope);
+  await addKeysByPattern(r, keys, "social:boosts:*", scope);
+  await addKeysByPattern(r, keys, "social:chat:*", scope);
+  await addKeysByPattern(r, keys, "social:merchant:*", scope);
+  await addKeysByPattern(r, keys, "social:npc:*", scope);
+  await addKeysByPattern(r, keys, "social:flex:*", scope);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -162,7 +222,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const scope = normalizeScope(parseScope(rawScope));
 
   if (!scope) {
-    return text(res, "Reset scopes: all, core, profile/rolls, inventory/tokens.");
+    return text(res, "Reset scopes: all, core, profile/rolls, inventory/tokens, global/server.");
   }
 
   const channelId = cleanId(req.query.channelId, ctx.channelId);
@@ -171,7 +231,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const username = normalizeUsername(name);
 
   const preview = truthy(req.query.preview) || truthy(req.query.dry);
+
+  // global=1 keeps its old meaning: search this user across any channel.
   const globalUser = truthy(req.query.global);
+
+  // server=1/globalData=1 means include global server-side state with an all reset.
+  const includeServerData =
+    scope === "global" ||
+    truthy(req.query.server) ||
+    truthy(req.query.globalData) ||
+    truthy(req.query.serverData);
 
   const keys = new Set<string>();
 
@@ -191,29 +260,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // Scoped search: safest normal reset.
-  await addKeysByPattern(r, keys, `*:${channelId}:${userId}`, scope);
-  await addKeysByPattern(r, keys, `*:${channelId}:${userId}:*`, scope);
-  await addKeysByPattern(r, keys, `*:${channelId}:*:${userId}`, scope);
-  await addKeysByPattern(r, keys, `*:${channelId}:*${userId}*`, scope);
-  await addKeysByPattern(r, keys, `*${channelId}*${userId}*`, scope);
+  if (includeServerData) {
+    addGlobalServerKeys(keys, channelId);
 
-  if (username) {
-    await addKeysByPattern(r, keys, `*:${channelId}:${username}`, scope);
-    await addKeysByPattern(r, keys, `*:${channelId}:${username}:*`, scope);
-    await addKeysByPattern(r, keys, `*${channelId}*${username}*`, scope);
+    // For query=global&global=1, wipe social/server keys for all channels too.
+    if (globalUser) {
+      await addAllChannelSocialKeys(r, keys, scope);
+    }
   }
 
-  // Global search: use this if the channelId was wrong before.
-  if (globalUser) {
-    await addKeysByPattern(r, keys, `*:${userId}`, scope);
-    await addKeysByPattern(r, keys, `*:${userId}:*`, scope);
-    await addKeysByPattern(r, keys, `*${userId}*`, scope);
+  if (scope !== "global") {
+    // Scoped search: safest normal player reset.
+    await addKeysByPattern(r, keys, `*:${channelId}:${userId}`, scope);
+    await addKeysByPattern(r, keys, `*:${channelId}:${userId}:*`, scope);
+    await addKeysByPattern(r, keys, `*:${channelId}:*:${userId}`, scope);
+    await addKeysByPattern(r, keys, `*:${channelId}:*${userId}*`, scope);
+    await addKeysByPattern(r, keys, `*${channelId}*${userId}*`, scope);
 
     if (username) {
-      await addKeysByPattern(r, keys, `*:${username}`, scope);
-      await addKeysByPattern(r, keys, `*:${username}:*`, scope);
-      await addKeysByPattern(r, keys, `*${username}*`, scope);
+      await addKeysByPattern(r, keys, `*:${channelId}:${username}`, scope);
+      await addKeysByPattern(r, keys, `*:${channelId}:${username}:*`, scope);
+      await addKeysByPattern(r, keys, `*${channelId}*${username}*`, scope);
+    }
+
+    // Global user search: use this if the channelId was wrong before.
+    if (globalUser) {
+      await addKeysByPattern(r, keys, `*:${userId}`, scope);
+      await addKeysByPattern(r, keys, `*:${userId}:*`, scope);
+      await addKeysByPattern(r, keys, `*${userId}*`, scope);
+
+      if (username) {
+        await addKeysByPattern(r, keys, `*:${username}`, scope);
+        await addKeysByPattern(r, keys, `*:${username}:*`, scope);
+        await addKeysByPattern(r, keys, `*${username}*`, scope);
+      }
     }
   }
 
@@ -222,14 +302,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (finalKeys.length === 0) {
     return text(
       res,
-      `No matching reset keys found for ${name}. ChannelId=${channelId} | UserId=${userId}. Try &global=1.`
+      `No matching reset keys found. Scope=${scope} | ChannelId=${channelId} | UserId=${userId}.`
     );
   }
 
   if (preview) {
     return text(
       res,
-      `Preview reset ${scope} for ${name}: ${finalKeys.length} key(s): ${finalKeys
+      `Preview reset ${scope}: ${finalKeys.length} key(s): ${finalKeys
         .slice(0, 8)
         .join(", ")}${finalKeys.length > 8 ? "..." : ""}`
     );
@@ -239,8 +319,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return text(
     res,
-    `✅ Reset ${scope} for ${name}. ChannelId=${channelId} | UserId=${userId} | Deleted ${finalKeys.length} key(s): ${finalKeys
-      .map((k) => k.split(":")[0])
+    `✅ Reset ${scope}. ChannelId=${channelId} | UserId=${userId} | Deleted ${finalKeys.length} key(s): ${finalKeys
+      .map((k) => k.split(":").slice(0, 2).join(":"))
       .join(", ")}.`
   );
 }

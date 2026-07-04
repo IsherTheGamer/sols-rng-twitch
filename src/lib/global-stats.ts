@@ -56,11 +56,26 @@ export async function getGlobalRolls(): Promise<number> {
   return v ?? 0;
 }
 
+const GLOBAL_LUCK_MILESTONES = [
+  1000,
+  10000,
+  100000,
+  1000000,
+  10000000,
+  100000000,
+  1000000000,
+  10000000000,
+  100000000000,
+  1000000000000,
+];
+
 export function getGlobalLuck(globalRolls: number): number {
-  if (globalRolls >= 10000) return 4;
-  if (globalRolls >= 1000) return 3;
-  if (globalRolls >= 100) return 2;
-  return 1;
+  const unlocked = GLOBAL_LUCK_MILESTONES.filter(
+    (target) => globalRolls >= target
+  ).length;
+
+  // +10% per milestone, from 1k to 1 trillion rolls.
+  return 1 + unlocked * 0.1;
 }
 
 export function getNextLuckMilestone(globalRolls: number): {
@@ -68,34 +83,24 @@ export function getNextLuckMilestone(globalRolls: number): {
   remaining: number;
   nextLuck: number;
 } {
-  if (globalRolls < 100) {
-    return {
-      target: 100,
-      remaining: 100 - globalRolls,
-      nextLuck: 2,
-    };
+  for (let i = 0; i < GLOBAL_LUCK_MILESTONES.length; i++) {
+    const target = GLOBAL_LUCK_MILESTONES[i];
+
+    if (globalRolls < target) {
+      return {
+        target,
+        remaining: target - globalRolls,
+        nextLuck: 1 + (i + 1) * 0.1,
+      };
+    }
   }
 
-  if (globalRolls < 1000) {
-    return {
-      target: 1000,
-      remaining: 1000 - globalRolls,
-      nextLuck: 3,
-    };
-  }
-
-  if (globalRolls < 10000) {
-    return {
-      target: 10000,
-      remaining: 10000 - globalRolls,
-      nextLuck: 4,
-    };
-  }
+  const maxTarget = GLOBAL_LUCK_MILESTONES[GLOBAL_LUCK_MILESTONES.length - 1];
 
   return {
-    target: 10000,
+    target: maxTarget,
     remaining: 0,
-    nextLuck: 4,
+    nextLuck: getGlobalLuck(globalRolls),
   };
 }
 
