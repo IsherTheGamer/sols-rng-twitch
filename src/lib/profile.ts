@@ -313,8 +313,19 @@ export async function getViewerProfile(
 
   const key = profileKey(channelId, userId);
   const data = await r.get<ViewerProfile>(key);
+  const profile = normalizeViewerProfile(data, channelId, userId, displayName);
 
-  return normalizeViewerProfile(data, channelId, userId, displayName);
+  // Makes !profile create/register the user so other people can view them later.
+  // Avoid saving anonymous browser/test profiles.
+  if (user) {
+    if (!data) {
+      await r.set(key, profile);
+    }
+
+    await registerProfileKey(channelId, key);
+  }
+
+  return profile;
 }
 
 export async function setViewerProfile(
