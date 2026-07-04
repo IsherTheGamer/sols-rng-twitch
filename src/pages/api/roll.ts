@@ -27,6 +27,7 @@ import {
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
 import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
+import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system";
 
 const VIEWER_MULTIROLL_LIMIT = 3;
 const VIP_MULTIROLL_LIMIT = 10;
@@ -155,6 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const achievementBonuses = await getAchievementBonuses();
   const coreLuck = await getViewerCoreLuck(channelId, user);
+  const serverLuck = await getServerLuckMultiplier(channelId);
 
   const cooldownMs = Math.max(
     1000,
@@ -214,7 +216,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         tokenRareBiomePercentLuck: tokenEffect.rareBiomePercentLuck,
         tokenFinalLuckMultiplier: tokenEffect.finalLuckMultiplier,
         achievementFlatLuck: achievementBonuses.flatLuck,
-        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier,
+        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier * serverLuck.multiplier,
         rareBiomeActive,
       });
 
@@ -237,12 +239,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     await recordCoreRolls(channelId, user, results);
+    await recordSocialRolls(channelId, user, results, oneTimeTokenAssisted ? "token" : "roll");
 
     const unlocked = await recordAuraRolls(results);
     const unlockText = formatAchievementUnlocks(unlocked);
     const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
     const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
-    const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}`;
+    const serverBoostText = serverLuck.percent > 0 ? ` | Server Boost +${Math.floor(serverLuck.percent)}%` : "";
+    const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}${serverBoostText}`;
 
     if (displayCount === 1) {
       const best = top[0];

@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { parseQuery, text } from "@/lib/api-helpers";
+import { text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
-import { formatSocialProfile } from "@/lib/social-system";
+import { recordChatActivity } from "@/lib/social-system";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId, user } = getChannelContext(req);
-  return text(res, await formatSocialProfile(channelId, user, parseQuery(req)));
+  return text(res, await recordChatActivity(channelId, user));
 }
