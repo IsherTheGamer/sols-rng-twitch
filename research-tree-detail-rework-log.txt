@@ -1,0 +1,9 @@
+=== Research Tree Detail Rework ===
+Started: Sun Jul  5 18:01:21 EDT 2026
+
+$ cp /c/Users/USER/Downloads/research-tree-detail-rework/PATCH_RESEARCH_TREE_DETAIL_REWORK.js ./PATCH_RESEARCH_TREE_DETAIL_REWORK.js
+
+$ node PATCH_RESEARCH_TREE_DETAIL_REWORK.js
+❌ Could not find researchStatusLine block.
+
+❌ Command failed with code 1. Check research-tree-detail-rework-log.txt.

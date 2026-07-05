@@ -7,7 +7,8 @@ const PAGE_SIZE = 8;
 const ACTIVITY_INFO = [
   "The Activity Of Knowledge Update commands:",
   "!knowledge = view Knowledge, Research, Scanner, Merchant Marks, and Relic Shards.",
-  "!research = view Research Tree pages. Use !research unlock <id> to unlock upgrades.",
+  "!research = research help. Use !research branches, !research <branch>, !research info <id>, or !research unlock <id>.",
+  "!research branches = list branches. Branches: archive, crafting, core, relic, scanner, boss, market, blueprint, forecast.",
   "!scanner = view Activity scanner, rare signal, boss, event, and best-action hints.",
   "!boss = view active boss. Mods can use !boss start.",
   "!worldevent = view the current Activity world event.",
