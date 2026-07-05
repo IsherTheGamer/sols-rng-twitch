@@ -29,6 +29,7 @@ import type { ChannelState } from "@/types/data";
 import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
 import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system";
 import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
+import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
 
 const VIEWER_MULTIROLL_LIMIT = 3;
 const VIP_MULTIROLL_LIMIT = 10;
@@ -248,6 +249,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       user,
       results,
       source: oneTimeTokenAssisted ? "token" : "roll",
+    });
+
+    await recordActivityRolls({
+      channelId,
+      channelName: channelLoginName,
+      user,
+      results,
     });
 
     const unlocked = await recordAuraRolls(results);

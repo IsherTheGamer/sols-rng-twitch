@@ -6,6 +6,7 @@ import { recordBiomeVisit } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { sendNightbotMessage } from "@/lib/nightbot";
 import { recordMegaBiome } from "@/lib/mega-feature-system";
+import { maybeStartActivityWorldEvent } from "@/lib/activity-of-knowledge-system";
 
 function normalizeChannel(input: string): string {
   return input
@@ -53,6 +54,16 @@ export default async function handler(
       timeOfDay: result.state.timeOfDay,
       expiresAt: result.state.biomeExpiresAt,
     });
+
+    const activityEvent = await maybeStartActivityWorldEvent({
+      channelId,
+      channelName,
+      biomeId: result.state.biomeId,
+    });
+
+    if (activityEvent.message) {
+      await sendNightbotMessage(activityEvent.message, channelName);
+    }
   }
 
   if (unlockText) {
