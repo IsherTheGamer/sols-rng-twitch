@@ -129,12 +129,12 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
-  "Mega Expansion v2: added Discord alerts/settings, replay, records, first discoveries, AOTD/BOTD, channel events, black market, player/global quests, and rebuilt leaderboards.",
-  "Quest expansion: !pquests and !gquests now support daily, weekly, monthly, and yearly pages with 3 quests per period.",
-  "Leaderboard rework: !lb now supports all-time plus daily/weekly/monthly/yearly rolls, best, rare, and value pages. !weeklylb is a shortcut.",
-  "Discord integration: !dcalerts controls alert status, aura rarity threshold, rare biome list, and test alerts. Browser admin endpoint can save per-channel webhooks.",
-  "Info update: !info sol commands and !info sol mega now explain the new command systems. !solinfo works as the same alias.",
-  "Event systems: !event can start temporary luck events, !blackmarket can spawn a rare Stardust shop, and !summary can post Discord recaps.",
+  "The Activity Of Knowledge Update is live: added Knowledge, Research Tree, Bosses, Relics, Scanner, Marketplace, Blueprints, Forecast, and World Events.",
+  "Knowledge is the new research currency. Earn it from rare activity, bosses, events, blueprints, and progression.",
+  "Research Tree added: unlock scanner levels, relic slots, boss damage upgrades up to +250%, market upgrades, blueprint tools, and forecast upgrades.",
+  "Bosses added: successful rolls deal boss damage, with bonus damage from 1/10k, 1/100k, 1M, 10M, 100M, and 1B/challenged+ auras.",
+  "World Events added: rare 1/250 chance on biome change, lasting at least 25 minutes. Check !worldevent.",
+  "New commands: !knowledge, !research, !scanner, !boss, !worldevent, !forecast, !market, !blueprints, !relics. Website: /activity."
 ];
 
 function recentKey(channelId: string): string { return `social:recent:${channelId}`; }

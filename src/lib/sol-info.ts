@@ -4,6 +4,20 @@ import { truncate } from "./format";
 
 const PAGE_SIZE = 8;
 
+const ACTIVITY_INFO = [
+  "The Activity Of Knowledge Update commands:",
+  "!knowledge = view Knowledge, Research, Scanner, Merchant Marks, and Relic Shards.",
+  "!research = view Research Tree pages. Use !research unlock <id> to unlock upgrades.",
+  "!scanner = view Activity scanner, rare signal, boss, event, and best-action hints.",
+  "!boss = view active boss. Mods can use !boss start.",
+  "!worldevent = view the current Activity world event.",
+  "!forecast = semi-smart daily forecast using activity data, not exact predictions.",
+  "!market = safe marketplace using Merchant Marks. Use !market buy <id>.",
+  "!blueprints = view blueprint unlocks and sources.",
+  "!relics = view relic catalog/owned relics. Reroll later with !relics reroll <id>.",
+  "Website: /activity"
+];
+
 const COMMAND_INFO = [
   "!update [page]: latest bot update notes",
   "!info sol commands [page]: command help pages",
@@ -198,7 +212,7 @@ function coreTopic(topic: string, pageRaw?: string): string {
   if (mode === "dev" || mode === "devs") return paginate(devEvents as Array<{ name?: string; id: string }>, pageRaw, (d) => d.name ?? titleCase(d.id), "🛠️ Dev Biomes");
   if (mode === "devices" || mode === "device") return paginate(devices as Array<{ name: string }>, pageRaw, (d) => d.name, "📟 Devices");
 
-  return truncate("📘 !info sol <what> [page] | what: commands, mega, aura/auras, biome/biomes, potion/potions, token boosts/potions/special, paths, materials, components, events, dev, devices.", 390);
+  return truncate("📘 !info sol <what> [page] | what: commands, mega, activity, aura/auras, biome/biomes, potion/potions, token boosts/potions/special, paths, materials, components, events, dev, devices.", 390);
 }
 
 export function formatSolInfo(rawQuery: string): string {
