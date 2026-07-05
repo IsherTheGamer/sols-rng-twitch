@@ -55,6 +55,16 @@ const COMMANDS: CommandDef[] = [
   { id: "luckdetails", title: "Luck Details", endpoint: "luckdetails", category: "Mega Systems", description: "Full luck breakdown.", examples: [""], needsUser: true },
   { id: "luck", title: "Luck", endpoint: "luck", category: "Mega Systems", description: "Luck estimate/global luck command.", placeholder: "global", examples: ["", "global"], needsUser: true },
 
+  { id: "knowledge", title: "Knowledge", endpoint: "knowledge", category: "Activity Of Knowledge", description: "View Knowledge, Research progress, scanner level, Merchant Marks, and relic resources.", examples: [""], needsUser: true },
+  { id: "research", title: "Research Tree", endpoint: "research", category: "Activity Of Knowledge", description: "View/research Activity upgrades. Unlocks scanner, relic slots, boss damage, market, blueprints, and forecast.", placeholder: "unlock scanner_1", examples: ["", "2", "unlock scanner_1", "unlock boss_damage_1"], needsUser: true, changesData: true },
+  { id: "scanner", title: "Scanner", endpoint: "scanner", category: "Activity Of Knowledge", description: "Activity scanner: rare signal, active boss/event, and best-action hints.", examples: [""], needsUser: true },
+  { id: "boss", title: "Boss", endpoint: "boss", category: "Activity Of Knowledge", description: "Active boss status. Mods can start a boss; successful rolls damage active bosses.", placeholder: "start", examples: ["", "start"], needsUser: true, changesData: true },
+  { id: "worldevent", title: "World Event", endpoint: "worldevent", category: "Activity Of Knowledge", description: "Current Activity world event. Events have 1/250 chance on biome change and last at least 25m.", examples: [""] },
+  { id: "forecast", title: "Forecast", endpoint: "forecast", category: "Activity Of Knowledge", description: "Semi-smart daily activity forecast. Useful but not exact.", examples: [""], needsUser: true },
+  { id: "market", title: "Activity Market", endpoint: "market", category: "Activity Of Knowledge", description: "Safe marketplace using Merchant Marks.", placeholder: "buy blueprint_fragment", examples: ["", "buy knowledge_note", "buy blueprint_fragment"], needsUser: true, changesData: true },
+  { id: "blueprints", title: "Blueprints", endpoint: "blueprints", category: "Activity Of Knowledge", description: "Blueprint sources, unlocks, and fragment overview.", placeholder: "biome_lens", examples: ["", "biome_lens", "relic_forge", "quantum_press"], needsUser: true },
+  { id: "relics", title: "Relics", endpoint: "relics", category: "Activity Of Knowledge", description: "Relic catalog/owned relics. Reroll machine unlocks from research.", placeholder: "reroll relic_id", examples: ["", "reroll scrap_magnet"], needsUser: true, changesData: true },
+
   { id: "core", title: "Core", endpoint: "core", category: "Core + Economy", description: "Core status/actions.", placeholder: "recipe", examples: ["", "recipe", "focus main", "focus sub"], needsUser: true, changesData: true },
   { id: "craft", title: "Craft", endpoint: "craft", category: "Core + Economy", description: "Craft recipes/components/core items.", placeholder: "recipe wire_1", examples: ["recipe wire_1", "wire_1 10", "frame", "chassis"], needsUser: true, changesData: true },
   { id: "components", title: "Components", endpoint: "components", category: "Core + Economy", description: "Component inventory pages.", placeholder: "2", examples: ["", "2"], needsUser: true },
@@ -94,6 +104,15 @@ const HOME_COMMANDS = [
   { id: "event", query: "" },
   { id: "blackmarket", query: "" },
   { id: "dcalerts", query: "" },
+  { id: "knowledge", query: "" },
+  { id: "research", query: "" },
+  { id: "scanner", query: "" },
+  { id: "boss", query: "" },
+  { id: "worldevent", query: "" },
+  { id: "forecast", query: "" },
+  { id: "market", query: "" },
+  { id: "blueprints", query: "" },
+  { id: "relics", query: "" },
 ];
 
 function cleanLogin(raw: string): string {

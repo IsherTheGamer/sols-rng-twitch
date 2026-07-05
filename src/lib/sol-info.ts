@@ -22,6 +22,7 @@ const COMMAND_INFO = [
   "!update [page]: latest bot update notes",
   "!info sol commands [page]: command help pages",
   "!info sol mega [page]: mega feature help",
+  "!info sol activity [page]: Activity Of Knowledge help",
   "!dcalerts: Discord webhook alert settings",
   "!replay [user/page]: major rare pull replay",
   "!records: channel records and best pulls",
@@ -185,6 +186,10 @@ function coreTopic(topic: string, pageRaw?: string): string {
     return paginate(MEGA_INFO, pageRaw, (x) => x, "✨ Mega Features", 4);
   }
 
+  if (mode === "activity" || mode === "knowledge" || mode === "research" || mode === "aok") {
+    return paginate(ACTIVITY_INFO, pageRaw, (x) => x, "🧠 Activity Of Knowledge", 4);
+  }
+
   if (mode === "paths" || mode === "path") {
     return paginate([
       "Safe: stable/easier walls", "Risk: harder/more rewards", "Support: crafting discounts", "Biome: biome/material scaling",
@@ -224,6 +229,7 @@ export function formatSolInfo(rawQuery: string): string {
   const page = parts[2] ?? "";
 
   if (topic === "help" || topic === "commands" || topic === "info") return coreTopic("help");
+  if (topic === "activity" || topic === "knowledge" || topic === "research" || topic === "aok") return coreTopic(topic, arg);
   if (topic === "aura" || topic === "auras") return auraInfo(arg, page);
   if (topic === "biome" || topic === "biomes") return biomeInfo(arg, page);
   if (topic === "potion" || topic === "potions") return potionInfo(arg, page);
