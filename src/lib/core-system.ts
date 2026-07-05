@@ -1702,7 +1702,7 @@ function addMaterialDrops(
   add("scrap", 1);
   add("metal_bits", 1);
 
-  if (roll.effectiveRarity >= 1000) add("circuit_scrap", 1);
+  if (roll.effectiveRarity >= 450) add("circuit_scrap", 1);
   if (roll.effectiveRarity >= 10000) add("signal_fragment", 1);
   if (roll.effectiveRarity >= 50000) add("refined_alloy", 1);
   if (roll.effectiveRarity >= 1000000) add("stabilized_flux", 1);

@@ -71,7 +71,7 @@ const MATERIAL_NAMES: Record<string, string> = {
 const MATERIAL_SOURCES = [
   ["Scrap", "Every roll gives Scrap."],
   ["Metal Bits", "Every roll gives Metal Bits."],
-  ["Circuit Scrap", "Roll 1/1k+ auras; also quests/boxes."],
+  ["Circuit Scrap", "Roll 1/450+ auras; also quests/boxes."],
   ["Signal Fragment", "Roll 1/10k+ auras; also quests/boxes."],
   ["Refined Alloy", "Roll 1/50k+ auras; also quests/boxes/black market."],
   ["Stabilized Flux", "Roll 1/1M+ auras; also late quests/black market."],

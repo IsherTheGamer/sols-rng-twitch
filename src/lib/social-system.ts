@@ -129,6 +129,7 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
+  "Balance hotfix: Circuit Scrap now drops from 1/450+ auras instead of 1/1k+, making early Core progression much easier for viewers.",
   "The Activity Of Knowledge Update is live: added Knowledge, Research Tree, Bosses, Relics, Scanner, Marketplace, Blueprints, Forecast, and World Events.",
   "Knowledge is the new research currency. Earn it from rare activity, bosses, events, blueprints, and progression.",
   "Research Tree added: unlock scanner levels, relic slots, boss damage upgrades up to +250%, market upgrades, blueprint tools, and forecast upgrades.",
