@@ -1,6 +1,8 @@
 import { Redis } from "@upstash/redis";
 import type { NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
+import { getGlobalRolls } from "./global-stats";
+import { getViewerProfile } from "./profile";
 
 let redis: Redis | null = null;
 
@@ -637,6 +639,102 @@ function tieredComponentName(id: string): string {
   return `${TIER_NAMES[tier - 1] ?? `Tier ${tier}`} ${titleCase(family)}`;
 }
 
+const TIER_6_7_DOUBLE_CHANCE = 0.25;
+const SHD_LEVEL_8_DUPLICATE_CHANCE = 0.10;
+const GLOBAL_25K_DUPLICATE_CHANCE = 0.01;
+const GLOBAL_25K_DUPLICATE_ROLLS_REQUIRED = 25000;
+
+const LEVEL_MATERIAL_BONUS_STEP = 50;
+const LEVEL_MATERIAL_BONUS_PER_STEP = 0.001;
+const GLOBAL_QUEST_MATERIAL_BONUS_STEP = 100;
+const GLOBAL_QUEST_MATERIAL_BONUS_PER_STEP = 0.001;
+const GLOBAL_QUEST_COMPLETIONS_KEY = "mega:gquest-completions";
+
+const CORE_NAME_ADJECTIVES = [
+  "Dawn", "Ember", "Azure", "Verdant", "Crimson", "Silver", "Golden", "Obsidian", "Astral", "Nova",
+  "Prismatic", "Echo", "Radiant", "Silent", "Storm", "Frost", "Solar", "Lunar", "Void", "Celestial",
+  "Arcane", "Quantum", "Stellar", "Nebula", "Eclipse"
+] as const;
+
+const CORE_NAME_NOUNS = [
+  "Spark", "Anchor", "Prism", "Engine", "Relay", "Beacon", "Circuit", "Crown", "Heart", "Lens",
+  "Forge", "Spire", "Gate", "Pulse", "Matrix", "Reactor", "Nexus", "Vessel", "Signal", "Star"
+] as const;
+
+function getComponentTier(id: string): number {
+  const match = id.match(/_(\d+)$/);
+  return Math.max(1, Math.min(10, Number(match?.[1] ?? 1)));
+}
+
+function getBaseComponentOutputAmount(tier: number): number {
+  if (tier <= 5) return 2;
+  return 1;
+}
+
+function getCorePartName(path: CorePath, tier: number, part: "Core" | "Frame" | "Chassis"): string {
+  const safeTier = Math.max(1, Math.floor(tier || 1));
+  const adjective = CORE_NAME_ADJECTIVES[(safeTier - 1) % CORE_NAME_ADJECTIVES.length];
+  const noun = CORE_NAME_NOUNS[Math.floor((safeTier - 1) / CORE_NAME_ADJECTIVES.length) % CORE_NAME_NOUNS.length];
+  const pathPrefix = path === "universal" ? "" : `${titleCase(path)} `;
+  return `${pathPrefix}${adjective} ${noun} ${part}`;
+}
+
+function getLevelMaterialMultiplier(level: number): number {
+  const steps = Math.floor(Math.max(0, level) / LEVEL_MATERIAL_BONUS_STEP);
+  return 1 + steps * LEVEL_MATERIAL_BONUS_PER_STEP;
+}
+
+function getGlobalQuestMaterialMultiplier(completed: number): number {
+  const steps = Math.floor(Math.max(0, completed) / GLOBAL_QUEST_MATERIAL_BONUS_STEP);
+  return 1 + steps * GLOBAL_QUEST_MATERIAL_BONUS_PER_STEP;
+}
+
+async function getGlobalQuestCompletions(): Promise<number> {
+  const r = getRedis();
+  if (!r) return 0;
+  const value = await r.get<number>(GLOBAL_QUEST_COMPLETIONS_KEY);
+  return Math.max(0, Math.floor(value ?? 0));
+}
+
+function getMaterialComponentDuplicateChance(
+  state: CoreSystemState,
+  globalRolls: number
+): number {
+  let chance = 0;
+  if (state.shdLevel >= 8) chance += SHD_LEVEL_8_DUPLICATE_CHANCE;
+  if (globalRolls >= GLOBAL_25K_DUPLICATE_ROLLS_REQUIRED) chance += GLOBAL_25K_DUPLICATE_CHANCE;
+  return Math.min(0.95, chance);
+}
+
+function getCraftDoubleChance(
+  state: CoreSystemState,
+  globalRolls: number,
+  tier: number
+): number {
+  let chance = getMaterialComponentDuplicateChance(state, globalRolls);
+  if (tier === 6 || tier === 7) chance += TIER_6_7_DOUBLE_CHANCE;
+  return Math.min(0.95, chance);
+}
+
+function rollBonusBatches(batches: number, chance: number): number {
+  if (chance <= 0) return 0;
+  let bonus = 0;
+  for (let i = 0; i < batches; i++) {
+    if (Math.random() < chance) bonus += 1;
+  }
+  return bonus;
+}
+
+function formatUsedCosts(costs: CraftCosts): string {
+  const parts: string[] = [];
+  if (costs.stardust) parts.push(`${formatAmount(costs.stardust)} Stardust`);
+  for (const [id, amount] of Object.entries(costs.materials ?? {})) parts.push(`${formatAmount(amount)} ${materialName(id)}`);
+  for (const [id, amount] of Object.entries(costs.components ?? {})) parts.push(`${formatAmount(amount)} ${componentName(id)}`);
+  for (const [id, amount] of Object.entries(costs.frames ?? {})) parts.push(`${formatAmount(amount)} ${frameName(id)}`);
+  for (const [id, amount] of Object.entries(costs.tokens ?? {})) parts.push(`${formatAmount(amount)} ${tokenName(id)}`);
+  return parts.length > 0 ? parts.join(", ") : "Free";
+}
+
 function buildComponentRecipes(): Record<string, ComponentRecipe> {
   const recipes: Record<string, ComponentRecipe> = {};
 
@@ -680,7 +778,7 @@ function buildComponentRecipes(): Record<string, ComponentRecipe> {
       recipes[id] = {
         id,
         name: tieredComponentName(id),
-        outputAmount: tier <= 3 ? 4 : tier <= 6 ? 2 : 1,
+        outputAmount: getBaseComponentOutputAmount(tier),
         costs,
       };
     }
@@ -780,7 +878,7 @@ const COMPONENT_RECIPES = buildComponentRecipes();
 function componentName(id: string): string {
   if (id.startsWith("chassis_")) {
     const [, path, tier] = id.split("_");
-    return `${titleCase(path)} Chassis ${tier}`;
+    return getCorePartName(path as CorePath, Number(tier), "Chassis");
   }
 
   return COMPONENT_RECIPES[id]?.name ?? tieredComponentName(id);
@@ -788,7 +886,7 @@ function componentName(id: string): string {
 
 function frameName(id: string): string {
   const [, path, tier] = id.split(":");
-  return `${titleCase(path)} Frame ${tier}`;
+  return getCorePartName(path as CorePath, Number(tier), "Frame");
 }
 
 function formatBag(
@@ -1199,7 +1297,7 @@ function getChassisRecipe(state: CoreSystemState, tier: number): ComponentRecipe
 
   return {
     id: chassisId(path, tier),
-    name: `${titleCase(path)} Chassis ${tier}`,
+    name: getCorePartName(path, tier, "Chassis"),
     costs: discountedCosts(state, costs),
   };
 }
@@ -1235,7 +1333,7 @@ function getFrameRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
 
   return {
     id: frameId(path, tier),
-    name: `${titleCase(path)} Frame ${tier}`,
+    name: getCorePartName(path, tier, "Frame"),
     costs: discountedCosts(state, costs),
   };
 }
@@ -1280,7 +1378,7 @@ function getCoreRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
 
   return {
     id: `core_${path}_${tier}`,
-    name: `${titleCase(path)} Core ${tier}`,
+    name: getCorePartName(path, tier, "Core"),
     costs: discountedCosts(state, costs),
   };
 }
@@ -1575,14 +1673,28 @@ function grantReward(state: CoreSystemState, reward: RewardBag, multiplier = 1):
   }
 }
 
-function materialDropMultiplier(state: CoreSystemState): number {
-  return getPathModifiers(state).materialMultiplier;
+function materialDropMultiplier(
+  state: CoreSystemState,
+  profileLevel = 0,
+  globalQuestCompletions = 0
+): number {
+  return (
+    getPathModifiers(state).materialMultiplier *
+    getLevelMaterialMultiplier(profileLevel) *
+    getGlobalQuestMaterialMultiplier(globalQuestCompletions)
+  );
 }
 
-function addMaterialDrops(state: CoreSystemState, roll: RollHitForCore): void {
-  const mult = materialDropMultiplier(state);
+function addMaterialDrops(
+  state: CoreSystemState,
+  roll: RollHitForCore,
+  duplicateChance = 0,
+  materialMultiplier = materialDropMultiplier(state)
+): void {
+  const mult = materialMultiplier;
   const add = (id: string, amount: number) => {
-    const value = Math.max(1, Math.floor(amount * mult));
+    let value = Math.max(1, Math.floor(amount * mult));
+    if (duplicateChance > 0 && Math.random() < duplicateChance) value *= 2;
     addToBag(state.materials, id, value);
     state.stats.materialsCollected += value;
   };
@@ -1820,7 +1932,7 @@ function shdUnlockText(level: number): string {
     2: "Better Stardust tracking",
     4: "Stardust Reactor unlocked",
     6: "Extra quest reward scaling",
-    8: "Late-game recipe token crafting unlocked",
+    8: "10% material/component duplication chance unlocked",
     10: "Max SHD storage unlocked",
   };
   return unlocks[level] ?? "Higher capacity unlocked";
@@ -1832,6 +1944,11 @@ export async function recordCoreRolls(
   rolls: RollHitForCore[]
 ): Promise<CoreSystemState> {
   const state = await getCoreState(channelId, user);
+  const globalRolls = await getGlobalRolls();
+  const profile = user ? await getViewerProfile(channelId, user) : null;
+  const globalQuestCompletions = await getGlobalQuestCompletions();
+  const materialDuplicateChance = getMaterialComponentDuplicateChance(state, globalRolls);
+  const materialMultiplier = materialDropMultiplier(state, profile?.level ?? 0, globalQuestCompletions);
 
   if (state.coreFocus === "main") {
     const nextTier = state.coreTier + 1;
@@ -1870,7 +1987,7 @@ export async function recordCoreRolls(
     if (roll.effectiveRarity >= 1000000) state.stats.rareRolls1m += 1;
     if (roll.effectiveRarity >= 10000000) state.stats.rareRolls10m += 1;
 
-    addMaterialDrops(state, roll);
+    addMaterialDrops(state, roll, materialDuplicateChance, materialMultiplier);
 
     if (roll.effectiveRarity >= 10000) progressQuest(state, "rarity", 1);
 
@@ -1957,7 +2074,13 @@ export async function craftByIdAmount(
 
   consumeCosts(state, scaledCosts);
 
-  let outputAmount = (recipe.outputAmount ?? 1) * batches;
+  const globalRolls = await getGlobalRolls();
+  const tier = getComponentTier(recipe.id);
+  const baseOutputPerBatch = recipe.outputAmount ?? 1;
+  const doubleChance = getCraftDoubleChance(state, globalRolls, tier);
+  const bonusBatches = rollBonusBatches(batches, doubleChance);
+
+  let outputAmount = baseOutputPerBatch * batches + baseOutputPerBatch * bonusBatches;
   if (state.corePath === "support" && outputAmount >= 10) outputAmount += Math.floor(outputAmount * 0.1);
 
   addToBag(state.components, recipe.id, outputAmount);
@@ -1968,7 +2091,9 @@ export async function craftByIdAmount(
 
   await saveCoreState(state);
 
-  return `✅ Crafted ${recipe.name} x${formatAmount(outputAmount)}.`;
+  const bonusText = bonusBatches > 0 ? ` + ${formatAmount(bonusBatches)} duplicate batch(es)` : "";
+  const chanceText = doubleChance > 0 ? ` | Double chance ${(doubleChance * 100).toFixed(1)}%` : "";
+  return truncate(`✅ Crafted ${recipe.name}: ${formatAmount(batches)} batch(es) x${formatAmount(baseOutputPerBatch)}${bonusText} = ${formatAmount(outputAmount)} total. Used: ${formatUsedCosts(scaledCosts)}.${chanceText}`);
 }
 
 export async function craftComponent(
@@ -2380,7 +2505,11 @@ export async function formatCraftRecipe(
   const recipe = COMPONENT_RECIPES[id];
   if (!recipe) return `Unknown recipe: ${id}. Try wire_1, plate_1, circuit_board_1, divergence_matrix.`;
 
-  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)} | Makes x${recipe.outputAmount ?? 1}`);
+  const globalRolls = await getGlobalRolls();
+  const tier = getComponentTier(recipe.id);
+  const doubleChance = getCraftDoubleChance(state, globalRolls, tier);
+  const chanceText = doubleChance > 0 ? ` | Double chance ${(doubleChance * 100).toFixed(1)}%` : "";
+  return truncate(`${recipe.name}: ${formatCosts(recipe.costs)} | Makes x${recipe.outputAmount ?? 1}${chanceText}`);
 }
 
 export async function formatReactorStatus(

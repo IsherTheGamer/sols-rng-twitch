@@ -155,6 +155,7 @@ interface BlackMarketState {
 }
 
 const PERIODS: QuestPeriod[] = ["daily", "weekly", "monthly", "yearly"];
+const GLOBAL_QUEST_COMPLETIONS_KEY = "mega:gquest-completions";
 const DEFAULT_RARE_BIOMES = ["glitched", "dreamspace", "singularity", "cyberspace", "aurora", "graveyard", "pumpkin_moon", "blazing_sun", "abnormality", "blood_rain", "red_full_moon"];
 const AOTD = ["Archangel", "Abyssal Hunter", "Matrix", "Overture", "Bloodlust", "Sovereign", "Symphony", "Apostolos", "Radiant", "Chromatic Genesis", "Ruins", "Gargantua"];
 const BOTD = ["starfall", "hell", "corruption", "glitched", "dreamspace", "aurora", "graveyard", "pumpkin_moon", "blazing_sun", "cyberspace", "singularity", "snowy"];
@@ -480,6 +481,11 @@ async function claimQuest(channelId: string, user: NightbotUser | null, scope: "
     claimed.add(q.id);
     if (scope === "player") core.stardust += period === "daily" ? 100 : period === "weekly" ? 1000 : period === "monthly" ? 5000 : 25000;
   }
+
+  if (scope === "global" && (period === "daily" || period === "weekly")) {
+    await r.incrby(GLOBAL_QUEST_COMPLETIONS_KEY, fresh.length);
+  }
+
   await saveCoreState(core);
   await r.set(claimedKey, [...claimed]);
   return `✅ Claimed ${fresh.length} ${scope} ${period} quest reward(s).`;
