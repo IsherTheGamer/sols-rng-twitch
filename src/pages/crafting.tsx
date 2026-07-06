@@ -49,6 +49,7 @@ const COMPONENT_FAMILIES = [
 const MATERIAL_NAMES: Record<string, string> = {
   scrap: "Scrap",
   metal_bits: "Metal Bits",
+  mechanical_scrap: "Mechanical Scrap",
   circuit_scrap: "Circuit Scrap",
   signal_fragment: "Signal Fragment",
   refined_alloy: "Refined Alloy",
@@ -71,6 +72,7 @@ const MATERIAL_NAMES: Record<string, string> = {
 const MATERIAL_SOURCES = [
   ["Scrap", "Every roll gives Scrap."],
   ["Metal Bits", "Every roll gives Metal Bits."],
+  ["Mechanical Scrap", "Pure roll-only: every 5 successful aura rolls gives 1. Not sold in shops/markets."],
   ["Circuit Scrap", "Roll 1/450+ auras; also quests/boxes."],
   ["Signal Fragment", "Roll 1/10k+ auras; also quests/boxes."],
   ["Refined Alloy", "Roll 1/50k+ auras; also quests/boxes/black market."],
@@ -112,6 +114,10 @@ function recipeFor(family: string, tier: number) {
     scrap: Math.ceil(baseScale * tier * 6),
     metal_bits: Math.ceil(baseScale * tier * 2),
   };
+
+  if (tier <= 2) {
+    materials.mechanical_scrap = Math.max(1, Math.ceil(baseScale * (tier === 1 ? 0.75 : 1.25)));
+  }
   const components: Record<string, number> = {};
 
   if (tier >= 2) components[`${family}_${tier - 1}`] = Math.max(1, Math.ceil(tier / 2));
@@ -211,6 +217,7 @@ export default function CraftingGuide() {
             ["Global 25k rolls", "+1% duplicate materials/components"],
             ["Levels", "+0.1% material multiplier every 50 levels"],
             ["Global quests", "+0.1% material multiplier every 100 daily/weekly global quests"],
+            ["Mechanical Scrap", "1 every 5 successful aura rolls; pure roll-only limiter"],
           ].map(([title, text]) => (
             <div key={title} style={{ background: "#11152a", border: "1px solid #20294d", borderRadius: 16, padding: 16 }}>
               <strong>{title}</strong>

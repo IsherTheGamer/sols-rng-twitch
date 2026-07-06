@@ -211,6 +211,7 @@ const SHD_CORE_REQUIREMENTS: Record<number, number> = {
 const MATERIAL_NAMES: Record<string, string> = {
   scrap: "Scrap",
   metal_bits: "Metal Bits",
+  mechanical_scrap: "Mechanical Scrap",
   circuit_scrap: "Circuit Scrap",
   signal_fragment: "Signal Fragment",
   refined_alloy: "Refined Alloy",
@@ -650,6 +651,8 @@ const GLOBAL_QUEST_MATERIAL_BONUS_STEP = 100;
 const GLOBAL_QUEST_MATERIAL_BONUS_PER_STEP = 0.001;
 const GLOBAL_QUEST_COMPLETIONS_KEY = "mega:gquest-completions";
 
+const MECHANICAL_SCRAP_ROLL_INTERVAL = 5;
+
 const CORE_NAME_ADJECTIVES = [
   "Dawn", "Ember", "Azure", "Verdant", "Crimson", "Silver", "Golden", "Obsidian", "Astral", "Nova",
   "Prismatic", "Echo", "Radiant", "Silent", "Storm", "Frost", "Solar", "Lunar", "Void", "Celestial",
@@ -746,6 +749,11 @@ function buildComponentRecipes(): Record<string, ComponentRecipe> {
         scrap: Math.ceil(baseScale * tier * 6),
         metal_bits: Math.ceil(baseScale * tier * 2),
       };
+
+      if (tier <= 2) {
+        // Mechanical Scrap is the low-tier roll-only limiter so Scrap/Metal Bits do not make early crafting infinite.
+        materialCosts.mechanical_scrap = Math.max(1, Math.ceil(baseScale * (tier === 1 ? 0.75 : 1.25)));
+      }
       const componentCosts: Record<string, number> = {};
 
       if (tier >= 2) componentCosts[`${family}_${tier - 1}`] = Math.max(1, Math.ceil(tier / 2));
@@ -1271,6 +1279,7 @@ function getChassisRecipe(state: CoreSystemState, tier: number): ComponentRecipe
     materials: {
       scrap: 35 * scale,
       metal_bits: 8 * scale,
+      mechanical_scrap: Math.max(2, Math.ceil(tier * 2)),
       circuit_scrap: tier >= 8 ? 5 * scale : 0,
     },
     components: {
@@ -1313,6 +1322,7 @@ function getFrameRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
       [`bolt_${Math.max(1, compTier)}`]: Math.max(1, Math.ceil(tier / 5)),
     },
     materials: {
+      mechanical_scrap: Math.max(3, Math.ceil(tier * 3)),
       circuit_scrap: Math.max(5, tier * 5),
     },
   };
@@ -1685,6 +1695,15 @@ function materialDropMultiplier(
   );
 }
 
+function addGuaranteedRollScrap(state: CoreSystemState): void {
+  if (state.stats.totalRollsTracked <= 0) return;
+  if (state.stats.totalRollsTracked % MECHANICAL_SCRAP_ROLL_INTERVAL !== 0) return;
+
+  // Pure roll-only limiter material. Do not route this through shops, sales, or rarity drops.
+  addToBag(state.materials, "mechanical_scrap", 1);
+  state.stats.materialsCollected += 1;
+}
+
 function addMaterialDrops(
   state: CoreSystemState,
   roll: RollHitForCore,
@@ -1982,6 +2001,7 @@ export async function recordCoreRolls(
 
   for (const roll of rolls) {
     state.stats.totalRollsTracked += 1;
+    addGuaranteedRollScrap(state);
     state.stats.highestRarity = Math.max(state.stats.highestRarity, roll.effectiveRarity);
     if (roll.effectiveRarity >= 100000) state.stats.rareRolls100k += 1;
     if (roll.effectiveRarity >= 1000000) state.stats.rareRolls1m += 1;

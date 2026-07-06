@@ -200,7 +200,7 @@ function coreTopic(topic: string, pageRaw?: string): string {
 
   if (mode === "materials" || mode === "material") {
     return paginate([
-      "Scrap", "Metal Bits", "Circuit Scrap", "Signal Fragment", "Refined Alloy", "Stabilized Flux", "Quantum Residue", "Reality Thread",
+      "Scrap", "Metal Bits", "Mechanical Scrap", "Circuit Scrap", "Signal Fragment", "Refined Alloy", "Stabilized Flux", "Quantum Residue", "Reality Thread",
       "Singularity Shard", "Dimensional Seal", "Anomaly Matter", "Forbidden Circuit", "Debug Fragment", "Thermal Paste", "Conductive Gel", "Energy Cell",
       "Glitched Alloy", "Chrono Dust", "Void Glass", "Stellar Ink",
     ], pageRaw, (x) => x, "🧱 Materials");
