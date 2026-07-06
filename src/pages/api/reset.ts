@@ -108,12 +108,16 @@ function isGlobalKey(key: string): boolean {
   return (
     key === "global:rolls" ||
     key === "global:achievement-state" ||
+    key.startsWith("global:") ||
     key.startsWith("social:recent:") ||
     key.startsWith("social:boosts:") ||
     key.startsWith("social:chat:") ||
     key.startsWith("social:merchant:") ||
     key.startsWith("social:npc:") ||
-    key.startsWith("social:flex:")
+    key.startsWith("social:flex:") ||
+    key.startsWith("mega:") ||
+    key.startsWith("aok:channel:") ||
+    key.startsWith("core-channel-active:")
   );
 }
 
@@ -129,6 +133,7 @@ function allowedForScope(key: string, scope: ResetScope): boolean {
       key.startsWith("viewer-inventory:") ||
       key.startsWith("roll-profile:") ||
       key.startsWith("rolls:") ||
+      key.startsWith("aok:player:") ||
       isGlobalKey(key)
     );
   }
@@ -141,6 +146,7 @@ function allowedForScope(key: string, scope: ResetScope): boolean {
     return (
       key.startsWith("profile:") ||
       key.startsWith("profiles:") ||
+      key.startsWith("aok:player:") ||
       key.startsWith("viewer-profile:") ||
       key.startsWith("roll-profile:") ||
       key.startsWith("rolls:")
@@ -187,6 +193,11 @@ function addGlobalServerKeys(keys: Set<string>, channelId: string): void {
   keys.add(`social:merchant:${channelId}`);
   keys.add(`social:npc:${channelId}`);
   keys.add(`social:flex:${channelId}`);
+
+  keys.add(`aok:channel:${channelId}`);
+  keys.add(`core-channel-active:${channelId}`);
+  keys.add(`mega:lastbiome:${channelId}`);
+  keys.add(`mega:discord:${channelId}`);
 }
 
 async function addAllChannelSocialKeys(
@@ -200,6 +211,10 @@ async function addAllChannelSocialKeys(
   await addKeysByPattern(r, keys, "social:merchant:*", scope);
   await addKeysByPattern(r, keys, "social:npc:*", scope);
   await addKeysByPattern(r, keys, "social:flex:*", scope);
+
+  await addKeysByPattern(r, keys, "aok:channel:*", scope);
+  await addKeysByPattern(r, keys, "core-channel-active:*", scope);
+  await addKeysByPattern(r, keys, "mega:*", scope);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -288,6 +303,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await addKeysByPattern(r, keys, `*:${userId}`, scope);
       await addKeysByPattern(r, keys, `*:${userId}:*`, scope);
       await addKeysByPattern(r, keys, `*${userId}*`, scope);
+      await addKeysByPattern(r, keys, `aok:player:*:${userId}`, scope);
 
       if (username) {
         await addKeysByPattern(r, keys, `*:${username}`, scope);
@@ -302,7 +318,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (finalKeys.length === 0) {
     return text(
       res,
-      `No matching reset keys found. Scope=${scope} | ChannelId=${channelId} | UserId=${userId}.`
+      `No matching reset keys found. Scope=${scope} | ChannelId=${channelId} | UserId=${userId} | Tip: old URL format with global=1 searches all channels for this user.`
     );
   }
 
