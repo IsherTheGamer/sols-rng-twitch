@@ -129,6 +129,7 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
+  "Roll limit rebalance: viewers can now roll up to 7x, VIP/subs 15x, mods 25x. Players gain hidden +1 max roll at 1k, 10k, 100k, 1M, 10M, 100M, and 1B total rolls.",
   "Crafting rebalance: Mechanical Scrap added as a pure roll-only crafting limiter. You get 1 every 5 successful aura rolls, and it is not sold in shops/markets.",
   "Balance hotfix: Circuit Scrap now drops from 1/450+ auras instead of 1/1k+, making early Core progression much easier for viewers.",
   "The Activity Of Knowledge Update is live: added Knowledge, Research Tree, Bosses, Relics, Scanner, Marketplace, Blueprints, Forecast, and World Events.",

@@ -18,7 +18,7 @@ import {
 import { text, error } from "@/lib/api-helpers";
 import { formatRollResult, formatMultiRoll } from "@/lib/format";
 import { withTick } from "@/lib/run-with-tick";
-import { isBroadcasterUser, recordViewerRolls } from "@/lib/profile";
+import { getViewerProfile, isBroadcasterUser, recordViewerRolls } from "@/lib/profile";
 import { announceAuraResults } from "@/lib/global-announcements";
 import { isRollMultiAllowlisted } from "@/lib/roll-access";
 import {
@@ -31,11 +31,25 @@ import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system"
 import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
 import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
 
-const VIEWER_MULTIROLL_LIMIT = 3;
-const VIP_MULTIROLL_LIMIT = 10;
-const MOD_MULTIROLL_LIMIT = 20;
+const VIEWER_MULTIROLL_LIMIT = 7;
+const VIP_MULTIROLL_LIMIT = 15;
+const MOD_MULTIROLL_LIMIT = 25;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
 const MAX_DISPLAY_RESULTS = 5;
+
+const ROLL_LIMIT_MILESTONES = [
+  1000,
+  10000,
+  100000,
+  1000000,
+  10000000,
+  100000000,
+  1000000000,
+] as const;
+
+function getRollLimitProgressBonus(totalRolls: number): number {
+  return ROLL_LIMIT_MILESTONES.filter((milestone) => totalRolls >= milestone).length;
+}
 
 export const config = {
   maxDuration: 30,
@@ -84,11 +98,14 @@ function getRoleRollLimit(options: {
   userLevel: string | undefined | null;
   isMod: boolean;
   trustedMultiroll: boolean;
+  rollProgressBonus: number;
 }): number {
   if (options.trustedMultiroll) return TRUSTED_MULTIROLL_LIMIT;
-  if (options.isMod) return MOD_MULTIROLL_LIMIT;
-  if (isVipUser(options.userLevel)) return VIP_MULTIROLL_LIMIT;
-  return VIEWER_MULTIROLL_LIMIT;
+
+  const bonus = Math.max(0, Math.floor(options.rollProgressBonus || 0));
+  if (options.isMod) return MOD_MULTIROLL_LIMIT + bonus;
+  if (isVipUser(options.userLevel)) return VIP_MULTIROLL_LIMIT + bonus;
+  return VIEWER_MULTIROLL_LIMIT + bonus;
 }
 
 function getRoleRollLimitName(options: {
@@ -140,10 +157,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const allowlisted = isRollMultiAllowlisted(user, channelLoginName);
   const trustedMultiroll = broadcaster || allowlisted;
 
+  const viewerProfileForLimit = trustedMultiroll || !user ? null : await getViewerProfile(channelId, user);
+  const totalProfileRollsForLimit =
+    (viewerProfileForLimit?.rolls ?? 0) +
+    (viewerProfileForLimit?.tokenRolls ?? 0) +
+    (viewerProfileForLimit?.potionRolls ?? 0);
+  const rollProgressBonus = trustedMultiroll ? 0 : getRollLimitProgressBonus(totalProfileRollsForLimit);
+
   const maxAllowed = getRoleRollLimit({
     userLevel: user?.userLevel,
     isMod,
     trustedMultiroll,
+    rollProgressBonus,
   });
 
   const limitName = getRoleRollLimitName({
@@ -283,9 +308,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const bonusText = bonusRolls > 0 ? ` (+${bonusRolls} achievement bonus)` : "";
     const msg =
-      `${name} rolled ${rollCount}x${bonusText} — top ${displayCount}: ` +
+      `${name} rolled ${rollCount}x — top ${displayCount}: ` +
       formatMultiRoll(top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity })));
 
     text(res, `${msg}${suffix}`);
