@@ -6,6 +6,8 @@ import { getViewerProfile, listViewerProfiles } from "./profile";
 import { getCoreState, saveCoreState } from "./core-system";
 import { formatRarity, truncate } from "./format";
 import { getServerLuckMultiplier } from "./social-system";
+import { findEvent, events } from "./data";
+import { getChannelState, setChannelState } from "./state";
 import { getGlobalRolls, getGlobalLuck, getNextLuckMilestone } from "./global-stats";
 
 let redis: Redis | null = null;
@@ -603,13 +605,91 @@ export async function formatBlackMarket(channelId: string, user: NightbotUser | 
   return truncate(`🕶️ Black Market ${Math.floor(left / 60)}m${left % 60}s: ${state.stock.filter((x) => x.stock > 0).map((x) => `${x.id}: ${x.name} ${fmt(x.price)}sd stock ${x.stock}`).join(" | ") || "Sold out"}`);
 }
 
+
+function findSeasonalEventForCommand(raw: string) {
+  const q = clean(raw);
+  if (!q) return undefined;
+  return findEvent(q) ?? findEvent(q.replace(/_/g, " "));
+}
+
+function seasonalEventName(id: string): string {
+  return findEvent(id)?.name ?? titleCase(id);
+}
+
+function seasonalEventIdsLabel(ids: string[]): string {
+  if (ids.length === 0) return "none";
+  return ids.map(seasonalEventName).join(", ");
+}
+
+function seasonalEventListText(): string {
+  return events.map((event) => event.id).join(", ");
+}
+
+async function activateSeasonalEvent(channelId: string, user: NightbotUser | null, raw: string, isMod: boolean): Promise<string> {
+  if (!isMod) return "Seasonal event activation is mod/broadcaster only.";
+  const event = findSeasonalEventForCommand(raw);
+  if (!event) {
+    return `Unknown seasonal event. Try: ${events.slice(-8).map((e) => e.id).join(", ")}`;
+  }
+  const state = await getChannelState(channelId);
+  const set = new Set(state.activeEvents ?? []);
+  const alreadyActive = set.has(event.id);
+  set.add(event.id);
+  state.activeEvents = [...set];
+  await setChannelState(state);
+  const biomes = event.eventBiomes?.length ? ` | Event biomes: ${event.eventBiomes.join(", ")}` : "";
+  return `${alreadyActive ? "✅ Already active" : "✅ Event activated"}: ${event.name} | Event auras enabled${biomes}. Use !event stop ${event.id} to disable.`;
+}
+
+async function deactivateSeasonalEvent(channelId: string, raw: string, isMod: boolean): Promise<string> {
+  if (!isMod) return "Seasonal event stop is mod/broadcaster only.";
+  const state = await getChannelState(channelId);
+  const target = clean(raw).toLowerCase();
+  if (target === "all" || target === "seasonal" || target === "events" || target === "all_events") {
+    const count = state.activeEvents?.length ?? 0;
+    state.activeEvents = [];
+    await setChannelState(state);
+    return `✅ Stopped ${count} seasonal event(s).`;
+  }
+  const event = findSeasonalEventForCommand(raw);
+  if (!event) return "Unknown seasonal event. Use !event list.";
+  const before = state.activeEvents ?? [];
+  state.activeEvents = before.filter((id) => id !== event.id);
+  await setChannelState(state);
+  return before.includes(event.id)
+    ? `✅ Event disabled: ${event.name}.`
+    : `${event.name} was not active.`;
+}
+
 export async function formatChannelEvent(channelId: string, user: NightbotUser | null, query: string, isMod: boolean): Promise<string> {
   const r = getRedis();
   if (!r) return "Event database is not connected.";
+
   const args = query.trim().split(/\s+/).filter(Boolean);
   const action = (args[0] ?? "status").toLowerCase();
+
+  // Old compatibility: !event summer_2025, !event halloween_2025, etc.
+  // This activates seasonal aura/event IDs in ChannelState.activeEvents.
+  const directSeasonal = findSeasonalEventForCommand(query);
+  if (directSeasonal && !["status", "start", "stop", "end", "off", "disable", "list", "events", "seasonal"].includes(action)) {
+    return activateSeasonalEvent(channelId, user, query, isMod);
+  }
+
+  if (action === "list" || action === "events" || action === "seasonal") {
+    const state = await getChannelState(channelId);
+    return truncate(`🎉 Seasonal Events | Active: ${seasonalEventIdsLabel(state.activeEvents ?? [])} | Available: ${seasonalEventListText()}`, 390);
+  }
+
   if (action === "start") {
     if (!isMod) return "Event start is mod/broadcaster only.";
+
+    const target = args.slice(1).join(" ");
+    const seasonal = findSeasonalEventForCommand(target);
+
+    if (seasonal) {
+      return activateSeasonalEvent(channelId, user, target, isMod);
+    }
+
     const kind = (args[1] ?? "luckstorm").toLowerCase() as ChannelEvent["kind"];
     const mins = Math.max(1, Math.min(120, parseAmount(args[2], 10)));
     const percent = kind === "luckstorm" ? 25 : kind === "festival" ? 15 : 10;
@@ -617,15 +697,36 @@ export async function formatChannelEvent(channelId: string, user: NightbotUser |
     await r.set(kEvent(channelId), event);
     return `🎉 Event started: ${event.name} +${event.percent}% for ${mins}m.`;
   }
-  if (action === "stop") {
+
+  if (action === "on" || action === "enable" || action === "activate") {
+    return activateSeasonalEvent(channelId, user, args.slice(1).join(" "), isMod);
+  }
+
+  if (action === "stop" || action === "end" || action === "off" || action === "disable") {
     if (!isMod) return "Event stop is mod/broadcaster only.";
+
+    const target = args.slice(1).join(" ");
+    if (target) {
+      const seasonal = findSeasonalEventForCommand(target);
+      if (seasonal || ["all", "seasonal", "events", "all_events"].includes(target.toLowerCase())) {
+        return deactivateSeasonalEvent(channelId, target, isMod);
+      }
+    }
+
     await r.del(kEvent(channelId));
     return "🎉 Channel event stopped.";
   }
+
+  const state = await getChannelState(channelId);
+  const seasonalText = `Seasonal: ${seasonalEventIdsLabel(state.activeEvents ?? [])}`;
   const event = await getActiveChannelEvent(channelId);
-  if (!event) return "🎉 No channel event active. Mods: !event start luckstorm 10";
+
+  if (!event) {
+    return truncate(`🎉 No channel boost event active. ${seasonalText}. Mods: !event summer_2025 OR !event start luckstorm 10`, 390);
+  }
+
   const left = Math.ceil((event.expiresAt - Date.now()) / 1000);
-  return `🎉 Event: ${event.name} +${event.percent}% | ${Math.floor(left / 60)}m${left % 60}s left.`;
+  return truncate(`🎉 Boost Event: ${event.name} +${event.percent}% | ${Math.floor(left / 60)}m${left % 60}s left | ${seasonalText}`, 390);
 }
 
 export async function getActiveChannelEvent(channelId: string): Promise<ChannelEvent | null> {

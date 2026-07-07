@@ -1,4 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+const fs = require("fs");
+
+const path = "src/pages/api/biome-tick.ts";
+
+if (!fs.existsSync(path)) {
+  console.error("❌ Missing src/pages/api/biome-tick.ts");
+  process.exit(1);
+}
+
+const next = `import type { NextApiRequest, NextApiResponse } from "next";
 import { getChannelState, setChannelState } from "@/lib/state";
 import { processBiomeTick, getBiomeStatus } from "@/lib/biome-engine";
 import { text, verifyCron } from "@/lib/api-helpers";
@@ -41,7 +50,7 @@ function resolveCronChannel(req: NextApiRequest): { channelId: string; channelNa
   const rawChannelId =
     getFirst(req.query.channelId) ??
     process.env.DEFAULT_CHANNEL_ID ??
-    (/^\d+$/.test(rawChannel) ? rawChannel : "") ??
+    (/^\\d+$/.test(rawChannel) ? rawChannel : "") ??
     channelName;
 
   const channelId = cleanId(rawChannelId) || channelName;
@@ -128,9 +137,9 @@ export default async function handler(
   }
 
   const parts: string[] = [
-    `tick ok for ${channelName}`,
-    `channelId=${channelId}`,
-    `biome=${result.state.biomeId}`,
+    \`tick ok for \${channelName}\`,
+    \`channelId=\${channelId}\`,
+    \`biome=\${result.state.biomeId}\`,
   ];
 
   if (biomeChanged) parts.push("changed");
@@ -139,3 +148,7 @@ export default async function handler(
 
   return text(res, parts.join(" | "));
 }
+`;
+
+fs.writeFileSync(path, next);
+console.log("✅ Replaced biome-tick.ts with channelId-safe tick handler.");
