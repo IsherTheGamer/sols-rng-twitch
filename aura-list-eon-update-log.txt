@@ -1,0 +1,122 @@
+=== Aura List Eon Update ===
+Started: Tue Jul  7 15:27:23 EDT 2026
+
+$ cp /c/Users/USER/Downloads/aura-list-eon-update/PATCH_AURA_LIST_EON_UPDATE.js ./PATCH_AURA_LIST_EON_UPDATE.js
+
+$ node PATCH_AURA_LIST_EON_UPDATE.js
+✅ Aura patch complete. Added 11, skipped 47.
+Added: sophyra, matrix_reality, sloth, prologue, pythios, sovereign, withered_ruins, aegis, dreamscape, ascendant, yolkeggy
+Skipped existing: virtual_memory, overture_history, maelstrom, dreamer, perpetual, lotusfall, cytokinesis, orchestra, flora_evergreen, chillsear, celestial_eclipse, apostolos, unknown, kyawthuite_remembrance, ruins, matrix_overdrive, sailor_admiral, elude, manta, aegis_watergun, snowball, star_rider_snowflake, cryogenic, gingerbread, jack_frost, lost_soul_wander, frostwood, north_pole, sky_burst, encase, cryofang, northern, eve_night, workshop, parol, sovereign_frostveil, winter_garden, dream_traveler, symphony_bloomed, hatchwarden, emperor, eggsistence, revive, eggore, eostre, eggis, sky_festival
+
+$ npm run build
+
+> sols-rng-twitch@1.0.0 build
+> next build
+
+▲ Next.js 16.2.9 (Turbopack)
+
+  Running TypeScript ...
+  Finished TypeScript in 16.1s ...
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.7s
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/6) ...
+  Generating static pages using 3 workers (1/6) 
+  Generating static pages using 3 workers (2/6) 
+  Generating static pages using 3 workers (4/6) 
+✓ Generating static pages using 3 workers (6/6) in 235ms
+  Finalizing page optimization ...
+
+Route (pages)
+┌ ○ /
+├ ○ /404
+├ ○ /activity
+├ ƒ /api/achievements
+├ ƒ /api/active
+├ ƒ /api/announce
+├ ƒ /api/aotd
+├ ƒ /api/biome
+├ ƒ /api/biome-tick
+├ ƒ /api/blackmarket
+├ ƒ /api/blueprints
+├ ƒ /api/boost
+├ ƒ /api/boss
+├ ƒ /api/botd
+├ ƒ /api/box
+├ ƒ /api/changebiome
+├ ƒ /api/collection
+├ ƒ /api/components
+├ ƒ /api/core
+├ ƒ /api/counter
+├ ƒ /api/craft
+├ ƒ /api/daily
+├ ƒ /api/dc-admin
+├ ƒ /api/dcalerts
+├ ƒ /api/debug-core
+├ ƒ /api/dev
+├ ƒ /api/device
+├ ƒ /api/discord-test
+├ ƒ /api/event
+├ ƒ /api/firsts
+├ ƒ /api/flex
+├ ƒ /api/forecast
+├ ƒ /api/global
+├ ƒ /api/gquests
+├ ƒ /api/ids
+├ ƒ /api/info
+├ ƒ /api/inventory
+├ ƒ /api/knowledge
+├ ƒ /api/lb
+├ ƒ /api/leaderboard
+├ ƒ /api/level
+├ ƒ /api/luck
+├ ƒ /api/luckdetails
+├ ƒ /api/market
+├ ƒ /api/merchant
+├ ƒ /api/next
+├ ƒ /api/nightbot-oauth
+├ ƒ /api/npc
+├ ƒ /api/pop
+├ ƒ /api/popop
+├ ƒ /api/pquests
+├ ƒ /api/profile
+├ ƒ /api/progress
+├ ƒ /api/quest
+├ ƒ /api/raid
+├ ƒ /api/reactor
+├ ƒ /api/recent
+├ ƒ /api/records
+├ ƒ /api/relics
+├ ƒ /api/replay
+├ ƒ /api/research
+├ ƒ /api/reset
+├ ƒ /api/roll
+├ ƒ /api/rollop
+├ ƒ /api/scanner
+├ ƒ /api/shd
+├ ƒ /api/solinfo
+├ ƒ /api/stardust
+├ ƒ /api/subcore
+├ ƒ /api/summary
+├ ƒ /api/test-announce
+├ ƒ /api/test-potion
+├ ƒ /api/test-send
+├ ƒ /api/title
+├ ƒ /api/titles
+├ ƒ /api/token
+├ ƒ /api/tokens
+├ ƒ /api/update
+├ ƒ /api/weekly
+├ ƒ /api/weeklylb
+├ ƒ /api/worldevent
+├ ○ /crafting
+└ ○ /dashboard
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+✅ Done. If build passed, commit with:
+git add data/auras.json PATCH_AURA_LIST_EON_UPDATE.js
+git commit -m "Add recent missing auras"
+git push

@@ -1,7 +1,467 @@
 {
   "version": "1.0",
-  "count": 393,
+  "count": 404,
   "auras": [
+    {
+      "id": "frigid",
+      "name": "+ Frigid +",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "dreadsea",
+      "name": "∙DREADSEA∙",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "aeroquest",
+      "name": "Aeroquest",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "blossom",
+      "name": "Blossom",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2024",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "carousel",
+      "name": "CAROUSEL",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "celestial_cupid",
+      "name": "Celestial : Cupid",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2024",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "christmastide",
+      "name": "Christmastide",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "corruption_egg",
+      "name": "Corruption Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "divinus_love",
+      "name": "Divinus : Love",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2024",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "easter_isles",
+      "name": "easter isles",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "egger",
+      "name": "Egger",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "eisveil",
+      "name": "Eisveil",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "flushed_heart_eye",
+      "name": "Flushed : Heart Eye",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2024",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "frozen",
+      "name": "Frozen",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "glitched_egg",
+      "name": "Glitched Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "hellfire_egg",
+      "name": "Hellfire Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "ink_paintballgun",
+      "name": "Ink : PaintballGun",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "rng-pass",
+        "summer-medal",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "lament",
+      "name": "LAMENT",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "life_guard",
+      "name": "Life-Guard",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "purchasable",
+        "unknown-price",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
     {
       "id": "nothing",
       "name": "Nothing",
@@ -18,6 +478,482 @@
       "deleted": false,
       "tags": [
         "basic"
+      ],
+      "time": null
+    },
+    {
+      "id": "null_egg",
+      "name": "Null Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "present",
+      "name": "Present",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "rabbit_invasion",
+      "name": "Rabbit Invasion",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "rainy_egg",
+      "name": "Rainy Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "reina",
+      "name": "Reina",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "season_iv",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "sandstorm_egg",
+      "name": "Sandstorm Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "scavenger",
+      "name": "Scavenger!",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "scorpion",
+      "name": "Scorpion",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "season_ii",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "skyforge",
+      "name": "SKYFORGE",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "slaughter",
+      "name": "Slaughter",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "season_iii",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "snowy_egg",
+      "name": "Snowy Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "sol_dev",
+      "name": "Sol",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "dev-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "starfall_egg",
+      "name": "Starfall Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "surfer",
+      "name": "Surfer",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2024",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "thaneborne",
+      "name": "THANEBORNE",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "veinweaver",
+      "name": "Veinweaver",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "velvet",
+      "name": "Velvet",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2026",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "windy_egg",
+      "name": "Windy Egg",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2025",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "zilch",
+      "name": "zilch.",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "season_vi",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
+      ],
+      "time": null
+    },
+    {
+      "id": "blood_demon",
+      "name": "血の悪魔",
+      "rarity": 1,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "season_v",
+      "unobtainable": true,
+      "deleted": false,
+      "tags": [
+        "limited",
+        "unknown-rarity",
+        "basic",
+        "event",
+        "event-exclusive",
+        "unobtainable"
       ],
       "time": null
     },
@@ -151,6 +1087,73 @@
       "deleted": false,
       "tags": [
         "basic"
+      ],
+      "time": null
+    },
+    {
+      "id": "dreamspace_star1",
+      "name": "★",
+      "rarity": 100,
+      "nativeRarity": null,
+      "biome": "dreamspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "unique"
+      ],
+      "time": null
+    },
+    {
+      "id": "fragments_of_the_red_crimson_moon_2",
+      "name": "Fragments Of The Crimson Moon",
+      "rarity": 100,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "red_fragment_ii",
+        "rarity": 100
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "memory",
+      "name": "Memory",
+      "rarity": 100,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "oblivion",
+        "rarity": 100
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged",
+        "potion-exclusive",
+        "raw-luck-only"
       ],
       "time": null
     },
@@ -383,6 +1386,49 @@
       "time": null
     },
     {
+      "id": "dreamspace_star2",
+      "name": "★★",
+      "rarity": 1000,
+      "nativeRarity": null,
+      "biome": "dreamspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary"
+      ],
+      "time": null
+    },
+    {
+      "id": "fragments_of_the_red_crimson_moon_1",
+      "name": "Fragments Of The Crimson Moon",
+      "rarity": 1000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "red_fragment_i",
+        "rarity": 1000
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
       "id": "diaboli",
       "name": "DIABOLI",
       "rarity": 1004,
@@ -516,6 +1562,30 @@
       "time": null
     },
     {
+      "id": "oblivion_aura",
+      "name": "OBLIVION",
+      "rarity": 2000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "oblivion",
+        "rarity": 2000
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged+",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
       "id": "magnetic",
       "name": "Magnetic",
       "rarity": 2048,
@@ -573,6 +1643,25 @@
       "time": null
     },
     {
+      "id": "fault",
+      "name": "FAULT",
+      "rarity": 3000,
+      "nativeRarity": null,
+      "biome": "glitched",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary"
+      ],
+      "time": null
+    },
+    {
       "id": "player",
       "name": "PLAYER",
       "rarity": 3000,
@@ -588,6 +1677,49 @@
       "deleted": false,
       "tags": [
         "epic"
+      ],
+      "time": null
+    },
+    {
+      "id": "pukeko",
+      "name": "pukeko",
+      "rarity": 3198,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "epic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "sandbasket",
+      "name": "SandBasket",
+      "rarity": 3500,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "per-dig",
+        "epic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -839,13 +1971,73 @@
       "time": null
     },
     {
-      "id": "dreamspace_star1",
-      "name": "★",
-      "rarity": 100,
+      "id": "snowball",
+      "name": "«Snowball»",
+      "rarity": 10000,
+      "nativeRarity": 5000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "unique",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "dreamspace_star3",
+      "name": "★★★",
+      "rarity": 10000,
       "nativeRarity": null,
       "biome": "dreamspace",
       "biomeLock": true,
       "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "meta",
+      "name": "meta",
+      "rarity": 10000,
+      "nativeRarity": null,
+      "biome": "cyberspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "corrosive",
+      "name": "Corrosive",
+      "rarity": 12000,
+      "nativeRarity": 2400,
+      "biome": "corruption",
+      "biomeLock": false,
+      "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
@@ -863,25 +2055,6 @@
       "rarity": 12000,
       "nativeRarity": 2000,
       "biome": "hell",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "unique"
-      ],
-      "time": null
-    },
-    {
-      "id": "corrosive",
-      "name": "Corrosive",
-      "rarity": 12000,
-      "nativeRarity": 2400,
-      "biome": "corruption",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -1067,25 +2240,6 @@
       "time": null
     },
     {
-      "id": "solar",
-      "name": "Solar",
-      "rarity": 50000,
-      "nativeRarity": 5000,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "unique"
-      ],
-      "time": "daytime"
-    },
-    {
       "id": "lunar",
       "name": "Lunar",
       "rarity": 50000,
@@ -1105,8 +2259,27 @@
       "time": "nighttime"
     },
     {
-      "id": "starlight",
-      "name": "STARLIGHT",
+      "id": "solar",
+      "name": "Solar",
+      "rarity": 50000,
+      "nativeRarity": 5000,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "unique"
+      ],
+      "time": "daytime"
+    },
+    {
+      "id": "star_rider",
+      "name": "Star Rider",
       "rarity": 50000,
       "nativeRarity": 10000,
       "biome": "starfall",
@@ -1124,8 +2297,8 @@
       "time": null
     },
     {
-      "id": "star_rider",
-      "name": "Star Rider",
+      "id": "starlight",
+      "name": "STARLIGHT",
       "rarity": 50000,
       "nativeRarity": 10000,
       "biome": "starfall",
@@ -1314,44 +2487,6 @@
       "time": null
     },
     {
-      "id": "dreamspace_star2",
-      "name": "★★",
-      "rarity": 1000,
-      "nativeRarity": null,
-      "biome": "dreamspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary"
-      ],
-      "time": null
-    },
-    {
-      "id": "fault",
-      "name": "FAULT",
-      "rarity": 3000,
-      "nativeRarity": null,
-      "biome": "glitched",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary"
-      ],
-      "time": null
-    },
-    {
       "id": "exotic",
       "name": "Exotic",
       "rarity": 99999,
@@ -1504,6 +2639,29 @@
       "time": null
     },
     {
+      "id": "bioluminescent",
+      "name": "Bioluminescent",
+      "rarity": 200000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "purchasable",
+        "pearl-clams",
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "bounded",
       "name": "BOUNDED",
       "rarity": 200000,
@@ -1519,6 +2677,132 @@
       "deleted": false,
       "tags": [
         "legendary"
+      ],
+      "time": null
+    },
+    {
+      "id": "pump",
+      "name": "PUMP",
+      "rarity": 200000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "star_rider_snowflake",
+      "name": "Star Rider : Snowflake",
+      "rarity": 240000,
+      "nativeRarity": 120000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "cryogenic",
+      "name": "Cryogenic",
+      "rarity": 250000,
+      "nativeRarity": 250000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": true,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "starfish_rider",
+      "name": "Starfish Rider",
+      "rarity": 250000,
+      "nativeRarity": 25000,
+      "biome": "starfall",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "attorney",
+      "name": "ATTORNEY",
+      "rarity": 270000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": "citadel_of_orders",
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "dev-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "watermelon",
+      "name": "Watermelon",
+      "rarity": 320000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -1618,6 +2902,28 @@
       "time": null
     },
     {
+      "id": "bubble",
+      "name": "Bubble",
+      "rarity": 500000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "purchasable",
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "raven",
       "name": "Raven",
       "rarity": 500000,
@@ -1633,6 +2939,67 @@
       "deleted": false,
       "tags": [
         "legendary"
+      ],
+      "time": null
+    },
+    {
+      "id": "clockwork",
+      "name": "CLOCKWORK",
+      "rarity": 530000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": "nulls_existence",
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "dev-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "prowler",
+      "name": "Prowler",
+      "rarity": 540000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": "hyperspace_realm",
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "dev-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "pump_trickster",
+      "name": "Pump : Trickster",
+      "rarity": 600000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -1675,6 +3042,69 @@
       "time": null
     },
     {
+      "id": "burger",
+      "name": "BURGER",
+      "rarity": 676767,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "verdict",
+      "name": "VERDICT",
+      "rarity": 700000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": "citadel_of_orders",
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "legendary",
+        "dev-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "parasol",
+      "name": "Parasol",
+      "rarity": 750000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "purchasable",
+        "legendary",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "kyawthuite",
       "name": "Kyawthuite",
       "rarity": 850000,
@@ -1694,21 +3124,23 @@
       "time": null
     },
     {
-      "id": "dreamspace_star3",
-      "name": "★★★",
-      "rarity": 10000,
+      "id": "troll",
+      "name": ":Troll:",
+      "rarity": 1000000,
       "nativeRarity": null,
-      "biome": "dreamspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "april_fools_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "mythic"
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -1808,6 +3240,27 @@
       "time": null
     },
     {
+      "id": "your_did_it",
+      "name": "your did it",
+      "rarity": 1234567,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "rage_brawler",
       "name": "Rage : Brawler",
       "rarity": 1280000,
@@ -1861,6 +3314,27 @@
       "deleted": false,
       "tags": [
         "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "celestial_wicked",
+      "name": "Celestial : WICKED",
+      "rarity": 1500000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -1922,6 +3396,25 @@
       "time": null
     },
     {
+      "id": "buggify",
+      "name": "Buggify",
+      "rarity": 2000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic"
+      ],
+      "time": null
+    },
+    {
       "id": "gravitational",
       "name": "Gravitational",
       "rarity": 2000000,
@@ -1941,8 +3434,8 @@
       "time": null
     },
     {
-      "id": "unbound",
-      "name": "UNBOUND",
+      "id": "kidnapped",
+      "name": "KIDNAPPED",
       "rarity": 2000000,
       "nativeRarity": null,
       "biome": null,
@@ -1951,17 +3444,40 @@
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "april_fools_2026",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "mythic"
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
     {
-      "id": "buggify",
-      "name": "Buggify",
+      "id": "lunar_cultist",
+      "name": "Lunar : Cultist",
+      "rarity": 2000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "unbound",
+      "name": "UNBOUND",
       "rarity": 2000000,
       "nativeRarity": null,
       "biome": null,
@@ -1994,6 +3510,28 @@
       "deleted": false,
       "tags": [
         "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "defined",
+      "name": "Defined",
+      "rarity": 2222000,
+      "nativeRarity": 2222,
+      "biome": "null",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2024",
+      "unobtainable": false,
+      "deleted": true,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive",
+        "deleted"
       ],
       "time": null
     },
@@ -2036,11 +3574,32 @@
       "time": null
     },
     {
-      "id": "parasite",
-      "name": "ParaSITE",
+      "id": "lunar_nightfall",
+      "name": "Lunar ☾ Nightfall",
+      "rarity": 3000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "orion",
+      "name": "Orion",
       "rarity": 3000000,
       "nativeRarity": 600000,
-      "biome": "corruption",
+      "biome": "starfall",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -2055,11 +3614,11 @@
       "time": null
     },
     {
-      "id": "orion",
-      "name": "Orion",
+      "id": "parasite",
+      "name": "ParaSITE",
       "rarity": 3000000,
       "nativeRarity": 600000,
-      "biome": "starfall",
+      "biome": "corruption",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -2089,6 +3648,27 @@
       "deleted": false,
       "tags": [
         "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "headless",
+      "name": "Headless",
+      "rarity": 3200000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -2188,30 +3768,53 @@
       "time": null
     },
     {
-      "id": "aquatic_flame",
-      "name": "Aquatic : Flame",
-      "rarity": 4000000,
+      "id": "werewolf",
+      "name": "Werewolf",
+      "rarity": 3600000,
       "nativeRarity": null,
-      "biome": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "gingerbread",
+      "name": "Gingerbread",
+      "rarity": 3750000,
+      "nativeRarity": 1875000,
+      "biome": "aurora",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "christmas_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "mythic"
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
     {
-      "id": "poseidon",
-      "name": "Poseidon",
+      "id": "aquatic_flame",
+      "name": "Aquatic : Flame",
       "rarity": 4000000,
-      "nativeRarity": 1000000,
-      "biome": "rainy",
+      "nativeRarity": null,
+      "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -2245,6 +3848,25 @@
       "time": null
     },
     {
+      "id": "poseidon",
+      "name": "Poseidon",
+      "rarity": 4000000,
+      "nativeRarity": 1000000,
+      "biome": "rainy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic"
+      ],
+      "time": null
+    },
+    {
       "id": "wraith",
       "name": "WRAITH",
       "rarity": 4100000,
@@ -2260,6 +3882,27 @@
       "deleted": false,
       "tags": [
         "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "shucks",
+      "name": "SHUCKS",
+      "rarity": 4460000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -2283,23 +3926,25 @@
       "time": null
     },
     {
-      "id": "solar_solstice",
-      "name": "Solar : Solstice",
-      "rarity": 5000000,
-      "nativeRarity": 500000,
-      "biome": null,
+      "id": "jack_frost",
+      "name": "Jack Frost",
+      "rarity": 4700000,
+      "nativeRarity": 2350000,
+      "biome": "aurora",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "christmas_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "mythic"
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
-      "time": "daytime"
+      "time": null
     },
     {
       "id": "galaxy",
@@ -2340,6 +3985,25 @@
       "time": "nighttime"
     },
     {
+      "id": "solar_solstice",
+      "name": "Solar : Solstice",
+      "rarity": 5000000,
+      "nativeRarity": 500000,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic"
+      ],
+      "time": "daytime"
+    },
+    {
       "id": "anima",
       "name": "Anima",
       "rarity": 5730000,
@@ -2376,6 +4040,27 @@
         "mythic"
       ],
       "time": "nighttime"
+    },
+    {
+      "id": "vital",
+      "name": "Vital",
+      "rarity": 6000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
     },
     {
       "id": "astronaut",
@@ -2431,6 +4116,27 @@
       "deleted": false,
       "tags": [
         "mythic"
+      ],
+      "time": null
+    },
+    {
+      "id": "oni",
+      "name": "Oni",
+      "rarity": 6666666,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -2587,6 +4293,27 @@
       "time": null
     },
     {
+      "id": "onion",
+      "name": "Onion",
+      "rarity": 8000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "outlaw",
       "name": "OUTLAW",
       "rarity": 8000000,
@@ -2701,11 +4428,32 @@
       "time": null
     },
     {
-      "id": "starscourge",
-      "name": "STARSCOURGE",
+      "id": "lost_soul_wander",
+      "name": "Lost Soul - WANDER",
+      "rarity": 9400000,
+      "nativeRarity": 4700000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "guardian",
+      "name": "GUARDIAN",
       "rarity": 10000000,
-      "nativeRarity": 2000000,
-      "biome": "starfall",
+      "nativeRarity": null,
+      "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -2716,6 +4464,71 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "illusionary",
+      "name": "illusionary",
+      "rarity": 10000000,
+      "nativeRarity": null,
+      "biome": "cyberspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged+",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "moonflower",
+      "name": "Moonflower",
+      "rarity": 10000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "neferkhaf",
+      "name": "Neferkhaf",
+      "rarity": 10000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "dune",
+        "rarity": 1000
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged",
+        "potion-exclusive",
+        "raw-luck-only"
       ],
       "time": null
     },
@@ -2739,11 +4552,11 @@
       "time": null
     },
     {
-      "id": "guardian",
-      "name": "GUARDIAN",
+      "id": "starscourge",
+      "name": "STARSCOURGE",
       "rarity": 10000000,
-      "nativeRarity": null,
-      "biome": null,
+      "nativeRarity": 2000000,
+      "biome": "starfall",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -2792,6 +4605,65 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "wonderland",
+      "name": "Wonderland",
+      "rarity": 12000000,
+      "nativeRarity": 4000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "glitch",
+      "name": "GLITCH",
+      "rarity": 12210110,
+      "nativeRarity": null,
+      "biome": "glitched",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged"
+      ],
+      "time": null
+    },
+    {
+      "id": "borealis",
+      "name": "Borealis",
+      "rarity": 13333333,
+      "nativeRarity": null,
+      "biome": "dreamspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged"
       ],
       "time": null
     },
@@ -2853,6 +4725,27 @@
       "time": null
     },
     {
+      "id": "sinister",
+      "name": "Sinister",
+      "rarity": 15000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "icarus",
       "name": "ICARUS",
       "rarity": 15660000,
@@ -2910,6 +4803,27 @@
       "time": null
     },
     {
+      "id": "very_small_sewage_rat",
+      "name": "Very Small Sewage Rat That's About 3.082 Studs Long",
+      "rarity": 20070629,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "plasma",
       "name": "PLASMA",
       "rarity": 20600000,
@@ -2925,6 +4839,27 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "cryptfire",
+      "name": "『Cryptfire』",
+      "rarity": 21000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -2982,6 +4917,27 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "frostwood",
+      "name": "« Frostwood »",
+      "rarity": 24500000,
+      "nativeRarity": 12250000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3062,6 +5018,69 @@
       "time": null
     },
     {
+      "id": "innovator",
+      "name": "INNOVATOR",
+      "rarity": 30000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "ria_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "pukeko_jumping",
+      "name": "Pukeko : Jumping",
+      "rarity": 31980000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "headless_horseman",
+      "name": "H E A D L E S S H O R S E M A N",
+      "rarity": 32000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "flora_florest",
       "name": "Flora : Florest",
       "rarity": 32800000,
@@ -3081,6 +5100,27 @@
       "time": null
     },
     {
+      "id": "aether_disappointment",
+      "name": "Aether : Disappointment",
+      "rarity": 33333330,
+      "nativeRarity": 6666666,
+      "biome": "heaven",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "ethereal",
       "name": "Ethereal",
       "rarity": 35000000,
@@ -3096,6 +5136,69 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "hatchwarden",
+      "name": "Hatchwarden",
+      "rarity": 40000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "kromat1k",
+      "name": "Kromat1k",
+      "rarity": 40000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "soul_hunter",
+      "name": "SOUL HUNTER",
+      "rarity": 40000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3138,6 +5241,27 @@
       "time": null
     },
     {
+      "id": "north_pole",
+      "name": "- North Pole -",
+      "rarity": 45000000,
+      "nativeRarity": 22500000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "overseer",
       "name": "Overseer",
       "rarity": 45000000,
@@ -3153,6 +5277,27 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "santa_frost",
+      "name": "Santa-Frost",
+      "rarity": 45000000,
+      "nativeRarity": 15000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3233,6 +5378,27 @@
       "time": null
     },
     {
+      "id": "sky_burst",
+      "name": "Sky Burst!",
+      "rarity": 60000000,
+      "nativeRarity": 30000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "twilight_iridescent",
       "name": "Twilight : Iridescent Memory",
       "rarity": 60000000,
@@ -3271,6 +5437,48 @@
       "time": null
     },
     {
+      "id": "reaper",
+      "name": "Reaper",
+      "rarity": 66000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "bloated_exe",
+      "name": "bloated.exe",
+      "rarity": 67676767,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "dominion",
       "name": "Dominion",
       "rarity": 70000000,
@@ -3286,6 +5494,48 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "winter_fantasy",
+      "name": "< Winter Fantasy >",
+      "rarity": 72000000,
+      "nativeRarity": 24000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "dullahan",
+      "name": "DULLAHAN",
+      "rarity": 72000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3328,8 +5578,8 @@
       "time": "nighttime"
     },
     {
-      "id": "sailor_dutchman",
-      "name": "Sailor : Flying Dutchman",
+      "id": "aquaria",
+      "name": "Aquaria",
       "rarity": 80000000,
       "nativeRarity": 20000000,
       "biome": "rainy",
@@ -3366,8 +5616,29 @@
       "time": null
     },
     {
-      "id": "aquaria",
-      "name": "Aquaria",
+      "id": "emperor",
+      "name": "EMPEROR",
+      "rarity": 80000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "sailor_dutchman",
+      "name": "Sailor : Flying Dutchman",
       "rarity": 80000000,
       "nativeRarity": 20000000,
       "biome": "rainy",
@@ -3400,6 +5671,27 @@
       "deleted": false,
       "tags": [
         "exalted"
+      ],
+      "time": null
+    },
+    {
+      "id": "runic_accursed",
+      "name": "RUNIC ACCURSED",
+      "rarity": 82000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3442,6 +5734,69 @@
       "time": null
     },
     {
+      "id": "bloodgarden",
+      "name": "Bloodgarden",
+      "rarity": 88000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "grief",
+      "name": "GRIEF",
+      "rarity": 88250000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "express",
+      "name": "Express",
+      "rarity": 90000000,
+      "nativeRarity": 30000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "exalted",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "nucleus",
       "name": "[-] Nucleus [+]",
       "rarity": 92118000,
@@ -3480,11 +5835,11 @@
       "time": null
     },
     {
-      "id": "starscourge_radiant",
-      "name": "STARSCOURGE : RADIANT",
+      "id": "spectraflow",
+      "name": "◇ Spectraflow ◇",
       "rarity": 100000000,
-      "nativeRarity": 20000000,
-      "biome": "starfall",
+      "nativeRarity": null,
+      "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -3499,11 +5854,11 @@
       "time": null
     },
     {
-      "id": "spectraflow",
-      "name": "◇ Spectraflow ◇",
+      "id": "starscourge_radiant",
+      "name": "STARSCOURGE : RADIANT",
       "rarity": 100000000,
-      "nativeRarity": null,
-      "biome": null,
+      "nativeRarity": 20000000,
+      "biome": "starfall",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -3537,6 +5892,48 @@
       "time": null
     },
     {
+      "id": "abominable",
+      "name": "{ABOMINABLE}",
+      "rarity": 120000000,
+      "nativeRarity": 40000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "crimson",
+      "name": "├ CRIMSON ┤",
+      "rarity": 120000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "overture",
       "name": "Overture",
       "rarity": 150000000,
@@ -3552,6 +5949,27 @@
       "deleted": false,
       "tags": [
         "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "glock_of_the_sky",
+      "name": "the glock of the sky",
+      "rarity": 170000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3613,6 +6031,46 @@
       "time": null
     },
     {
+      "id": "nightmare_sky",
+      "name": "》 NIGHTMARE SKY 《",
+      "rarity": 190000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "projection",
+      "name": "Projection",
+      "rarity": 197000000,
+      "nativeRarity": null,
+      "biome": "singularity",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged"
+      ],
+      "time": null
+    },
+    {
       "id": "impeached",
       "name": "IMPEACHED",
       "rarity": 200000000,
@@ -3651,6 +6109,25 @@
       "time": null
     },
     {
+      "id": "oppression",
+      "name": "[OPPRESSION]",
+      "rarity": 220000000,
+      "nativeRarity": null,
+      "biome": "glitched",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged+"
+      ],
+      "time": null
+    },
+    {
       "id": "lumenpool",
       "name": "~ Lumenpool ~",
       "rarity": 220000000,
@@ -3666,6 +6143,27 @@
       "deleted": false,
       "tags": [
         "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "shard_surfer",
+      "name": "《 Shard┃Surfer 》",
+      "rarity": 225000000,
+      "nativeRarity": 75000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -3689,6 +6187,27 @@
       "time": null
     },
     {
+      "id": "encase",
+      "name": "[ENCASE]",
+      "rarity": 230000000,
+      "nativeRarity": 115000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "virtual_memory",
       "name": "Virtual Memory",
       "rarity": 232232232,
@@ -3704,6 +6223,28 @@
       "deleted": false,
       "tags": [
         "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "imcrine",
+      "name": "IMCRINE",
+      "rarity": 250000000,
+      "nativeRarity": 50000000,
+      "biome": "corruption",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": true,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive",
+        "deleted"
       ],
       "time": null
     },
@@ -3746,28 +6287,30 @@
       "time": null
     },
     {
-      "id": "exotic_void",
-      "name": "Exotic◇Void",
-      "rarity": 299999999,
+      "id": "graveborn",
+      "name": "GRAVEBORN",
+      "rarity": 290000000,
       "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "halloween_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "glorious"
+        "glorious",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
     {
-      "id": "overture_history",
-      "name": "OVERTURE I HISTORY",
-      "rarity": 300000000,
+      "id": "exotic_void",
+      "name": "Exotic◇Void",
+      "rarity": 299999999,
       "nativeRarity": null,
       "biome": null,
       "biomeLock": false,
@@ -3803,11 +6346,91 @@
       "time": null
     },
     {
+      "id": "manta",
+      "name": "Manta",
+      "rarity": 300000000,
+      "nativeRarity": 150000000,
+      "biome": "blazing_sun",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "overture_history",
+      "name": "OVERTURE I HISTORY",
+      "rarity": 300000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "eggsistence",
+      "name": "Eggsistence",
+      "rarity": 307777777,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "maelstrom",
       "name": "MAELSTROM",
       "rarity": 309999999,
       "nativeRarity": 103333333,
       "biome": "windy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "perpetual",
+      "name": "«Perpetual»",
+      "rarity": 315000000,
+      "nativeRarity": null,
+      "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
@@ -3841,13 +6464,13 @@
       "time": "nighttime"
     },
     {
-      "id": "perpetual",
-      "name": "«Perpetual»",
-      "rarity": 315000000,
+      "id": "dreammetric",
+      "name": "Dreammetric",
+      "rarity": 320000000,
       "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
+      "biome": "dreamspace",
+      "biomeLock": true,
+      "noBreakthrough": true,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
@@ -3855,7 +6478,7 @@
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "glorious"
+        "challenged+"
       ],
       "time": null
     },
@@ -3993,6 +6616,48 @@
       "time": null
     },
     {
+      "id": "symphony_bloomed",
+      "name": "Symphony : Bloomed",
+      "rarity": 375000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "valentines_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "cryofang",
+      "name": "CryoFang",
+      "rarity": 380000000,
+      "nativeRarity": 190000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "celestial_eclipse",
       "name": "Celestial Eclipse",
       "rarity": 384400000,
@@ -4031,6 +6696,90 @@
       "time": null
     },
     {
+      "id": "doodle_abyssal_hunter",
+      "name": "Doodle : Abyssal Hunter",
+      "rarity": 400000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "im_peach",
+      "name": "i'm peach",
+      "rarity": 400000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "northern",
+      "name": "‹ NØRTHERN ›",
+      "rarity": 405000000,
+      "nativeRarity": 202500000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "eve_night",
+      "name": "Eve - Night",
+      "rarity": 424000000,
+      "nativeRarity": 212000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "gargantua",
       "name": "GARGANTUA",
       "rarity": 430000000,
@@ -4046,6 +6795,27 @@
       "deleted": false,
       "tags": [
         "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "afterparty",
+      "name": "A F T E R P A R T Y",
+      "rarity": 440000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -4107,6 +6877,27 @@
       "time": null
     },
     {
+      "id": "phantasma",
+      "name": "Phantasma",
+      "rarity": 462000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "ruins",
       "name": "RUINS",
       "rarity": 500000000,
@@ -4141,6 +6932,46 @@
       "deleted": false,
       "tags": [
         "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "atlas_yuletide",
+      "name": "ATLAS:YULETIDE",
+      "rarity": 510000000,
+      "nativeRarity": 170000000,
+      "biome": "snowy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "winter_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "point_zero",
+      "name": "POINT : ZERO",
+      "rarity": 521121900,
+      "nativeRarity": null,
+      "biome": "singularity",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged"
       ],
       "time": null
     },
@@ -4183,6 +7014,661 @@
       "time": null
     },
     {
+      "id": "sophyra",
+      "name": "Sophyra",
+      "rarity": 570000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "surfer_symphony",
+      "name": "Surfer : Symphony",
+      "rarity": 600000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "matrix_reality",
+      "name": "MATRIX ▫ REALITY",
+      "rarity": 601020102,
+      "nativeRarity": 300510051,
+      "biome": "cyberspace",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "apocalypse",
+      "name": "A POCALYPSE",
+      "rarity": 624000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "ramenpool",
+      "name": "Ramenpool",
+      "rarity": 630000000,
+      "nativeRarity": 157500000,
+      "biome": "rainy",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "revive",
+      "name": "Revive",
+      "rarity": 645000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "sloth",
+      "name": "Sloth",
+      "rarity": 650000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "system_workshop",
+      "name": "System Workshop:",
+      "rarity": 650000000,
+      "nativeRarity": 325000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "harvester",
+      "name": "〖HARVESTER〗",
+      "rarity": 666000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "prologue",
+      "name": "PROLOGUE",
+      "rarity": 666616111,
+      "nativeRarity": null,
+      "biome": "limbo",
+      "biomeLock": true,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "pythios",
+      "name": "PYTHIOS",
+      "rarity": 666666666,
+      "nativeRarity": 111111111,
+      "biome": "hell",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "wraith_light",
+      "name": "W:R:A:I:T:H / L:I:G:H:T",
+      "rarity": 695000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "eggore",
+      "name": "EGGORE",
+      "rarity": 700000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "workshop",
+      "name": "Workshop",
+      "rarity": 700000000,
+      "nativeRarity": 350000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "banshee",
+      "name": "〔BANSHEE〕",
+      "rarity": 730000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "malediction",
+      "name": "MALEDICTION",
+      "rarity": 730000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "sovereign",
+      "name": "SOVEREIGN",
+      "rarity": 750000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "parol",
+      "name": "P A R O L",
+      "rarity": 760000000,
+      "nativeRarity": 380000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "withered_ruins",
+      "name": "⟪-WITHERED-⟫ -RUINS-",
+      "rarity": 800000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "apostolos_veil",
+      "name": "APOSTOLOS : VEIL",
+      "rarity": 800000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2024",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "aegis",
+      "name": "﴾AEGIS﴿",
+      "rarity": 825000000,
+      "nativeRarity": 412500000,
+      "biome": "cyberspace",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "aegis_watergun",
+      "name": "AEGIS : WATERGUN",
+      "rarity": 825000000,
+      "nativeRarity": 412500000,
+      "biome": "blazing_sun",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "summer_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "dreamscape",
+      "name": "dreamscape",
+      "rarity": 850000000,
+      "nativeRarity": null,
+      "biome": "limbo",
+      "biomeLock": true,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "ravage",
+      "name": "RAVAGE",
+      "rarity": 930000000,
+      "nativeRarity": null,
+      "biome": "graveyard",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "ascendant",
+      "name": "ASCENDANT",
+      "rarity": 935000000,
+      "nativeRarity": 187000000,
+      "biome": "heaven",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious"
+      ],
+      "time": null
+    },
+    {
+      "id": "arachnophobia",
+      "name": "<ARACHNOPHOBIA>",
+      "rarity": 940000000,
+      "nativeRarity": null,
+      "biome": "pumpkin_moon",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "glorious",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "eden",
+      "name": "Eden",
+      "rarity": 999999999,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "void_heart",
+        "rarity": 50000
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "challenged+",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "a_fools_experience",
+      "name": "A fool's experience...",
+      "rarity": 1000000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "eostre",
+      "name": "E ostre",
+      "rarity": 1000000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "lamenthyr",
+      "name": "LAMENTHYR",
+      "rarity": 1000000000,
+      "nativeRarity": null,
+      "biome": "blood_rain",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "halloween_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "pukeko_god",
+      "name": "P. U. K. E. K. O. G. O. D.",
+      "rarity": 1000000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "sovereign_frostveil",
+      "name": "SOVEREIGN : Frostveil",
+      "rarity": 1000000000,
+      "nativeRarity": 500000000,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "nyctophobia",
       "name": "N̥Y̰C̷T̠O͂Ò͈̩̀P͕̹̝̣̘̍H͋O̯̐̎̋B̢Ȋ̡̦̀̀̒Ǎ̝͚",
       "rarity": 1011111010,
@@ -4221,6 +7707,27 @@
       "time": null
     },
     {
+      "id": "eggis",
+      "name": "✿EGGIS EGGIS✿",
+      "rarity": 1150000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
       "id": "luminosity",
       "name": "[ LUMINOSITY ]",
       "rarity": 1200000000,
@@ -4240,232 +7747,44 @@
       "time": null
     },
     {
-      "id": "breakthrough_aura",
-      "name": "BREAKTHROUGH",
-      "rarity": 1999999999,
+      "id": "erebus",
+      "name": "Erebus",
+      "rarity": 1200000000,
       "nativeRarity": null,
-      "biome": "null",
+      "biome": "blood_rain",
       "biomeLock": true,
       "noBreakthrough": true,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "halloween_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "transcendent"
+        "transcendent",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
     {
-      "id": "equinox",
-      "name": "『EQUINOX』",
-      "rarity": 2500000000,
-      "nativeRarity": null,
-      "biome": null,
+      "id": "winter_garden",
+      "name": "Winter Garden",
+      "rarity": 1450012025,
+      "nativeRarity": 725006013,
+      "biome": "aurora",
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": null,
+      "event": "christmas_2025",
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "transcendent"
-      ],
-      "time": null
-    },
-    {
-      "id": "master_hand",
-      "name": "MASTER-HAND",
-      "rarity": 12500000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "dimensional"
-      ],
-      "time": null
-    },
-    {
-      "id": "glitch",
-      "name": "GLITCH",
-      "rarity": 12210110,
-      "nativeRarity": null,
-      "biome": "glitched",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged"
-      ],
-      "time": null
-    },
-    {
-      "id": "oppression",
-      "name": "[OPPRESSION]",
-      "rarity": 220000000,
-      "nativeRarity": null,
-      "biome": "glitched",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+"
-      ],
-      "time": null
-    },
-    {
-      "id": "borealis",
-      "name": "Borealis",
-      "rarity": 13333333,
-      "nativeRarity": null,
-      "biome": "dreamspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged"
-      ],
-      "time": null
-    },
-    {
-      "id": "dreammetric",
-      "name": "Dreammetric",
-      "rarity": 320000000,
-      "nativeRarity": null,
-      "biome": "dreamspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+"
-      ],
-      "time": null
-    },
-    {
-      "id": "meta",
-      "name": "meta",
-      "rarity": 10000,
-      "nativeRarity": null,
-      "biome": "cyberspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "illusionary",
-      "name": "illusionary",
-      "rarity": 10000000,
-      "nativeRarity": null,
-      "biome": "cyberspace",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "projection",
-      "name": "Projection",
-      "rarity": 197000000,
-      "nativeRarity": null,
-      "biome": "singularity",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged"
-      ],
-      "time": null
-    },
-    {
-      "id": "point_zero",
-      "name": "POINT : ZERO",
-      "rarity": 521121900,
-      "nativeRarity": null,
-      "biome": "singularity",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged"
-      ],
-      "time": null
-    },
-    {
-      "id": "astraios",
-      "name": "ASTRAIOS",
-      "rarity": 1750000000,
-      "nativeRarity": null,
-      "biome": "singularity",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+"
+        "transcendent",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -4489,11 +7808,11 @@
       "time": null
     },
     {
-      "id": "monarch",
-      "name": "MONARCH",
-      "rarity": 3000000000,
+      "id": "astraios",
+      "name": "ASTRAIOS",
+      "rarity": 1750000000,
       "nativeRarity": null,
-      "biome": "corruption",
+      "biome": "singularity",
       "biomeLock": true,
       "noBreakthrough": true,
       "potion": null,
@@ -4504,6 +7823,109 @@
       "deleted": false,
       "tags": [
         "challenged+"
+      ],
+      "time": null
+    },
+    {
+      "id": "yolkegg",
+      "name": "Y.O.L.K.E.G.G.",
+      "rarity": 1790909090,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "yolkeggy",
+      "name": "Y.O.L.K.E.G.G.Y.",
+      "rarity": 1790909090,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "breakthrough_aura",
+      "name": "BREAKTHROUGH",
+      "rarity": 1999999999,
+      "nativeRarity": null,
+      "biome": "null",
+      "biomeLock": true,
+      "noBreakthrough": true,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent"
+      ],
+      "time": null
+    },
+    {
+      "id": "sky_festival",
+      "name": "[ Sky Festival ]",
+      "rarity": 2000000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "easter_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
+      ],
+      "time": null
+    },
+    {
+      "id": "dream_traveler",
+      "name": "Dream Traveler",
+      "rarity": 2025012025,
+      "nativeRarity": 1012506013,
+      "biome": "aurora",
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "christmas_2025",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -4527,160 +7949,16 @@
       "time": "nighttime"
     },
     {
-      "id": "memory",
-      "name": "Memory",
-      "rarity": 100,
+      "id": "abomination_aura",
+      "name": "ABOMINATION",
+      "rarity": 2343528000,
       "nativeRarity": null,
       "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": {
-        "id": "oblivion",
-        "rarity": 100
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "oblivion_aura",
-      "name": "OBLIVION",
-      "rarity": 2000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "oblivion",
-        "rarity": 2000
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "neferkhaf",
-      "name": "Neferkhaf",
-      "rarity": 10000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "dune",
-        "rarity": 1000
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "eden",
-      "name": "Eden",
-      "rarity": 999999999,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "void_heart",
-        "rarity": 50000
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged+",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "fragments_of_the_red_crimson_moon_1",
-      "name": "Fragments Of The Crimson Moon",
-      "rarity": 1000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "red_fragment_i",
-        "rarity": 1000
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "fragments_of_the_red_crimson_moon_2",
-      "name": "Fragments Of The Crimson Moon",
-      "rarity": 100,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "red_fragment_ii",
-        "rarity": 100
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "challenged",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "another_realm",
-      "name": "ANOTHER REALM",
-      "rarity": 2945160000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "xyz_potion",
-        "rarity": 5454
+        "id": "chaos_potion",
+        "rarity": 4840
       },
       "devBiome": null,
       "luckImmune": true,
@@ -4691,6 +7969,70 @@
         "transcendent",
         "potion-exclusive",
         "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "red_full_moon_aura",
+      "name": "RED FULL MOON",
+      "rarity": 2344496400,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "chaos_potion",
+        "rarity": 4842
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "equinox",
+      "name": "『EQUINOX』",
+      "rarity": 2500000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent"
+      ],
+      "time": null
+    },
+    {
+      "id": "you_are_an_idiot",
+      "name": "『YOU ARE AN IDIOT』",
+      "rarity": 2500000000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": "april_fools_2026",
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "event",
+        "event-exclusive"
       ],
       "time": null
     },
@@ -4743,16 +8085,16 @@
       "time": null
     },
     {
-      "id": "red_full_moon_aura",
-      "name": "RED FULL MOON",
-      "rarity": 2344496400,
+      "id": "another_realm",
+      "name": "ANOTHER REALM",
+      "rarity": 2945160000,
       "nativeRarity": null,
       "biome": null,
       "biomeLock": false,
       "noBreakthrough": false,
       "potion": {
-        "id": "chaos_potion",
-        "rarity": 4842
+        "id": "xyz_potion",
+        "rarity": 5454
       },
       "devBiome": null,
       "luckImmune": true,
@@ -4767,3158 +8109,28 @@
       "time": null
     },
     {
-      "id": "abomination_aura",
-      "name": "ABOMINATION",
-      "rarity": 2343528000,
+      "id": "monarch",
+      "name": "MONARCH",
+      "rarity": 3000000000,
       "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": {
-        "id": "chaos_potion",
-        "rarity": 4840
-      },
-      "devBiome": null,
-      "luckImmune": true,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "potion-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "prowler",
-      "name": "Prowler",
-      "rarity": 540000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": "hyperspace_realm",
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "dev-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "clockwork",
-      "name": "CLOCKWORK",
-      "rarity": 530000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": "nulls_existence",
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "dev-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "attorney",
-      "name": "ATTORNEY",
-      "rarity": 270000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": "citadel_of_orders",
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "dev-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "verdict",
-      "name": "VERDICT",
-      "rarity": 700000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": "citadel_of_orders",
-      "luckImmune": false,
-      "event": null,
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "dev-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "divinus_love",
-      "name": "Divinus : Love",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2024",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "flushed_heart_eye",
-      "name": "Flushed : Heart Eye",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2024",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "celestial_cupid",
-      "name": "Celestial : Cupid",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2024",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "blossom",
-      "name": "Blossom",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2024",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "defined",
-      "name": "Defined",
-      "rarity": 2222000,
-      "nativeRarity": 2222,
-      "biome": "null",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2024",
-      "unobtainable": false,
-      "deleted": true,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive",
-        "deleted"
-      ],
-      "time": null
-    },
-    {
-      "id": "kromat1k",
-      "name": "Kromat1k",
-      "rarity": 40000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "im_peach",
-      "name": "i'm peach",
-      "rarity": 400000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "watermelon",
-      "name": "Watermelon",
-      "rarity": 320000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "starfish_rider",
-      "name": "Starfish Rider",
-      "rarity": 250000,
-      "nativeRarity": 25000,
-      "biome": "starfall",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "shard_surfer",
-      "name": "《 Shard┃Surfer 》",
-      "rarity": 225000000,
-      "nativeRarity": 75000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "surfer",
-      "name": "Surfer",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2024",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "innovator",
-      "name": "INNOVATOR",
-      "rarity": 30000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "ria_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "pump",
-      "name": "PUMP",
-      "rarity": 200000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "lunar_nightfall",
-      "name": "Lunar ☾ Nightfall",
-      "rarity": 3000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "vital",
-      "name": "Vital",
-      "rarity": 6000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "moonflower",
-      "name": "Moonflower",
-      "rarity": 10000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "cryptfire",
-      "name": "『Cryptfire』",
-      "rarity": 21000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "soul_hunter",
-      "name": "SOUL HUNTER",
-      "rarity": 40000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "dullahan",
-      "name": "DULLAHAN",
-      "rarity": 72000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "nightmare_sky",
-      "name": "》 NIGHTMARE SKY 《",
-      "rarity": 190000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "harvester",
-      "name": "〖HARVESTER〗",
-      "rarity": 666000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "apostolos_veil",
-      "name": "APOSTOLOS : VEIL",
-      "rarity": 800000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2024",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "wonderland",
-      "name": "Wonderland",
-      "rarity": 12000000,
-      "nativeRarity": 4000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "santa_frost",
-      "name": "Santa-Frost",
-      "rarity": 45000000,
-      "nativeRarity": 15000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "winter_fantasy",
-      "name": "< Winter Fantasy >",
-      "rarity": 72000000,
-      "nativeRarity": 24000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "express",
-      "name": "Express",
-      "rarity": 90000000,
-      "nativeRarity": 30000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "abominable",
-      "name": "{ABOMINABLE}",
-      "rarity": 120000000,
-      "nativeRarity": 40000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "atlas_yuletide",
-      "name": "ATLAS:YULETIDE",
-      "rarity": 510000000,
-      "nativeRarity": 170000000,
-      "biome": "snowy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "frozen",
-      "name": "Frozen",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "frigid",
-      "name": "+ Frigid +",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "winter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "pukeko",
-      "name": "pukeko",
-      "rarity": 3198,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "epic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "troll",
-      "name": ":Troll:",
-      "rarity": 1000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "onion",
-      "name": "Onion",
-      "rarity": 8000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "glock_of_the_sky",
-      "name": "the glock of the sky",
-      "rarity": 170000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "windy_egg",
-      "name": "Windy Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "snowy_egg",
-      "name": "Snowy Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "rainy_egg",
-      "name": "Rainy Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "sandstorm_egg",
-      "name": "Sandstorm Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "hellfire_egg",
-      "name": "Hellfire Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "starfall_egg",
-      "name": "Starfall Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "corruption_egg",
-      "name": "Corruption Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "null_egg",
-      "name": "Null Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "glitched_egg",
-      "name": "Glitched Egg",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "manta",
-      "name": "Manta",
-      "rarity": 300000000,
-      "nativeRarity": 150000000,
-      "biome": "blazing_sun",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "aegis_watergun",
-      "name": "AEGIS : WATERGUN",
-      "rarity": 825000000,
-      "nativeRarity": 412500000,
-      "biome": "blazing_sun",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "bubble",
-      "name": "Bubble",
-      "rarity": 500000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "purchasable",
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "parasol",
-      "name": "Parasol",
-      "rarity": 750000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "purchasable",
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "bioluminescent",
-      "name": "Bioluminescent",
-      "rarity": 200000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "purchasable",
-        "pearl-clams",
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "sandbasket",
-      "name": "SandBasket",
-      "rarity": 3500,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "per-dig",
-        "epic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "life_guard",
-      "name": "Life-Guard",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "purchasable",
-        "unknown-price",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "ink_paintballgun",
-      "name": "Ink : PaintballGun",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "summer_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "rng-pass",
-        "summer-medal",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "scorpion",
-      "name": "Scorpion",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "season_ii",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "pump_trickster",
-      "name": "Pump : Trickster",
-      "rarity": 600000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "celestial_wicked",
-      "name": "Celestial : WICKED",
-      "rarity": 1500000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "lunar_cultist",
-      "name": "Lunar : Cultist",
-      "rarity": 2000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "headless",
-      "name": "Headless",
-      "rarity": 3200000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "werewolf",
-      "name": "Werewolf",
-      "rarity": 3600000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "shucks",
-      "name": "SHUCKS",
-      "rarity": 4460000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "oni",
-      "name": "Oni",
-      "rarity": 6666666,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "sinister",
-      "name": "Sinister",
-      "rarity": 15000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "headless_horseman",
-      "name": "H E A D L E S S H O R S E M A N",
-      "rarity": 32000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "reaper",
-      "name": "Reaper",
-      "rarity": 66000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "runic_accursed",
-      "name": "RUNIC ACCURSED",
-      "rarity": 82000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "bloodgarden",
-      "name": "Bloodgarden",
-      "rarity": 88000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "grief",
-      "name": "GRIEF",
-      "rarity": 88250000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "crimson",
-      "name": "├ CRIMSON ┤",
-      "rarity": 120000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "graveborn",
-      "name": "GRAVEBORN",
-      "rarity": 290000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "afterparty",
-      "name": "A F T E R P A R T Y",
-      "rarity": 440000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "phantasma",
-      "name": "Phantasma",
-      "rarity": 462000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "apocalypse",
-      "name": "A POCALYPSE",
-      "rarity": 624000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "wraith_light",
-      "name": "W:R:A:I:T:H / L:I:G:H:T",
-      "rarity": 695000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "malediction",
-      "name": "MALEDICTION",
-      "rarity": 730000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "banshee",
-      "name": "〔BANSHEE〕",
-      "rarity": 730000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "ravage",
-      "name": "RAVAGE",
-      "rarity": 930000000,
-      "nativeRarity": null,
-      "biome": "graveyard",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "arachnophobia",
-      "name": "<ARACHNOPHOBIA>",
-      "rarity": 940000000,
-      "nativeRarity": null,
-      "biome": "pumpkin_moon",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "lamenthyr",
-      "name": "LAMENTHYR",
-      "rarity": 1000000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "erebus",
-      "name": "Erebus",
-      "rarity": 1200000000,
-      "nativeRarity": null,
-      "biome": "blood_rain",
-      "biomeLock": true,
-      "noBreakthrough": true,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "veinweaver",
-      "name": "Veinweaver",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "dreadsea",
-      "name": "∙DREADSEA∙",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "carousel",
-      "name": "CAROUSEL",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "lament",
-      "name": "LAMENT",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "thaneborne",
-      "name": "THANEBORNE",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "halloween_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "slaughter",
-      "name": "Slaughter",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "season_iii",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "snowball",
-      "name": "«Snowball»",
-      "rarity": 10000,
-      "nativeRarity": 5000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "unique",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "star_rider_snowflake",
-      "name": "Star Rider : Snowflake",
-      "rarity": 240000,
-      "nativeRarity": 120000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "cryogenic",
-      "name": "Cryogenic",
-      "rarity": 250000,
-      "nativeRarity": 250000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": true,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive",
-        "raw-luck-only"
-      ],
-      "time": null
-    },
-    {
-      "id": "gingerbread",
-      "name": "Gingerbread",
-      "rarity": 3750000,
-      "nativeRarity": 1875000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "jack_frost",
-      "name": "Jack Frost",
-      "rarity": 4700000,
-      "nativeRarity": 2350000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "lost_soul_wander",
-      "name": "Lost Soul - WANDER",
-      "rarity": 9400000,
-      "nativeRarity": 4700000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "frostwood",
-      "name": "« Frostwood »",
-      "rarity": 24500000,
-      "nativeRarity": 12250000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "north_pole",
-      "name": "- North Pole -",
-      "rarity": 45000000,
-      "nativeRarity": 22500000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "sky_burst",
-      "name": "Sky Burst!",
-      "rarity": 60000000,
-      "nativeRarity": 30000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "encase",
-      "name": "[ENCASE]",
-      "rarity": 230000000,
-      "nativeRarity": 115000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "cryofang",
-      "name": "CryoFang",
-      "rarity": 380000000,
-      "nativeRarity": 190000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "northern",
-      "name": "‹ NØRTHERN ›",
-      "rarity": 405000000,
-      "nativeRarity": 202500000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "eve_night",
-      "name": "Eve - Night",
-      "rarity": 424000000,
-      "nativeRarity": 212000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "workshop",
-      "name": "Workshop",
-      "rarity": 700000000,
-      "nativeRarity": 350000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "parol",
-      "name": "P A R O L",
-      "rarity": 760000000,
-      "nativeRarity": 380000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "sovereign_frostveil",
-      "name": "SOVEREIGN : Frostveil",
-      "rarity": 1000000000,
-      "nativeRarity": 500000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "winter_garden",
-      "name": "Winter Garden",
-      "rarity": 1450012025,
-      "nativeRarity": 725006013,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "dream_traveler",
-      "name": "Dream Traveler",
-      "rarity": 2025012025,
-      "nativeRarity": 1012506013,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "present",
-      "name": "Present",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "skyforge",
-      "name": "SKYFORGE",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "christmastide",
-      "name": "Christmastide",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "eisveil",
-      "name": "Eisveil",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "christmas_2025",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "reina",
-      "name": "Reina",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "season_iv",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "symphony_bloomed",
-      "name": "Symphony : Bloomed",
-      "rarity": 375000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "velvet",
-      "name": "Velvet",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "valentines_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "blood_demon",
-      "name": "血の悪魔",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "season_v",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "hatchwarden",
-      "name": "Hatchwarden",
-      "rarity": 40000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "emperor",
-      "name": "EMPEROR",
-      "rarity": 80000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "eggsistence",
-      "name": "Eggsistence",
-      "rarity": 307777777,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "revive",
-      "name": "Revive",
-      "rarity": 645000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "eggore",
-      "name": "EGGORE",
-      "rarity": 700000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "eostre",
-      "name": "E ostre",
-      "rarity": 1000000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "eggis",
-      "name": "✿EGGIS EGGIS✿",
-      "rarity": 1150000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "yolkegg",
-      "name": "Y.O.L.K.E.G.G.",
-      "rarity": 1790909090,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "sky_festival",
-      "name": "[ Sky Festival ]",
-      "rarity": 2000000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "egger",
-      "name": "Egger",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "easter_isles",
-      "name": "easter isles",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "aeroquest",
-      "name": "Aeroquest",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "rabbit_invasion",
-      "name": "Rabbit Invasion",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "scavenger",
-      "name": "Scavenger!",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "easter_2026",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "burger",
-      "name": "BURGER",
-      "rarity": 676767,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "legendary",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "your_did_it",
-      "name": "your did it",
-      "rarity": 1234567,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "kidnapped",
-      "name": "KIDNAPPED",
-      "rarity": 2000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "mythic",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "very_small_sewage_rat",
-      "name": "Very Small Sewage Rat That's About 3.082 Studs Long",
-      "rarity": 20070629,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "pukeko_jumping",
-      "name": "Pukeko : Jumping",
-      "rarity": 31980000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "aether_disappointment",
-      "name": "Aether : Disappointment",
-      "rarity": 33333330,
-      "nativeRarity": 6666666,
-      "biome": "heaven",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "bloated_exe",
-      "name": "bloated.exe",
-      "rarity": 67676767,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "exalted",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "imcrine",
-      "name": "IMCRINE",
-      "rarity": 250000000,
-      "nativeRarity": 50000000,
       "biome": "corruption",
-      "biomeLock": false,
-      "noBreakthrough": false,
+      "biomeLock": true,
+      "noBreakthrough": true,
       "potion": null,
       "devBiome": null,
       "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": true,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive",
-        "deleted"
-      ],
-      "time": null
-    },
-    {
-      "id": "doodle_abyssal_hunter",
-      "name": "Doodle : Abyssal Hunter",
-      "rarity": 400000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
+      "event": null,
       "unobtainable": false,
       "deleted": false,
       "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
+        "challenged+"
       ],
       "time": null
     },
     {
-      "id": "surfer_symphony",
-      "name": "Surfer : Symphony",
-      "rarity": 600000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "ramenpool",
-      "name": "Ramenpool",
-      "rarity": 630000000,
-      "nativeRarity": 157500000,
-      "biome": "rainy",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "system_workshop",
-      "name": "System Workshop:",
-      "rarity": 650000000,
-      "nativeRarity": 325000000,
-      "biome": "aurora",
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "glorious",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "pukeko_god",
-      "name": "P. U. K. E. K. O. G. O. D.",
-      "rarity": 1000000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "a_fools_experience",
-      "name": "A fool's experience...",
-      "rarity": 1000000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "you_are_an_idiot",
-      "name": "『YOU ARE AN IDIOT』",
-      "rarity": 2500000000,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "april_fools_2026",
-      "unobtainable": false,
-      "deleted": false,
-      "tags": [
-        "transcendent",
-        "event",
-        "event-exclusive"
-      ],
-      "time": null
-    },
-    {
-      "id": "zilch",
-      "name": "zilch.",
-      "rarity": 1,
-      "nativeRarity": null,
-      "biome": null,
-      "biomeLock": false,
-      "noBreakthrough": false,
-      "potion": null,
-      "devBiome": null,
-      "luckImmune": false,
-      "event": "season_vi",
-      "unobtainable": true,
-      "deleted": false,
-      "tags": [
-        "limited",
-        "unknown-rarity",
-        "basic",
-        "event",
-        "event-exclusive",
-        "unobtainable"
-      ],
-      "time": null
-    },
-    {
-      "id": "sol_dev",
-      "name": "Sol",
-      "rarity": 1,
+      "id": "master_hand",
+      "name": "MASTER-HAND",
+      "rarity": 12500000000,
       "nativeRarity": null,
       "biome": null,
       "biomeLock": false,
@@ -7927,11 +8139,10 @@
       "devBiome": null,
       "luckImmune": false,
       "event": null,
-      "unobtainable": true,
+      "unobtainable": false,
       "deleted": false,
       "tags": [
-        "dev-exclusive",
-        "unobtainable"
+        "dimensional"
       ],
       "time": null
     }
