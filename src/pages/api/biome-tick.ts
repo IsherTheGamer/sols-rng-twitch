@@ -12,6 +12,11 @@ function getFirst(input: string | string[] | undefined): string | undefined {
   return Array.isArray(input) ? input[0] : input;
 }
 
+function isDisabledFlag(input: string | string[] | undefined): boolean {
+  const value = (getFirst(input) ?? "").trim().toLowerCase();
+  return ["0", "false", "off", "no", "silent"].includes(value);
+}
+
 function normalizeChannel(input: string): string {
   return input
     .trim()
@@ -119,7 +124,11 @@ export default async function handler(
     }
   }
 
-  if (result.statusMessage) {
+  // Default behavior: every cron tick sends the current biome + remaining duration.
+  // Use &status=0 only if you want the cron to announce biome changes but not status.
+  const shouldSendStatus = !isDisabledFlag(req.query.status);
+
+  if (shouldSendStatus) {
     await sendNightbotMessage(getBiomeStatus(result.state), channelName);
   }
 
@@ -134,7 +143,7 @@ export default async function handler(
   ];
 
   if (biomeChanged) parts.push("changed");
-  if (result.statusMessage) parts.push("status sent");
+  if (typeof shouldSendStatus !== "undefined" && shouldSendStatus) parts.push("status sent");
   if (unlocked.length > 0) parts.push("achievement");
 
   return text(res, parts.join(" | "));
