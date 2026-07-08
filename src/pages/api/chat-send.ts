@@ -6,6 +6,22 @@ function first(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
+function readBodyToken(req: NextApiRequest): string {
+  if (!req.body || typeof req.body !== "object") return "";
+  const value = (req.body as Record<string, unknown>).token;
+  return typeof value === "string" ? value : "";
+}
+
+function verifyChatSendToken(req: NextApiRequest): boolean {
+  if (verifyCron(req)) return true;
+
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return true;
+
+  const bodyToken = readBodyToken(req);
+  return bodyToken === secret;
+}
+
 function normalizeChannel(input: string): string {
   return input
     .trim()
@@ -33,7 +49,7 @@ function readMessage(req: NextApiRequest): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!verifyCron(req)) {
+  if (!verifyChatSendToken(req)) {
     return res.status(401).send("Unauthorized");
   }
 
