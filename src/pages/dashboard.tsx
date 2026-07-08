@@ -311,7 +311,10 @@ export default function Dashboard() {
         <p style={styles.muted}>These are intentionally not in the dashboard because they are too powerful or should only be called by cron/admin links.</p>
         <ul style={styles.blockedList}>{EXCLUDED.map((item) => <li key={item}>{item}</li>)}</ul>
       </section>
-    </main>
+    <div style={{ marginTop: 20 }}>
+          <a href="/chat-send" style={{ color: "#b6ffdf", fontWeight: 800 }}>Open Nightbot Chat Sender →</a>
+        </div>
+      </main>
   );
 }
 
