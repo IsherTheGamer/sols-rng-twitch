@@ -21,16 +21,22 @@ export default function ChatSendPage() {
     setResult("");
 
     try {
-      const response = await fetch("/api/chat-send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, channel, msg }),
+      const params = new URLSearchParams();
+      params.set("token", token);
+      params.set("channel", channel);
+      params.set("msg", msg);
+
+      // Use GET/query mode because it is the same path that works from a direct URL.
+      // This avoids browser/body/proxy issues that can cause "Failed to fetch".
+      const response = await fetch(`/api/chat-send?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
       });
 
       const body = await response.text();
-      setResult(body);
+      setResult(body || `HTTP ${response.status}`);
     } catch (error) {
-      setResult(error instanceof Error ? error.message : "Send failed.");
+      setResult(`Failed to fetch. Try URL mode directly: /api/chat-send?token=YOUR_TOKEN&channel=${channel}&msg=${encodeURIComponent(msg)}`);
     } finally {
       setSending(false);
     }

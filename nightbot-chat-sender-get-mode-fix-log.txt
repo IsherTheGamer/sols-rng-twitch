@@ -1,0 +1,122 @@
+=== Nightbot Chat Sender GET Mode Fix ===
+Started: Wed Jul  8 14:30:42 EDT 2026
+
+$ cp /c/Users/USER/Downloads/nightbot-chat-sender-get-mode-fix/PATCH_NIGHTBOT_CHAT_SENDER_GET_MODE_FIX.js ./PATCH_NIGHTBOT_CHAT_SENDER_GET_MODE_FIX.js
+
+$ node PATCH_NIGHTBOT_CHAT_SENDER_GET_MODE_FIX.js
+✅ Chat sender page now uses GET/query mode instead of POST body.
+
+$ npm run build
+
+> sols-rng-twitch@1.0.0 build
+> next build
+
+▲ Next.js 16.2.9 (Turbopack)
+
+  Running TypeScript ...
+  Finished TypeScript in 12.0s ...
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.9s
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/7) ...
+  Generating static pages using 3 workers (1/7) 
+  Generating static pages using 3 workers (3/7) 
+  Generating static pages using 3 workers (5/7) 
+✓ Generating static pages using 3 workers (7/7) in 226ms
+  Finalizing page optimization ...
+
+Route (pages)
+┌ ○ /
+├ ○ /404
+├ ○ /activity
+├ ƒ /api/achievements
+├ ƒ /api/active
+├ ƒ /api/announce
+├ ƒ /api/aotd
+├ ƒ /api/biome
+├ ƒ /api/biome-tick
+├ ƒ /api/blackmarket
+├ ƒ /api/blueprints
+├ ƒ /api/boost
+├ ƒ /api/boss
+├ ƒ /api/botd
+├ ƒ /api/box
+├ ƒ /api/changebiome
+├ ƒ /api/chat-send
+├ ƒ /api/collection
+├ ƒ /api/components
+├ ƒ /api/core
+├ ƒ /api/counter
+├ ƒ /api/craft
+├ ƒ /api/daily
+├ ƒ /api/dc-admin
+├ ƒ /api/dcalerts
+├ ƒ /api/debug-core
+├ ƒ /api/dev
+├ ƒ /api/device
+├ ƒ /api/discord-test
+├ ƒ /api/event
+├ ƒ /api/firsts
+├ ƒ /api/flex
+├ ƒ /api/forecast
+├ ƒ /api/global
+├ ƒ /api/gquests
+├ ƒ /api/ids
+├ ƒ /api/info
+├ ƒ /api/inventory
+├ ƒ /api/knowledge
+├ ƒ /api/lb
+├ ƒ /api/leaderboard
+├ ƒ /api/level
+├ ƒ /api/luck
+├ ƒ /api/luckdetails
+├ ƒ /api/market
+├ ƒ /api/merchant
+├ ƒ /api/next
+├ ƒ /api/nightbot-oauth
+├ ƒ /api/npc
+├ ƒ /api/pop
+├ ƒ /api/popop
+├ ƒ /api/pquests
+├ ƒ /api/profile
+├ ƒ /api/progress
+├ ƒ /api/quest
+├ ƒ /api/raid
+├ ƒ /api/reactor
+├ ƒ /api/recent
+├ ƒ /api/records
+├ ƒ /api/relics
+├ ƒ /api/replay
+├ ƒ /api/research
+├ ƒ /api/reset
+├ ƒ /api/roll
+├ ƒ /api/rollop
+├ ƒ /api/scanner
+├ ƒ /api/shd
+├ ƒ /api/solinfo
+├ ƒ /api/stardust
+├ ƒ /api/subcore
+├ ƒ /api/summary
+├ ƒ /api/test-announce
+├ ƒ /api/test-potion
+├ ƒ /api/test-send
+├ ƒ /api/title
+├ ƒ /api/titles
+├ ƒ /api/token
+├ ƒ /api/tokens
+├ ƒ /api/update
+├ ƒ /api/weekly
+├ ƒ /api/weeklylb
+├ ƒ /api/worldevent
+├ ○ /chat-send
+├ ○ /crafting
+└ ○ /dashboard
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+✅ Done. If build passed, commit with:
+git add src/pages/chat-send.tsx PATCH_NIGHTBOT_CHAT_SENDER_GET_MODE_FIX.js
+git commit -m "Fix chat sender website fetch mode"
+git push
