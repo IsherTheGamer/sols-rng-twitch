@@ -196,7 +196,9 @@ const SHD_CAPS: Record<number, number> = {
 };
 
 const SHD_CORE_REQUIREMENTS: Record<number, number> = {
-  1: 10,
+  // Lv.1 must unlock at Core 9 because SHD Lv.0 capacity is 500,
+  // while Core 10 costs 617 Stardust. Requiring Core 10 here softlocks progression.
+  1: 9,
   2: 25,
   3: 50,
   4: 75,
