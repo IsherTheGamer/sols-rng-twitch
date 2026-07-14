@@ -31,9 +31,9 @@ import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system"
 import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
 import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
 
-const VIEWER_MULTIROLL_LIMIT = 10;
-const VIP_MULTIROLL_LIMIT = 25;
-const MOD_MULTIROLL_LIMIT = 50;
+const VIEWER_MULTIROLL_LIMIT = 7;
+const VIP_MULTIROLL_LIMIT = 15;
+const MOD_MULTIROLL_LIMIT = 25;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
 const MAX_DISPLAY_RESULTS = 5;
 
@@ -154,7 +154,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const amount = parseAmount(req.query.args as string | undefined);
   const broadcaster = isBroadcasterUser(user, channel);
-  const allowlisted = await isRollMultiAllowlisted(user, channelLoginName, channelId);
+  const allowlisted = isRollMultiAllowlisted(user, channelLoginName);
   const trustedMultiroll = broadcaster || allowlisted;
 
   const viewerProfileForLimit = trustedMultiroll || !user ? null : await getViewerProfile(channelId, user);
