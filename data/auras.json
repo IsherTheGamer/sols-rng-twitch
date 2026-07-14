@@ -3280,6 +3280,25 @@
       "time": null
     },
     {
+      "id": "zipittt",
+      "name": "Player : Zipittt",
+      "rarity": 12121212,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": null,
+      "devBiome": null,
+      "luckImmune": false,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "mythic"
+      ],
+      "time": null
+    },
+    {
       "id": "symbiosis",
       "name": "symbiosis",
       "rarity": 1331201,
@@ -7959,6 +7978,30 @@
       "potion": {
         "id": "chaos_potion",
         "rarity": 4840
+      },
+      "devBiome": null,
+      "luckImmune": true,
+      "event": null,
+      "unobtainable": false,
+      "deleted": false,
+      "tags": [
+        "transcendent",
+        "potion-exclusive",
+        "raw-luck-only"
+      ],
+      "time": null
+    },
+    {
+      "id": "chud",
+      "name": "PLAYER : CHUD-MAXING",
+      "rarity": 2343528000,
+      "nativeRarity": null,
+      "biome": null,
+      "biomeLock": false,
+      "noBreakthrough": false,
+      "potion": {
+        "id": "chaos_potion",
+        "rarity": 50
       },
       "devBiome": null,
       "luckImmune": true,
