@@ -18,7 +18,10 @@ function cronAuthorized(req: NextApiRequest): boolean {
   return Boolean(process.env.CRON_SECRET) && verifyCron(req);
 }
 
-function parseAction(req: NextApiRequest): { action: string; target: string } {
+function parseAction(req: NextApiRequest): {
+  action: string;
+  target: string;
+} {
   const raw = parseQuery(req).trim();
   const parts = raw.split(/\s+/).filter(Boolean);
 
@@ -38,16 +41,16 @@ function parseAction(req: NextApiRequest): { action: string; target: string } {
 
 function formatList(usernames: string[]): string {
   if (usernames.length === 0) return "none";
+
   const shown = usernames.slice(0, 20);
   const hidden = usernames.length - shown.length;
+
   return `${shown.join(", ")}${hidden > 0 ? ` (+${hidden} more)` : ""}`;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId: contextChannelId, user } = getChannelContext(req);
-  const channelId =
-    first(req.query.channelId).replace(/[^a-zA-Z0-9_-]/g, "") ||
-    contextChannelId;
+  const channelId = first(req.query.channelId).replace(/[^a-zA-Z0-9_-]/g, "") || contextChannelId;
 
   if (!isRollAccessManager(user) && !cronAuthorized(req)) {
     return text(
@@ -97,13 +100,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return text(
         res,
         result.removed
-          ? `✅ Removed ${target}. Total: ${result.entries.length}.`
+          ? `✅ Removed ${target} from the 10k roll allowlist. Total: ${result.entries.length}.`
           : `${target} was not in the dynamic allowlist.`
       );
     }
 
     if (action === "check") {
       if (!target) return text(res, "Usage: !rollaccess check username");
+
       const entries = await getDynamicRollAllowlist(channelId);
       const found = entries.some((entry) => entry.username === target);
 
@@ -117,19 +121,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (action === "clear") {
       const removed = await clearDynamicRollAccess(channelId);
-      return text(res, `✅ Cleared ${removed} dynamic roll-access entries.`);
+      return text(res, `✅ Cleared ${removed} dynamic roll-access entr${removed === 1 ? "y" : "ies"}.`);
     }
 
     return text(
       res,
-      "Usage: !rollaccess add/remove/check/list/clear [username]"
+      "Commands: !rollaccess add <user> | remove <user> | check <user> | list | clear"
     );
   } catch (error) {
     return text(
       res,
-      `❌ Roll access failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`
+      `❌ Roll-access update failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

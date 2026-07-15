@@ -48,7 +48,9 @@ function getChannelSpecificEnvName(
   channelName: string | undefined | null
 ): string | null {
   const clean = normalizeRollAccessName(channelName);
+
   if (!clean) return null;
+
   return `ROLL_MULTI_ALLOWED_USERS_${clean.toUpperCase()}`;
 }
 
@@ -105,7 +107,10 @@ async function saveDynamicRollAllowlist(
   entries: DynamicRollAccessEntry[]
 ): Promise<void> {
   const r = getRedis();
-  if (!r) throw new Error("Redis is not connected.");
+  if (!r) {
+    throw new Error("Redis is not connected.");
+  }
+
   await r.set(dynamicAllowlistKey(channelId), normalizeEntries(entries));
 }
 
@@ -115,21 +120,22 @@ export async function addDynamicRollAccess(options: {
   addedBy: NightbotUser | null;
 }): Promise<{ added: boolean; entries: DynamicRollAccessEntry[] }> {
   const username = normalizeRollAccessName(options.username);
-  if (!username) throw new Error("Enter a valid Twitch username.");
+
+  if (!username) {
+    throw new Error("Enter a valid Twitch username.");
+  }
 
   const entries = await getDynamicRollAllowlist(options.channelId);
-  if (entries.some((entry) => entry.username === username)) {
-    return { added: false, entries };
-  }
+  const exists = entries.some((entry) => entry.username === username);
 
-  if (entries.length >= 100) {
-    throw new Error("Dynamic allowlist is limited to 100 users.");
-  }
+  if (exists) return { added: false, entries };
+  if (entries.length >= 100) throw new Error("Dynamic allowlist is limited to 100 users.");
 
   entries.push({
     username,
     addedById: options.addedBy?.providerId ?? "cron-token",
-    addedByName: options.addedBy?.displayName ?? options.addedBy?.name ?? "cron-token",
+    addedByName:
+      options.addedBy?.displayName ?? options.addedBy?.name ?? "cron-token",
     addedAt: Date.now(),
   });
 
@@ -142,13 +148,17 @@ export async function removeDynamicRollAccess(options: {
   username: string;
 }): Promise<{ removed: boolean; entries: DynamicRollAccessEntry[] }> {
   const username = normalizeRollAccessName(options.username);
-  if (!username) throw new Error("Enter a valid Twitch username.");
+
+  if (!username) {
+    throw new Error("Enter a valid Twitch username.");
+  }
 
   const entries = await getDynamicRollAllowlist(options.channelId);
   const next = entries.filter((entry) => entry.username !== username);
   const removed = next.length !== entries.length;
 
   if (removed) await saveDynamicRollAllowlist(options.channelId, next);
+
   return { removed, entries: next };
 }
 
@@ -165,6 +175,7 @@ export async function isRollMultiAllowlisted(
 ): Promise<boolean> {
   if (!user) return false;
 
+  // The two allowlist managers always receive trusted 10k-roll access.
   if (isRollAccessManager(user)) return true;
 
   const userNames = [
@@ -174,10 +185,12 @@ export async function isRollMultiAllowlisted(
   ].filter(Boolean);
 
   const globalAllowed = parseList(process.env.ROLL_MULTI_ALLOWED_USERS);
+
   const channelEnvName = getChannelSpecificEnvName(channelName);
   const channelAllowed = channelEnvName
     ? parseList(process.env[channelEnvName])
     : [];
+
   const dynamicAllowed = (await getDynamicRollAllowlist(channelId)).map(
     (entry) => entry.username
   );
