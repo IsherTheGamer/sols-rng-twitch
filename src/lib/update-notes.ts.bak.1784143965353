@@ -1,7 +1,6 @@
 import { truncate } from "./format";
 
 const UPDATE_NOTES = [
-  "Claim reward visibility: quest claims, achievement claims, global quest activations, and box openings now show the exact items or currency granted.",
   "Discord Control Update: added /discord-test for safe fake aura announcements. Tests do not roll, consume HP/tokens, change stats, or touch player progression, and the embed ends with a small Test marker.",
   "Discord slash commands added through /sols: public info, update notes, material sources, leaderboards, records, and first discoveries; admin-only roll access and Discord alert settings.",
   "Info overhaul: !info materials now explains exactly how every material is obtained. Added detailed component, token, box, and generic !info obtain <item> guides.",

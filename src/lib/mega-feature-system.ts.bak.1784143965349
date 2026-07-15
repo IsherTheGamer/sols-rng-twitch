@@ -5,7 +5,7 @@ import type { NightbotUser } from "./nightbot";
 import { getViewerProfile, listViewerProfiles } from "./profile";
 import { getCoreState, saveCoreState } from "./core-system";
 import { formatRarity, truncate } from "./format";
-import { addServerBoost, getServerLuckMultiplier } from "./social-system";
+import { getServerLuckMultiplier } from "./social-system";
 import { findEvent, events } from "./data";
 import { getChannelState, setChannelState } from "./state";
 import { getGlobalRolls, getGlobalLuck, getNextLuckMilestone } from "./global-stats";
@@ -452,7 +452,7 @@ export async function formatPlayerQuests(channelId: string, user: NightbotUser |
   const list = questsFor(period, "player");
   const userId = getUserId(user);
   if (parts[1] === "claim") return claimQuest(channelId, user, "player", period, key, stats, list);
-  const shown = list.map((q) => `${q.name} ${Math.min(metricValue(stats, q.metric, userId), q.target)}/${q.target} → ${q.reward}`).join(" | ");
+  const shown = list.map((q) => `${q.name} ${Math.min(metricValue(stats, q.metric, userId), q.target)}/${q.target}`).join(" | ");
   return truncate(`🧾 ${titleCase(period)} Player Quests: ${shown} | !pquests ${period} claim`);
 }
 
@@ -463,175 +463,34 @@ export async function formatGlobalQuests(channelId: string, user: NightbotUser |
   const stats = await getStats(kGlobalStats(period, key), period, key);
   const list = questsFor(period, "global");
   if (parts[1] === "claim") return claimQuest(channelId, user, "global", period, key, stats, list);
-  const shown = list.map((q) => `${q.name} ${Math.min(metricValue(stats, q.metric), q.target)}/${q.target} → ${q.reward}`).join(" | ");
+  const shown = list.map((q) => `${q.name} ${Math.min(metricValue(stats, q.metric), q.target)}/${q.target}`).join(" | ");
   return truncate(`🌐 ${titleCase(period)} Global Quests: ${shown} | !gquests ${period} claim`);
 }
 
-type MegaQuestClaimDef = {
-  id: string;
-  name: string;
-  metric: QuestMetric;
-  target: number;
-  reward: string;
-};
-
-function addCoreReward(
-  bag: Record<string, number>,
-  id: string,
-  amount: number
-): void {
-  if (amount <= 0) return;
-  bag[id] = (bag[id] ?? 0) + amount;
-}
-
-function grantPlayerMegaQuestReward(
-  core: Awaited<ReturnType<typeof getCoreState>>,
-  quest: MegaQuestClaimDef,
-  period: QuestPeriod
-): string {
-  const mult =
-    period === "daily"
-      ? 1
-      : period === "weekly"
-      ? 7
-      : period === "monthly"
-      ? 30
-      : 365;
-
-  if (quest.metric === "rolls") {
-    const amount = 100 * mult;
-    core.stardust += amount;
-    core.stats.stardustCollected += amount;
-    return `${fmt(amount)} Stardust`;
-  }
-
-  if (quest.metric === "rare") {
-    const amount = Math.max(1, Math.floor(mult / 3));
-    addCoreReward(core.lootboxes, "quest_box", amount);
-    return `Quest Box x${amount}`;
-  }
-
-  addCoreReward(core.tokens, "recipe_token", 1);
-  return "Recipe Token x1";
-}
-
-async function activateGlobalMegaQuestReward(
-  r: NonNullable<ReturnType<typeof getRedis>>,
-  channelId: string,
-  period: QuestPeriod,
-  key: string,
-  quest: MegaQuestClaimDef
-): Promise<string> {
-  const activationKey = `mega:global-reward:${period}:${key}:${quest.id}`;
-  const activated = await r.set(activationKey, "1", {
-    nx: true,
-    ex: 60 * 60 * 24 * 370,
-  });
-
-  if (!activated) {
-    return `${quest.reward} (already activated; contribution recorded)`;
-  }
-
-  if (quest.metric === "rolls") {
-    await addServerBoost({
-      channelId,
-      name: `${titleCase(period)} Global Quest`,
-      percent: 10,
-      durationSeconds: 10 * 60,
-      source: "global quest reward",
-    });
-
-    return "+10% server luck for 10m";
-  }
-
-  if (quest.metric === "rare") {
-    const now = Date.now();
-    await setBlack(channelId, {
-      spawnedAt: now,
-      expiresAt: now + 5 * 60 * 1000,
-      stock: blackStock(now),
-    });
-
-    return "Black Market spawned for 5m";
-  }
-
-  await addServerBoost({
-    channelId,
-    name: `${titleCase(period)} Global Miracle`,
-    percent: 25,
-    durationSeconds: 10 * 60,
-    source: "global quest reward",
-  });
-
-  return "+25% server luck for 10m";
-}
-
-async function claimQuest(
-  channelId: string,
-  user: NightbotUser | null,
-  scope: "player" | "global",
-  period: QuestPeriod,
-  key: string,
-  stats: PeriodStats,
-  list: MegaQuestClaimDef[]
-): Promise<string> {
+async function claimQuest(channelId: string, user: NightbotUser | null, scope: "player" | "global", period: QuestPeriod, key: string, stats: PeriodStats, list: Array<{ id: string; name: string; metric: QuestMetric; target: number; reward: string }>): Promise<string> {
   if (!user) return "Claim only works from Twitch chat.";
-
   const r = getRedis();
   if (!r) return "Quest database is not connected.";
-
   const userId = getUserId(user);
-  const done = list.filter(
-    (quest) =>
-      metricValue(
-        stats,
-        quest.metric,
-        scope === "player" ? userId : undefined
-      ) >= quest.target
-  );
-
+  const done = list.filter((q) => metricValue(stats, q.metric, scope === "player" ? userId : undefined) >= q.target);
   if (done.length === 0) return "No completed quests to claim yet.";
-
   const claimedKey = kQuestClaim(channelId, userId, scope, period, key);
   const claimed = new Set((await r.get<string[]>(claimedKey)) ?? []);
-  const fresh = done.filter((quest) => !claimed.has(quest.id));
-
-  if (fresh.length === 0) {
-    return `Already claimed completed ${scope} ${period} quests.`;
+  const fresh = done.filter((q) => !claimed.has(q.id));
+  if (fresh.length === 0) return `Already claimed completed ${scope} ${period} quests.`;
+  const core = await getCoreState(channelId, user);
+  for (const q of fresh) {
+    claimed.add(q.id);
+    if (scope === "player") core.stardust += period === "daily" ? 100 : period === "weekly" ? 1000 : period === "monthly" ? 5000 : 25000;
   }
 
-  const core = await getCoreState(channelId, user);
-  const rewardLines: string[] = [];
-
-  for (const quest of fresh) {
-    claimed.add(quest.id);
-
-    if (scope === "player") {
-      rewardLines.push(
-        `${quest.name}: ${grantPlayerMegaQuestReward(core, quest, period)}`
-      );
-    } else {
-      await r.incrby(GLOBAL_QUEST_COMPLETIONS_KEY, 1);
-      rewardLines.push(
-        `${quest.name}: ${await activateGlobalMegaQuestReward(
-          r,
-          channelId,
-          period,
-          key,
-          quest
-        )}`
-      );
-    }
+  if (scope === "global" && (period === "daily" || period === "weekly")) {
+    await r.incrby(GLOBAL_QUEST_COMPLETIONS_KEY, fresh.length);
   }
 
   await saveCoreState(core);
   await r.set(claimedKey, [...claimed]);
-
-  return truncate(
-    `✅ Claimed ${fresh.length} ${scope} ${period} quest reward(s) | ${rewardLines.join(
-      " | "
-    )}`
-  );
+  return `✅ Claimed ${fresh.length} ${scope} ${period} quest reward(s).`;
 }
 
 export async function formatReplay(channelId: string, query: string): Promise<string> {

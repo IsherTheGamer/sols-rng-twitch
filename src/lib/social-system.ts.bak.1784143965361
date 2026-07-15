@@ -129,7 +129,6 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
-  "Claim reward visibility: quest claims, achievement claims, global quest activations, and box openings now show the exact items or currency granted.",
   "Seasonal event command restored: mods can use !event summer_2025, !event christmas_2025, !event easter_2026, etc. New boost events still use !event start luckstorm 10.",
   "Roll limit rebalance: viewers can now roll up to 7x, VIP/subs 15x, mods 25x. Players gain hidden +1 max roll at 1k, 10k, 100k, 1M, 10M, 100M, and 1B total rolls.",
   "Crafting rebalance: Mechanical Scrap added as a pure roll-only crafting limiter. You get 1 every 5 successful aura rolls, and it is not sold in shops/markets.",

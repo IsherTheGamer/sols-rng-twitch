@@ -1658,141 +1658,31 @@ function progressQuest(state: CoreSystemState, type: QuestType, amount: number):
   }
 }
 
-function scaleRewardBag(
-  reward: RewardBag,
-  multiplier = 1
-): RewardBag {
-  const scale = (value: number) => {
-    if (!Number.isFinite(value) || value <= 0) return 0;
-    return Math.max(1, Math.floor(value * multiplier));
-  };
-
-  const scaleMap = (
-    bag: Record<string, number> | undefined
-  ): Record<string, number> | undefined => {
-    if (!bag) return undefined;
-
-    const out: Record<string, number> = {};
-    for (const [id, amount] of Object.entries(bag)) {
-      const scaled = scale(amount);
-      if (scaled > 0) out[id] = scaled;
-    }
-
-    return Object.keys(out).length > 0 ? out : undefined;
-  };
-
-  const stardust = reward.stardust ? scale(reward.stardust) : 0;
-
-  return {
-    materials: scaleMap(reward.materials),
-    components: scaleMap(reward.components),
-    tokens: scaleMap(reward.tokens),
-    lootboxes: scaleMap(reward.lootboxes),
-    stardust: stardust > 0 ? stardust : undefined,
-  };
-}
-
-function mergeRewardBags(...rewards: RewardBag[]): RewardBag {
-  const out: RewardBag = {
-    materials: {},
-    components: {},
-    tokens: {},
-    lootboxes: {},
-    stardust: 0,
-  };
-
-  const mergeMap = (
-    target: Record<string, number>,
-    source: Record<string, number> | undefined
-  ) => {
-    for (const [id, amount] of Object.entries(source ?? {})) {
-      if (amount <= 0) continue;
-      target[id] = (target[id] ?? 0) + amount;
-    }
-  };
-
-  for (const reward of rewards) {
-    mergeMap(out.materials ?? {}, reward.materials);
-    mergeMap(out.components ?? {}, reward.components);
-    mergeMap(out.tokens ?? {}, reward.tokens);
-    mergeMap(out.lootboxes ?? {}, reward.lootboxes);
-    out.stardust = (out.stardust ?? 0) + Math.max(0, reward.stardust ?? 0);
-  }
-
-  return out;
-}
-
-function formatRewardBag(reward: RewardBag): string {
-  const parts: string[] = [];
-
-  if ((reward.stardust ?? 0) > 0) {
-    parts.push(`${formatAmount(reward.stardust ?? 0)} Stardust`);
-  }
+function grantReward(state: CoreSystemState, reward: RewardBag, multiplier = 1): void {
+  const scale = (v: number) => Math.max(1, Math.floor(v * multiplier));
 
   for (const [id, amount] of Object.entries(reward.materials ?? {})) {
-    if (amount > 0) parts.push(`${materialName(id)} x${formatAmount(amount)}`);
+    addToBag(state.materials, id, scale(amount));
   }
 
   for (const [id, amount] of Object.entries(reward.components ?? {})) {
-    if (amount > 0) parts.push(`${componentName(id)} x${formatAmount(amount)}`);
+    addToBag(state.components, id, scale(amount));
   }
 
   for (const [id, amount] of Object.entries(reward.tokens ?? {})) {
-    if (amount > 0) parts.push(`${tokenName(id)} x${formatAmount(amount)}`);
+    addToBag(state.tokens, id, scale(amount));
   }
 
   for (const [id, amount] of Object.entries(reward.lootboxes ?? {})) {
-    if (amount > 0) parts.push(`${lootboxName(id)} x${formatAmount(amount)}`);
+    addToBag(state.lootboxes, id, scale(amount));
   }
 
-  return parts.length > 0 ? parts.join(", ") : "Nothing";
-}
-
-function grantReward(
-  state: CoreSystemState,
-  reward: RewardBag,
-  multiplier = 1
-): RewardBag {
-  const scaled = scaleRewardBag(reward, multiplier);
-  const granted: RewardBag = {};
-
-  for (const [id, amount] of Object.entries(scaled.materials ?? {})) {
-    addToBag(state.materials, id, amount);
-    granted.materials = granted.materials ?? {};
-    granted.materials[id] = amount;
-  }
-
-  for (const [id, amount] of Object.entries(scaled.components ?? {})) {
-    addToBag(state.components, id, amount);
-    granted.components = granted.components ?? {};
-    granted.components[id] = amount;
-  }
-
-  for (const [id, amount] of Object.entries(scaled.tokens ?? {})) {
-    addToBag(state.tokens, id, amount);
-    granted.tokens = granted.tokens ?? {};
-    granted.tokens[id] = amount;
-  }
-
-  for (const [id, amount] of Object.entries(scaled.lootboxes ?? {})) {
-    addToBag(state.lootboxes, id, amount);
-    granted.lootboxes = granted.lootboxes ?? {};
-    granted.lootboxes[id] = amount;
-  }
-
-  if ((scaled.stardust ?? 0) > 0 && state.shdLevel >= 0) {
+  if (reward.stardust && state.shdLevel >= 0) {
     const cap = getShdCapacity(state);
-    const room = Math.max(0, cap - state.stardust);
-    const added = Math.min(room, scaled.stardust ?? 0);
-
-    if (added > 0) {
-      state.stardust += added;
-      state.stats.stardustCollected += added;
-      granted.stardust = added;
-    }
+    const add = scale(reward.stardust);
+    state.stardust = Math.min(cap, state.stardust + add);
+    state.stats.stardustCollected += add;
   }
-
-  return granted;
 }
 
 function materialDropMultiplier(
@@ -2774,7 +2664,6 @@ export async function formatQuestStatus(
 
   if (quests.length === 0) return `No ${kind} quests found.`;
 
-  const rewardMultiplier = getPathModifiers(state).questRewardMultiplier;
   const items = quests.map((quest) => {
     const progress = getQuestProgressValue(state, quest);
     const ready = progress >= quest.target && !state.questClaimed[quest.id];
@@ -2784,7 +2673,7 @@ export async function formatQuestStatus(
       ? "🎁 ready"
       : `${formatAmount(progress)}/${formatAmount(quest.target)}`;
 
-    return `${quest.title}: ${quest.description} (${status}) | Reward: ${formatRewardBag(scaleRewardBag(quest.reward, rewardMultiplier))}`;
+    return `${quest.title}: ${quest.description} (${status})`;
   });
 
   return formatPagedItems(`${titleCase(kind)} Quests`, items, rawPage, 2);
@@ -2805,17 +2694,11 @@ export async function claimQuest(
   state.questClaimed[ready.id] = true;
   state.stats.questsCompleted += 1;
 
-  const claimedReward = grantReward(
-    state,
-    ready.reward,
-    getPathModifiers(state).questRewardMultiplier
-  );
+  grantReward(state, ready.reward, getPathModifiers(state).questRewardMultiplier);
   progressQuest(state, "materials", 1);
 
   await saveCoreState(state);
-  return truncate(
-    `✅ Claimed ${ready.title}! Reward: ${formatRewardBag(claimedReward)}`
-  );
+  return `✅ Claimed ${ready.title}! Rewards added.`;
 }
 
 export async function formatAchievementsStatus(
@@ -2831,7 +2714,7 @@ export async function formatAchievementsStatus(
     const ready = !claimed && achievement.check(state);
     const status = claimed ? "✅" : ready ? "🎁" : "🔒";
 
-    return `${status} ${achievement.title}: ${achievement.description} | Reward: ${formatRewardBag(achievement.reward)}`;
+    return `${status} ${achievement.title}: ${achievement.description}`;
   });
 
   return `${formatPagedItems("🏆 Achievements", items, rawPage, 3)} | Use !achievements claim`;
@@ -2846,25 +2729,16 @@ export async function claimAchievements(
 
   if (ready.length === 0) return `No achievements ready to claim.`;
 
-  const claimedRewards: RewardBag[] = [];
-
   for (const achievement of ready) {
     state.achievementsClaimed[achievement.id] = true;
-    claimedRewards.push(grantReward(state, achievement.reward));
+    grantReward(state, achievement.reward);
   }
 
-  const combinedReward = mergeRewardBags(...claimedRewards);
-
   await saveCoreState(state);
-  return truncate(
-    `✅ Claimed ${ready.length} achievement reward(s) | Rewards: ${formatRewardBag(combinedReward)}`
-  );
+  return `✅ Claimed ${ready.length} achievement reward(s): ${ready.map((a) => a.title).slice(0, 3).join(", ")}${ready.length > 3 ? "..." : ""}`;
 }
 
-function openOneBox(
-  state: CoreSystemState,
-  boxId: string
-): RewardBag {
+function openOneBox(state: CoreSystemState, boxId: string): string {
   const seed = `${state.userId}:${boxId}:${Date.now()}:${state.stats.boxesOpened}`;
   const roll = hashString(seed) % 100;
 
@@ -2872,60 +2746,39 @@ function openOneBox(
   progressQuest(state, "boxes", 1);
 
   if (boxId === "starter_box") {
-    return grantReward(state, {
-      materials: { scrap: 500, circuit_scrap: 80, signal_fragment: 15 },
-      tokens: { quest_token: 1 },
-    });
+    grantReward(state, { materials: { scrap: 500, circuit_scrap: 80, signal_fragment: 15 }, tokens: { quest_token: 1 } });
+    return "Starter rewards";
   }
 
   if (boxId === "core_box") {
-    return grantReward(state, {
-      materials: { refined_alloy: 100, stabilized_flux: 20 },
-      tokens: {
-        recipe_token: roll > 70 ? 2 : 1,
-        wall_token: roll > 85 ? 1 : 0,
-      },
-    });
+    grantReward(state, { materials: { refined_alloy: 100, stabilized_flux: 20 }, tokens: { recipe_token: roll > 70 ? 2 : 1, wall_token: roll > 85 ? 1 : 0 } });
+    return "Core rewards";
   }
 
   if (boxId === "quest_box") {
-    return grantReward(state, {
-      materials: { signal_fragment: 120, refined_alloy: 30 },
-      tokens: { quest_token: 2, crafting_token: 1 },
-    });
+    grantReward(state, { materials: { signal_fragment: 120, refined_alloy: 30 }, tokens: { quest_token: 2, crafting_token: 1 } });
+    return "Quest rewards";
   }
 
   if (boxId === "reactor_box") {
-    return grantReward(state, {
-      materials: { quantum_residue: 20, reality_thread: 5 },
-      tokens: {
-        reactor_token: 1,
-        recipe_token: roll > 75 ? 1 : 0,
-      },
-    });
+    grantReward(state, { materials: { quantum_residue: 20, reality_thread: 5 }, tokens: { reactor_token: 1, recipe_token: roll > 75 ? 1 : 0 } });
+    return "Reactor rewards";
   }
 
   if (boxId === "anomaly_box") {
-    return grantReward(state, {
-      materials: {
-        anomaly_matter: 40,
-        dimensional_seal: 20,
-        forbidden_circuit: roll > 85 ? 2 : 1,
-      },
-      tokens: { anomaly_token: 1, recipe_token: 3 },
-    });
+    grantReward(state, { materials: { anomaly_matter: 40, dimensional_seal: 20, forbidden_circuit: roll > 85 ? 2 : 1 }, tokens: { anomaly_token: 1, recipe_token: 3 } });
+    return "Anomaly rewards";
   }
 
   if (boxId === "dev_box") {
-    return grantReward(state, {
-      materials: { debug_fragment: 10, anomaly_matter: 100 },
-      tokens: { recipe_token: 10, wall_token: 5, path_token: 3 },
-      lootboxes: { anomaly_box: 1 },
-    });
+    grantReward(state, { materials: { debug_fragment: 10, anomaly_matter: 100 }, tokens: { recipe_token: 10, wall_token: 5, path_token: 3 }, lootboxes: { anomaly_box: 1 } });
+    return "Dev rewards";
   }
 
-  return grantReward(state, { materials: { scrap: 100 } });
+  grantReward(state, { materials: { scrap: 100 } });
+  return "Unknown box rewards";
 }
+
 
 export async function formatBoxesStatus(
   channelId: string,
@@ -2953,17 +2806,11 @@ export async function openLootbox(
 
   removeFromBag(state.lootboxes, boxId, amount);
 
-  const rewards: RewardBag[] = [];
-  for (let i = 0; i < amount; i++) {
-    rewards.push(openOneBox(state, boxId));
-  }
-
-  const combinedReward = mergeRewardBags(...rewards);
+  const summaries: string[] = [];
+  for (let i = 0; i < amount; i++) summaries.push(openOneBox(state, boxId));
 
   await saveCoreState(state);
-  return truncate(
-    `✅ Opened ${lootboxName(boxId)} x${amount} | Rewards: ${formatRewardBag(combinedReward)}`
-  );
+  return truncate(`✅ Opened ${lootboxName(boxId)} x${amount}: ${summaries.slice(0, 3).join(", ")}${amount > 3 ? "..." : ""}`);
 }
 
 export async function formatNextStep(
