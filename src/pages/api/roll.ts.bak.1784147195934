@@ -2,14 +2,13 @@ import { runAfterCommandReply } from "@/lib/delayed-announcement";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   addGlobalRolls,
-  getGlobalRolls,
   getGlobalLuck,
   getAchievementBonuses,
   recordAuraRolls,
 } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
 import { getChannelContext } from "@/lib/nightbot";
-import { cooldownKey, formatRemaining, getChannelState } from "@/lib/state";
+import { cooldownKey, formatRemaining } from "@/lib/state";
 import { rollOnce, topRarest, type RollHitResult } from "@/lib/roll-engine";
 import {
   applyCooldown,
@@ -25,20 +24,17 @@ import { isRollMultiAllowlisted } from "@/lib/roll-access";
 import {
   consumeRollTokenBuffsForRolls,
   formatConsumedRollTokenEffects,
-  type RollTokenPlan,
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
 import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
 import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system";
 import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
 import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
-import { processBiomeTick } from "@/lib/biome-engine";
 
 const VIEWER_MULTIROLL_LIMIT = 10;
 const VIP_MULTIROLL_LIMIT = 25;
 const MOD_MULTIROLL_LIMIT = 50;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
-const SAFE_ROLL_THRESHOLD = 5000;
 const MAX_DISPLAY_RESULTS = 5;
 
 const ROLL_LIMIT_MILESTONES = [
@@ -152,24 +148,6 @@ function calculateRollLuck(options: {
   );
 }
 
-async function getSafeSimulationState(
-  channelId: string,
-  channelName: string
-): Promise<ChannelState> {
-  const storedState = await getChannelState(channelId, channelName);
-
-  // processBiomeTick mutates the object it receives, so clone it first.
-  // The simulated tick is intentionally never written back to Redis.
-  const previewState = JSON.parse(
-    JSON.stringify(storedState)
-  ) as ChannelState;
-
-  const elapsed = Date.now() - previewState.lastTickAt;
-  const tick = await processBiomeTick(previewState, elapsed, null, false);
-
-  return tick.state;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channel, channelId, channelName, channelLoginName, user, isMod } =
     getChannelContext(req);
@@ -203,8 +181,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return error(res, `Max ${limitName} multi-roll is ${maxAllowed}.`);
   }
 
-  const safeSimulation = amount >= SAFE_ROLL_THRESHOLD;
-
   const achievementBonuses = await getAchievementBonuses();
   const coreLuck = await getViewerCoreLuck(channelId, user);
   const serverLuck = await getServerLuckMultiplier(channelId);
@@ -215,7 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ROLL_COOLDOWN_MS - achievementBonuses.cooldownReductionSeconds * 1000
   );
 
-  if (!safeSimulation && !isMod && !trustedMultiroll) {
+  if (!isMod && !trustedMultiroll) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
     const cd = await checkCooldown(key, cooldownMs);
 
@@ -231,35 +207,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const rollCount = baseRollCount + bonusRolls;
   const displayCount = rollCount > 1 ? Math.min(rollCount, MAX_DISPLAY_RESULTS) : 1;
 
-  const tokenPlan: RollTokenPlan = safeSimulation
-    ? { effects: [] }
-    : await consumeRollTokenBuffsForRolls({
-        channelId,
-        user,
-        rolls: rollCount,
-      });
+  const tokenPlan = await consumeRollTokenBuffsForRolls({
+    channelId,
+    user,
+    rolls: rollCount,
+  });
 
   const oneTimeTokenAssisted = tokenPlan.effects.some((effect) =>
     effect.used.some((buff) => buff.consumeOnRoll)
   );
 
-  const globalRollsAfter = safeSimulation
-    ? await getGlobalRolls()
-    : await addGlobalRolls(rollCount);
+  const globalRollsAfter = await addGlobalRolls(rollCount);
+  const firstGlobalRoll = Math.max(1, globalRollsAfter - rollCount + 1);
 
-  // Safe mode advances a virtual roll index for luck calculations only.
-  // Nothing is committed to the global-roll counter.
-  const firstGlobalRoll = safeSimulation
-    ? Math.max(1, globalRollsAfter + 1)
-    : Math.max(1, globalRollsAfter - rollCount + 1);
-
-  const runWithState = safeSimulation
-    ? async (fn: (state: ChannelState) => Promise<void>) =>
-        fn(await getSafeSimulationState(channelId, channelName))
-    : async (fn: (state: ChannelState) => Promise<void>) =>
-        withTick(channelId, channelName, fn);
-
-  return runWithState(async (state) => {
+  return withTick(channelId, channelName, async (state) => {
     const name = user?.displayName ?? user?.name ?? "Player";
     const rareBiomeActive = isSpecialBiomeActive(state);
     const results: RollHitResult[] = [];
@@ -298,75 +259,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const top = topRarest(results, displayCount);
 
-    let unlockText = "";
+    await recordViewerRolls(
+      channelId,
+      user,
+      results,
+      oneTimeTokenAssisted ? "token" : "roll"
+    );
 
-    if (!safeSimulation) {
-      await recordViewerRolls(
-        channelId,
-        user,
-        results,
-        oneTimeTokenAssisted ? "token" : "roll"
-      );
+    await recordCoreRolls(channelId, user, results);
+    await recordSocialRolls(channelId, user, results, oneTimeTokenAssisted ? "token" : "roll");
+    await recordMegaRolls({
+      channelId,
+      channelName: channelLoginName,
+      user,
+      results,
+      source: oneTimeTokenAssisted ? "token" : "roll",
+    });
 
-      await recordCoreRolls(channelId, user, results);
-      await recordSocialRolls(
-        channelId,
-        user,
-        results,
-        oneTimeTokenAssisted ? "token" : "roll"
-      );
+    await recordActivityRolls({
+      channelId,
+      channelName: channelLoginName,
+      user,
+      results,
+    });
 
-      await recordMegaRolls({
-        channelId,
-        channelName: channelLoginName,
-        user,
-        results,
-        source: oneTimeTokenAssisted ? "token" : "roll",
-      });
-
-      await recordActivityRolls({
-        channelId,
-        channelName: channelLoginName,
-        user,
-        results,
-      });
-
-      const unlocked = await recordAuraRolls(results);
-      unlockText = formatAchievementUnlocks(unlocked);
-    }
-
+    const unlocked = await recordAuraRolls(results);
+    const unlockText = formatAchievementUnlocks(unlocked);
     const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
     const tokenText = tokenUsage ? ` | Tokens used: ${tokenUsage}` : "";
-    const serverBoostText =
-      serverLuck.percent > 0
-        ? ` | Server Boost +${Math.floor(serverLuck.percent)}%`
-        : "";
-    const megaBoostText =
-      megaLuck.percent > 0
-        ? ` | Event +${Math.floor(megaLuck.percent)}%`
-        : "";
-    const safeText = safeSimulation
-      ? " | 🛡 SAFE SIM: no stats/items/quests/records/alerts changed; tokens ignored"
-      : "";
-    const suffix = `${safeText}${
-      unlockText ? ` | ${unlockText}` : ""
-    }${tokenText}${serverBoostText}${megaBoostText}`;
+    const serverBoostText = serverLuck.percent > 0 ? ` | Server Boost +${Math.floor(serverLuck.percent)}%` : "";
+    const megaBoostText = megaLuck.percent > 0 ? ` | Event +${Math.floor(megaLuck.percent)}%` : "";
+    const suffix = `${unlockText ? ` | ${unlockText}` : ""}${tokenText}${serverBoostText}${megaBoostText}`;
 
     if (displayCount === 1) {
       const best = top[0];
       text(res, `${formatRollResult(name, best.aura.name, best.effectiveRarity)}${suffix}`);
 
-      if (!safeSimulation) {
-        await runAfterCommandReply(() =>
-          announceAuraResults({
-            channelId,
-            channelName: channelLoginName,
-            displayName: name,
-            results,
-            source: "roll",
-          })
-        );
-      }
+      await runAfterCommandReply(() =>
+        announceAuraResults({
+          channelId,
+          channelName: channelLoginName,
+          displayName: name,
+          results,
+          source: "roll",
+        })
+      );
 
       return;
     }
@@ -377,17 +314,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     text(res, `${msg}${suffix}`);
 
-    if (!safeSimulation) {
-      await runAfterCommandReply(() =>
-        announceAuraResults({
-          channelId,
-          channelName: channelLoginName,
-          displayName: name,
-          results,
-          source: "roll",
-        })
-      );
-    }
+    await runAfterCommandReply(() =>
+      announceAuraResults({
+        channelId,
+        channelName: channelLoginName,
+        displayName: name,
+        results,
+        source: "roll",
+      })
+    );
 
     return;
   });
