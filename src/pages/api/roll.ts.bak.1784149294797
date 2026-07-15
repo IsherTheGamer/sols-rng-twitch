@@ -39,7 +39,6 @@ const VIP_MULTIROLL_LIMIT = 25;
 const MOD_MULTIROLL_LIMIT = 50;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
 const SAFE_ROLL_THRESHOLD = 5000;
-const MAX_SAFE_LUCK_MULTIPLIER = 100;
 const MAX_DISPLAY_RESULTS = 5;
 
 const ROLL_LIMIT_MILESTONES = [
@@ -88,38 +87,6 @@ function parseAmount(rawArgs: string | undefined): number {
   if (suffix === "k") return base * 1000;
   if (suffix === "m") return base * 1000000;
   return base;
-}
-
-function parseSafeLuckMultiplier(rawArgs: string | undefined): number {
-  const parts = (rawArgs ?? "")
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length < 2) return 1;
-
-  const raw = parts[1]
-    .replace(/,/g, "")
-    .replace(/x$/i, "");
-
-  if (!/^\d+(?:\.\d+)?$/.test(raw)) return NaN;
-
-  const multiplier = Number(raw);
-  if (!Number.isFinite(multiplier) || multiplier < 1) return NaN;
-
-  return multiplier;
-}
-
-function formatSafeLuckMultiplier(multiplier: number): string {
-  if (Number.isInteger(multiplier)) {
-    return multiplier.toLocaleString("en-US");
-  }
-
-  return multiplier
-    .toFixed(2)
-    .replace(/0+$/, "")
-    .replace(/\.$/, "");
 }
 
 function getUserLevel(userLevel: string | undefined | null): string {
@@ -207,9 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { channel, channelId, channelName, channelLoginName, user, isMod } =
     getChannelContext(req);
 
-  const rawArgs = req.query.args as string | undefined;
-  const amount = parseAmount(rawArgs);
-  const requestedSafeLuckMultiplier = parseSafeLuckMultiplier(rawArgs);
+  const amount = parseAmount(req.query.args as string | undefined);
   const broadcaster = isBroadcasterUser(user, channel);
   const allowlisted = await isRollMultiAllowlisted(user, channelLoginName, channelId);
   const trustedMultiroll = broadcaster || allowlisted;
@@ -239,31 +204,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const safeSimulation = amount >= SAFE_ROLL_THRESHOLD;
-
-  if (!Number.isFinite(requestedSafeLuckMultiplier)) {
-    return error(
-      res,
-      "Safe luck must be a number from 1 to 100. Example: !roll 5000 2"
-    );
-  }
-
-  if (!safeSimulation && requestedSafeLuckMultiplier !== 1) {
-    return error(
-      res,
-      "Extra luck is only available for 5,000+ safe simulations."
-    );
-  }
-
-  if (requestedSafeLuckMultiplier > MAX_SAFE_LUCK_MULTIPLIER) {
-    return error(
-      res,
-      `Maximum safe-simulation luck is x${MAX_SAFE_LUCK_MULTIPLIER}.`
-    );
-  }
-
-  const safeLuckMultiplier = safeSimulation
-    ? requestedSafeLuckMultiplier
-    : 1;
 
   const achievementBonuses = await getAchievementBonuses();
   const coreLuck = await getViewerCoreLuck(channelId, user);
@@ -336,21 +276,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const baseLuck = getGlobalLuck(firstGlobalRoll + i) * coreLuck.multiplier;
 
-      const calculatedLuck = calculateRollLuck({
+      const luck = calculateRollLuck({
         baseLuck,
         tokenFlatLuck: tokenEffect.flatLuck,
         tokenPercentLuck: tokenEffect.percentLuck,
         tokenRareBiomePercentLuck: tokenEffect.rareBiomePercentLuck,
         tokenFinalLuckMultiplier: tokenEffect.finalLuckMultiplier,
         achievementFlatLuck: achievementBonuses.flatLuck,
-        achievementFinalLuckMultiplier:
-          achievementBonuses.finalLuckMultiplier *
-          serverLuck.multiplier *
-          megaLuck.multiplier,
+        achievementFinalLuckMultiplier: achievementBonuses.finalLuckMultiplier * serverLuck.multiplier * megaLuck.multiplier,
         rareBiomeActive,
       });
-
-      const luck = calculatedLuck * safeLuckMultiplier;
 
       const result = rollOnce({
         state,
@@ -411,9 +346,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? ` | Event +${Math.floor(megaLuck.percent)}%`
         : "";
     const safeText = safeSimulation
-      ? ` | 🛡 SAFE SIM x${formatSafeLuckMultiplier(
-          safeLuckMultiplier
-        )} luck: no stats/items/quests/records/alerts changed; tokens ignored`
+      ? " | 🛡 SAFE SIM: no stats/items/quests/records/alerts changed; tokens ignored"
       : "";
     const suffix = `${safeText}${
       unlockText ? ` | ${unlockText}` : ""
