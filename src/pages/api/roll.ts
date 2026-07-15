@@ -34,12 +34,12 @@ import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-syste
 import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
 import { processBiomeTick } from "@/lib/biome-engine";
 
-const VIEWER_MULTIROLL_LIMIT = 10;
-const VIP_MULTIROLL_LIMIT = 25;
-const MOD_MULTIROLL_LIMIT = 50;
+const VIEWER_MULTIROLL_LIMIT = 15;
+const VIP_MULTIROLL_LIMIT = 35;
+const MOD_MULTIROLL_LIMIT = 75;
 const TRUSTED_MULTIROLL_LIMIT = 10000;
-const SAFE_ROLL_THRESHOLD = 5000;
-const MAX_SAFE_LUCK_MULTIPLIER = 100;
+const SAFE_ROLL_THRESHOLD = 2500;
+const MAX_SAFE_LUCK_MULTIPLIER = 1000000;
 const MAX_DISPLAY_RESULTS = 5;
 
 const ROLL_LIMIT_MILESTONES = [
@@ -243,14 +243,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!Number.isFinite(requestedSafeLuckMultiplier)) {
     return error(
       res,
-      "Safe luck must be a number from 1 to 100. Example: !roll 5000 2"
+      "Safe luck must be a number from 1 to 1000000. Example: !roll 5000 2"
     );
   }
 
   if (!safeSimulation && requestedSafeLuckMultiplier !== 1) {
     return error(
       res,
-      "Extra luck is only available for 5,000+ safe simulations."
+      "Extra luck is only available for 2,500+ safe simulations."
     );
   }
 
