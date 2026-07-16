@@ -298,30 +298,13 @@ export async function formatBoostStatus(channelId: string): Promise<string> {
   return truncate(`🌐 Server Boost +${formatAmount(total)}%: ${shown.join(" | ")}`);
 }
 
-export async function recordSocialRolls(channelId: string, user: NightbotUser | null, rolls: Array<{ aura: { id: string; name: string }; effectiveRarity: number }>, source: RollSource, existingProfile?: ViewerProfile): Promise<string[]> {
+export async function recordSocialRolls(channelId: string, user: NightbotUser | null, rolls: Array<{ aura: { id: string; name: string }; effectiveRarity: number }>, source: RollSource): Promise<string[]> {
   if (!user) return [];
   const userId = getUserId(user);
   const displayName = getDisplayName(user);
   const unlockedMessages: string[] = [];
-  const rareRolls = rolls
-    .filter((roll) => roll.effectiveRarity >= RECENT_MIN_RARITY)
-    .sort((a, b) => b.effectiveRarity - a.effectiveRarity);
-
-  if (rareRolls.length > 0) {
-    const existing = await getRecent(channelId);
-    const now = Date.now();
-    const added = rareRolls.slice(0, 3).map((roll, index) => ({
-      userId,
-      displayName,
-      auraId: roll.aura.id,
-      auraName: roll.aura.name,
-      rarity: roll.effectiveRarity,
-      source,
-      createdAt: now + index,
-    }));
-
-    await setRecent(channelId, [...added, ...existing]);
-  }
+  const rareRolls = rolls.filter((roll) => roll.effectiveRarity >= RECENT_MIN_RARITY).sort((a, b) => b.effectiveRarity - a.effectiveRarity);
+  for (const roll of rareRolls.slice(0, 3)) await addRecentPull(channelId, { userId, displayName, auraId: roll.aura.id, auraName: roll.aura.name, rarity: roll.effectiveRarity, source, createdAt: Date.now() });
   const best = rareRolls[0];
   if (best) {
     await progressNpcQuest(channelId, "rare_pull", 1);
@@ -330,7 +313,7 @@ export async function recordSocialRolls(channelId: string, user: NightbotUser | 
       await addServerBoost({ channelId, name: "Rare Pull Surge", percent, durationSeconds: 5 * 60, source: `${displayName} pulled ${best.aura.name}` });
     }
   }
-  const profile = existingProfile ?? await getViewerProfile(channelId, user);
+  const profile = await getViewerProfile(channelId, user);
   const { unlocked } = await refreshTitles(channelId, profile);
   for (const id of unlocked) unlockedMessages.push(`Title unlocked: ${getTitleName(id)}`);
   return unlockedMessages;

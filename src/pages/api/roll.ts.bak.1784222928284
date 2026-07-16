@@ -366,7 +366,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let unlockText = "";
 
     if (!safeSimulation) {
-      const updatedProfile = await recordViewerRolls(
+      await recordViewerRolls(
         channelId,
         user,
         results,
@@ -378,8 +378,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         channelId,
         user,
         results,
-        oneTimeTokenAssisted ? "token" : "roll",
-        updatedProfile
+        oneTimeTokenAssisted ? "token" : "roll"
       );
 
       await recordMegaRolls({
@@ -388,8 +387,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         user,
         results,
         source: oneTimeTokenAssisted ? "token" : "roll",
-        profileRolls:
-          updatedProfile.rolls + updatedProfile.tokenRolls,
       });
 
       await recordActivityRolls({

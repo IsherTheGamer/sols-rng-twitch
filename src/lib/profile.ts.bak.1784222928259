@@ -281,17 +281,12 @@ export function normalizeViewerProfile(
   };
 }
 
-const PROFILE_REGISTRATION_CACHE = new Set<string>();
-
 async function registerProfileKey(
   channelId: string,
   key: string
 ): Promise<void> {
-  const cacheKey = `${channelId}:${key}`;
-
-  if (PROFILE_REGISTRATION_CACHE.has(cacheKey)) return;
-
   const r = getRedis();
+
   if (!r) return;
 
   const indexKey = profileIndexKey(channelId);
@@ -300,13 +295,6 @@ async function registerProfileKey(
   if (!keys.includes(key)) {
     keys.push(key);
     await r.set(indexKey, keys);
-  }
-
-  PROFILE_REGISTRATION_CACHE.add(cacheKey);
-
-  if (PROFILE_REGISTRATION_CACHE.size > 5000) {
-    PROFILE_REGISTRATION_CACHE.clear();
-    PROFILE_REGISTRATION_CACHE.add(cacheKey);
   }
 }
 
@@ -341,8 +329,7 @@ export async function getViewerProfile(
 }
 
 export async function setViewerProfile(
-  profile: ViewerProfile,
-  options?: { register?: boolean }
+  profile: ViewerProfile
 ): Promise<void> {
   const r = getRedis();
 
@@ -353,10 +340,7 @@ export async function setViewerProfile(
   profile.updatedAt = Date.now();
 
   await r.set(key, profile);
-
-  if (options?.register !== false) {
-    await registerProfileKey(profile.channelId, key);
-  }
+  await registerProfileKey(profile.channelId, key);
 }
 
 export function getProfileTierId(
@@ -500,7 +484,7 @@ export async function recordViewerRolls(
   profile.xp += levelResult.xpGained;
   profile.level = levelResult.levelAfter;
 
-  await setViewerProfile(profile, { register: false });
+  await setViewerProfile(profile);
 
   return profile;
 }
@@ -542,25 +526,24 @@ export async function listViewerProfiles(
   channelId: string
 ): Promise<ViewerProfile[]> {
   const r = getRedis();
+
   if (!r) return [];
 
   const indexKey = profileIndexKey(channelId);
   const keys = (await r.get<string[]>(indexKey)) ?? [];
 
-  if (keys.length === 0) return [];
-
-  const raw = (await r.mget(...keys)) as Array<ViewerProfile | null>;
   const profiles: ViewerProfile[] = [];
 
-  for (let index = 0; index < raw.length; index++) {
-    const data = raw[index];
+  for (const key of keys) {
+    const data = await r.get<ViewerProfile>(key);
+
     if (!data) continue;
 
     profiles.push(
       normalizeViewerProfile(
         data,
         data.channelId ?? channelId,
-        data.userId ?? keys[index]?.split(":").pop() ?? "anon",
+        data.userId ?? "anon",
         data.displayName ?? "Player"
       )
     );

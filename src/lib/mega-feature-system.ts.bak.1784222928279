@@ -203,13 +203,8 @@ async function saveDiscordSettings(channelId: string, settings: DiscordSettings)
   await r.set(kDiscord(channelId), { ...settings, updatedAt: Date.now() });
 }
 
-async function postDiscord(
-  channelId: string,
-  payload: Record<string, unknown>,
-  settingsOverride?: DiscordSettings
-): Promise<void> {
-  const settings =
-    settingsOverride ?? (await getMegaDiscordSettings(channelId));
+async function postDiscord(channelId: string, payload: Record<string, unknown>): Promise<void> {
+  const settings = await getMegaDiscordSettings(channelId);
   if (!settings.enabled || !settings.webhookUrl) return;
   try {
     const res = await fetch(settings.webhookUrl, {
@@ -316,110 +311,36 @@ function updateStats(stats: PeriodStats, userId: string, userName: string, resul
   stats.users[userId] = user;
 }
 
-async function updateRecords(
-  channelId: string,
-  userId: string,
-  userName: string,
-  channelName: string,
-  results: Array<{ aura: AuraDef; effectiveRarity: number }>,
-  source: "roll" | "potion" | "token",
-  profileRolls: number
-): Promise<void> {
+async function updateRecords(channelId: string, userId: string, userName: string, channelName: string, results: Array<{ aura: AuraDef; effectiveRarity: number }>, source: "roll" | "potion" | "token"): Promise<void> {
   const r = getRedis();
   if (!r) return;
-
-  const recordKey = kRecords(channelId);
-  const firstKey = kFirsts(channelId);
-  const replayKey = kReplay(channelId);
-
-  const [recordRaw, firstRaw, replayRaw] = (await r.mget(
-    recordKey,
-    firstKey,
-    replayKey
-  )) as [RecordsState | null, FirstState | null, ReplayPull[] | null];
-
-  const records =
-    recordRaw ?? {
-      totalRarePulls: 0,
-      rareBiomes: {},
-      updatedAt: Date.now(),
-    };
-
-  const firsts = firstRaw ?? { auras: {}, biomes: {} };
-  const replay = replayRaw ?? [];
+  const records = (await r.get<RecordsState>(kRecords(channelId))) ?? { totalRarePulls: 0, rareBiomes: {}, updatedAt: Date.now() };
+  const firsts = (await r.get<FirstState>(kFirsts(channelId))) ?? { auras: {}, biomes: {} };
+  const replay = (await r.get<ReplayPull[]>(kReplay(channelId))) ?? [];
   const today = todayKey();
 
   for (const result of results) {
     if (!firsts.auras[result.aura.id]) {
-      firsts.auras[result.aura.id] = {
-        id: `${Date.now()}:${result.aura.id}:first`,
-        userId,
-        userName,
-        auraId: result.aura.id,
-        auraName: result.aura.name,
-        rarity: result.effectiveRarity,
-        channelName,
-        source,
-        createdAt: Date.now(),
-      };
+      firsts.auras[result.aura.id] = { id: `${Date.now()}:${result.aura.id}:first`, userId, userName, auraId: result.aura.id, auraName: result.aura.name, rarity: result.effectiveRarity, channelName, source, createdAt: Date.now() };
     }
-
-    if (result.effectiveRarity >= 100000) {
-      records.totalRarePulls++;
-    }
-
+    if (result.effectiveRarity >= 100000) records.totalRarePulls++;
     if (result.effectiveRarity >= 100000000) {
-      const pull: ReplayPull = {
-        id: `${Date.now()}:${result.aura.id}:${Math.random()
-          .toString(36)
-          .slice(2, 8)}`,
-        userId,
-        userName,
-        auraId: result.aura.id,
-        auraName: result.aura.name,
-        rarity: result.effectiveRarity,
-        channelName,
-        source,
-        createdAt: Date.now(),
-      };
-
+      const pull: ReplayPull = { id: `${Date.now()}:${result.aura.id}:${Math.random().toString(36).slice(2, 8)}`, userId, userName, auraId: result.aura.id, auraName: result.aura.name, rarity: result.effectiveRarity, channelName, source, createdAt: Date.now() };
       replay.unshift(pull);
-
-      if (!records.bestAura || pull.rarity > records.bestAura.rarity) {
-        records.bestAura = pull;
-      }
-
-      if (
-        !records.biggestToday ||
-        todayKey(records.biggestToday.createdAt) !== today ||
-        pull.rarity > records.biggestToday.rarity
-      ) {
-        records.biggestToday = pull;
-      }
+      if (!records.bestAura || pull.rarity > records.bestAura.rarity) records.bestAura = pull;
+      if (!records.biggestToday || todayKey(records.biggestToday.createdAt) !== today || pull.rarity > records.biggestToday.rarity) records.biggestToday = pull;
     }
   }
 
-  if (
-    !records.mostRollsUser ||
-    profileRolls > records.mostRollsUser.rolls
-  ) {
-    records.mostRollsUser = {
-      userId,
-      userName,
-      rolls: profileRolls,
-    };
-  }
-
+  const profile = await getViewerProfile(channelId, { providerId: userId, displayName: userName, name: norm(userName), provider: "twitch", userLevel: "everyone" });
+  if (!records.mostRollsUser || profile.rolls > records.mostRollsUser.rolls) records.mostRollsUser = { userId, userName, rolls: profile.rolls };
   records.updatedAt = Date.now();
-
-  await r.mset({
-    [replayKey]: replay.slice(0, 100),
-    [recordKey]: records,
-    [firstKey]: firsts,
-  });
+  await r.set(kReplay(channelId), replay.slice(0, 100));
+  await r.set(kRecords(channelId), records);
+  await r.set(kFirsts(channelId), firsts);
 }
 
-export async function recordMegaRolls(options: { channelId: string; channelName?: string | null; user: NightbotUser | null; results: Array<{ aura: AuraDef; effectiveRarity: number }>; source?: "roll" | "potion" | "token"; estimatedLuck?: number; profileRolls?: number; }): Promise<void> {
+export async function recordMegaRolls(options: { channelId: string; channelName?: string | null; user: NightbotUser | null; results: Array<{ aura: AuraDef; effectiveRarity: number }>; source?: "roll" | "potion" | "token"; estimatedLuck?: number; }): Promise<void> {
   if (!options.user) return;
   const r = getRedis();
   if (!r) return;
@@ -428,60 +349,19 @@ export async function recordMegaRolls(options: { channelId: string; channelName?
   const channelName = norm(options.channelName) || options.channelId;
   const source = options.source ?? "roll";
 
-  const statEntries = PERIODS.flatMap((period) => {
+  for (const period of PERIODS) {
     const pkey = periodKey(period);
-
-    return [
-      {
-        key: kStats(options.channelId, period, pkey),
-        period,
-        pkey,
-        userId,
-        userName,
-      },
-      {
-        key: kGlobalStats(period, pkey),
-        period,
-        pkey,
-        userId: `${options.channelId}:${userId}`,
-        userName: `${channelName}/${userName}`,
-      },
-    ];
-  });
-
-  const statValues = (await r.mget(
-    ...statEntries.map((entry) => entry.key)
-  )) as Array<PeriodStats | null>;
-
-  const statWrites: Record<string, PeriodStats> = {};
-
-  for (let index = 0; index < statEntries.length; index++) {
-    const entry = statEntries[index];
-    const stats =
-      statValues[index] ?? createStats(entry.period, entry.pkey);
-
-    updateStats(
-      stats,
-      entry.userId,
-      entry.userName,
-      options.results
-    );
-
-    stats.updatedAt = Date.now();
-    statWrites[entry.key] = stats;
+    const sKey = kStats(options.channelId, period, pkey);
+    const gsKey = kGlobalStats(period, pkey);
+    const stats = await getStats(sKey, period, pkey);
+    const gstats = await getStats(gsKey, period, pkey);
+    updateStats(stats, userId, userName, options.results);
+    updateStats(gstats, `${options.channelId}:${userId}`, `${channelName}/${userName}`, options.results);
+    await saveStats(sKey, stats);
+    await saveStats(gsKey, gstats);
   }
 
-  await r.mset(statWrites);
-
-  await updateRecords(
-    options.channelId,
-    userId,
-    userName,
-    channelName,
-    options.results,
-    source,
-    options.profileRolls ?? 0
-  );
+  await updateRecords(options.channelId, userId, userName, channelName, options.results, source);
 
   const best = Math.max(...options.results.map((r) => r.effectiveRarity), 0);
   const estimated = options.estimatedLuck ?? 0;
@@ -505,60 +385,15 @@ export async function recordMegaRolls(options: { channelId: string; channelName?
       aura: hit.aura,
       effectiveRarity: hit.effectiveRarity,
       source,
-      settings: discordSettings,
     });
   }
 }
 
-export async function sendMegaDiscordAuraAlert(options: { channelId: string; channelName?: string | null; displayName: string; aura: AuraDef; effectiveRarity: number; source: "roll" | "potion" | "token"; tierId?: string; settings?: DiscordSettings; }): Promise<void> {
-  const settings =
-    options.settings ?? (await getMegaDiscordSettings(options.channelId));
+export async function sendMegaDiscordAuraAlert(options: { channelId: string; channelName?: string | null; displayName: string; aura: AuraDef; effectiveRarity: number; source: "roll" | "potion" | "token"; tierId?: string; }): Promise<void> {
+  const settings = await getMegaDiscordSettings(options.channelId);
   if (options.effectiveRarity < settings.minAuraRarity && options.tierId !== "dev-exclusive") return;
   const channel = norm(options.channelName) || options.channelId;
-  await postDiscord(
-    options.channelId,
-    {
-      embeds: [
-        {
-          title:
-            options.tierId === "dev-exclusive"
-              ? "📌 DEV-EXCLUSIVE Aura Pulled!"
-              : "🌌 Rare Aura Pulled!",
-          description: `**${options.displayName}** ${
-            options.source === "potion" ? "popped and got" : "rolled"
-          } **${options.aura.name}**`,
-          color:
-            options.tierId === "dev-exclusive"
-              ? 0xffd700
-              : 0x9b59b6,
-          fields: [
-            {
-              name: "Aura",
-              value: options.aura.name,
-              inline: true,
-            },
-            {
-              name: "Rarity",
-              value: formatRarity(options.effectiveRarity),
-              inline: true,
-            },
-            {
-              name: "Player",
-              value: options.displayName,
-              inline: true,
-            },
-            {
-              name: "Twitch Channel",
-              value: `${channel}\n${channelUrl(channel)}`,
-              inline: false,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    },
-    settings
-  );
+  await postDiscord(options.channelId, { embeds: [{ title: options.tierId === "dev-exclusive" ? "📌 DEV-EXCLUSIVE Aura Pulled!" : "🌌 Rare Aura Pulled!", description: `**${options.displayName}** ${options.source === "potion" ? "popped and got" : "rolled"} **${options.aura.name}**`, color: options.tierId === "dev-exclusive" ? 0xffd700 : 0x9b59b6, fields: [ { name: "Aura", value: options.aura.name, inline: true }, { name: "Rarity", value: formatRarity(options.effectiveRarity), inline: true }, { name: "Player", value: options.displayName, inline: true }, { name: "Twitch Channel", value: `${channel}\n${channelUrl(channel)}`, inline: false } ], timestamp: new Date().toISOString() }] });
 }
 
 export async function recordMegaBiome(options: { channelId: string; channelName?: string | null; biomeId: string; timeOfDay?: string | null; expiresAt?: number; }): Promise<void> {

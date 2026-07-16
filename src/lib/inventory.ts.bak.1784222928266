@@ -559,24 +559,15 @@ async function claimPendingGrants(
   user: NightbotUser | null
 ): Promise<boolean> {
   const r = getRedis();
+
   if (!r) return false;
 
   const usernames = getPossibleUsernames(user);
-  if (usernames.length === 0) return false;
-
-  const keys = usernames.map((username) =>
-    pendingGrantKey(inventory.channelId, username)
-  );
-
-  const grantsList = (await r.mget(...keys)) as Array<
-    Record<string, number> | null
-  >;
-
-  const claimedKeys: string[] = [];
   let changed = false;
 
-  for (let index = 0; index < grantsList.length; index++) {
-    const grants = grantsList[index] ?? {};
+  for (const username of usernames) {
+    const key = pendingGrantKey(inventory.channelId, username);
+    const grants = (await r.get<Record<string, number>>(key)) ?? {};
 
     for (const [tokenId, amount] of Object.entries(grants)) {
       addToken(inventory, tokenId, amount);
@@ -584,12 +575,8 @@ async function claimPendingGrants(
     }
 
     if (Object.keys(grants).length > 0) {
-      claimedKeys.push(keys[index]);
+      await r.del(key);
     }
-  }
-
-  if (claimedKeys.length > 0) {
-    await r.del(...claimedKeys);
   }
 
   return changed;
@@ -1038,7 +1025,6 @@ export async function consumeRollTokenBuffsForRolls(options: {
 
   removeExpiredBuffs(inventory);
 
-  const originalBuffs = JSON.stringify(inventory.activeBuffs);
   const effects: RollTokenEffect[] = [];
   let activeBuffs = inventory.activeBuffs;
 
@@ -1051,9 +1037,7 @@ export async function consumeRollTokenBuffsForRolls(options: {
 
   inventory.activeBuffs = activeBuffs;
 
-  if (JSON.stringify(activeBuffs) !== originalBuffs) {
-    await setViewerInventory(inventory);
-  }
+  await setViewerInventory(inventory);
 
   return {
     effects,

@@ -2,76 +2,98 @@ import Head from "next/head";
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
-const CATEGORY_OPTIONS = [
+const GROUPS = [
   {
-    id: "profile",
-    title: "Profile, rolls, XP & level",
-    description:
-      "Roll totals, rarity value, best auras, tiers, XP, level rewards, and profile leaderboard registration.",
+    title: "Profile",
+    description: "Each stored profile field can be reset independently.",
+    items: [
+      ["profile_rolls", "Normal rolls", "Only the standard !roll counter."],
+      ["profile_token_rolls", "Token/potion rolls", "Token and legacy potion-roll counters."],
+      ["profile_rarity_total", "Total rarity value", "Accumulated rarity value used by value leaderboards."],
+      ["profile_xp", "XP", "Set XP to 0 without touching other fields."],
+      ["profile_level", "Level", "Set displayed level to 1."],
+      ["profile_weekly_xp", "Weekly XP counters", "Reset weekly tier caps/counts."],
+      ["profile_level_rewards", "Claimed level rewards", "Allow level rewards to be claimed again."],
+      ["profile_dev_xp_auras", "DEV XP aura tracking", "Forget DEV-exclusive XP aura history."],
+      ["profile_owned_tiers", "Owned tier counts", "Reset tier ownership counters."],
+      ["profile_highest_tier", "Highest tier", "Reset highest tier and rank."],
+      ["profile_best_aura", "Best normal aura", "Clear the best standard roll."],
+      ["profile_best_token", "Best token aura", "Clear best token/potion result."],
+      ["profile_index", "Profile index entry", "Remove from username lookup and standard leaderboards."],
+    ],
   },
   {
-    id: "inventory",
-    title: "Inventory, tokens & active buffs",
-    description:
-      "Token inventory, active effects, pending token grants, and potion-token state.",
+    title: "Inventory",
+    description: "Token inventory and queued effects.",
+    items: [
+      ["inventory_tokens", "Stored tokens", "Delete owned roll and potion tokens."],
+      ["inventory_active_buffs", "Active/queued token buffs", "Delete active timed and consume-on-roll effects."],
+      ["inventory_pending_grants", "Pending grants", "Delete username-based admin/reward grants."],
+    ],
   },
   {
-    id: "core",
-    title: "Core, SHD, crafting & materials",
-    description:
-      "Core tier/path, Stardust, SHD, reactor, materials, components, boxes, Core quests, and achievements.",
+    title: "Core, SHD and crafting",
+    description: "Every Core-system section is separate.",
+    items: [
+      ["core_tier", "Core tier", "Reset to Core 0."],
+      ["core_path_focus", "Core path and focus", "Reset to universal/main."],
+      ["core_shd_level", "SHD level", "Reset SHD to uncrafted."],
+      ["core_stardust", "Stardust", "Set stored Stardust to 0."],
+      ["core_wall_seed", "Wall seed", "Generate a fresh wall seed."],
+      ["core_materials", "Materials", "Delete all Core materials."],
+      ["core_components", "Components", "Delete all crafted components."],
+      ["core_frames", "Frames/chassis", "Delete frame storage."],
+      ["core_subcores", "Sub-Cores", "Delete Sub-Cores and active selection."],
+      ["core_reactor", "Stardust Reactor", "Reset level and deposit."],
+      ["core_tokens", "Core crafting tokens", "Delete recipe/path/reactor/etc. tokens."],
+      ["core_lootboxes", "Loot boxes", "Delete unopened boxes."],
+      ["core_quest_progress", "Core quest progress", "Reset objective counters."],
+      ["core_quest_claims", "Core quest claims", "Forget claimed Core quests."],
+      ["core_achievements", "Achievement claims", "Forget claimed achievements."],
+      ["core_unlocks", "Core unlock flags", "Reset feature unlocks."],
+      ["core_stats", "Core statistics", "Reset crafting, rarity, box and reactor stats."],
+      ["core_jobs", "Active jobs", "Delete active crafting/Core jobs."],
+    ],
   },
   {
-    id: "knowledge",
-    title: "Knowledge, research, relics & blueprints",
-    description:
-      "Knowledge currencies, research tree, scanner, relics, blueprint unlocks, and personal boss statistics.",
+    title: "Knowledge, research and relics",
+    description: "Activity of Knowledge player data.",
+    items: [
+      ["knowledge_currency", "Knowledge", "Set Knowledge to 0."],
+      ["knowledge_merchant_marks", "Merchant Marks", "Set Marks to 0."],
+      ["knowledge_relic_shards", "Relic Shards", "Set shards to 0."],
+      ["knowledge_blueprint_fragments", "Blueprint Fragments", "Set fragments to 0."],
+      ["knowledge_scanner", "Scanner level", "Reset Scanner to 0."],
+      ["knowledge_research", "Research tree", "Lock all research again."],
+      ["knowledge_blueprints", "Blueprint ownership", "Delete owned blueprints."],
+      ["knowledge_relics", "Relics", "Delete owned/equipped relics."],
+      ["knowledge_stats", "Knowledge statistics", "Reset boss, event and relic stats."],
+      ["knowledge_boss_participation", "Active boss participation", "Remove damage entry from the current boss."],
+    ],
   },
   {
-    id: "social",
-    title: "Titles, recent pulls & flex activity",
-    description:
-      "Owned/equipped titles, recent rare pulls, and active flex challenge involvement.",
-  },
-  {
-    id: "quests",
-    title: "Quest claims & luck history",
-    description:
-      "Personal/global period claim markers, NPC claim history, and stored luck-history records.",
-  },
-  {
-    id: "leaderboards",
-    title: "Period leaderboards",
-    description:
-      "Removes the player from daily, weekly, monthly, yearly, and cross-channel period tables.",
-  },
-  {
-    id: "records",
-    title: "Replay, records & first discoveries",
-    description:
-      "Rare-pull replay history, record slots, and aura first-discovery ownership.",
-  },
-  {
-    id: "cooldowns",
-    title: "Cooldowns",
-    description:
-      "Player-specific roll and command cooldown keys for the selected channel.",
-  },
-  {
-    id: "access",
-    title: "10k roll allowlist",
-    description:
-      "Removes the username from the Redis-backed 10,000-roll allowlist.",
-  },
-  {
-    id: "other",
-    title: "Other exact player keys",
-    description:
-      "Catches additional player-owned Redis keys containing both this channel ID and exact user ID. Shared keys are excluded.",
+    title: "Social, quests and history",
+    description: "Shared objects are edited surgically; other viewers remain untouched.",
+    items: [
+      ["social_titles", "Titles", "Delete owned/equipped titles."],
+      ["social_recent_pulls", "Recent pulls", "Remove entries from !recent."],
+      ["social_flex", "Flex challenge", "Cancel the active challenge if involved."],
+      ["quest_period_claims", "Period quest claims", "Delete personal/global daily-weekly-monthly-yearly claim keys."],
+      ["quest_npc_claims", "NPC quest claims", "Remove this player's claimed-by markers."],
+      ["mega_luck_history", "Best-luck history", "Delete stored best luck/aura history."],
+      ["leaderboard_channel_periods", "Channel period leaderboards", "Remove user rows from daily/weekly/monthly/yearly tables."],
+      ["leaderboard_global_periods", "Global period leaderboards", "Remove cross-channel user rows."],
+      ["records_replay", "Rare replay history", "Remove entries shown by !replay."],
+      ["records_slots", "Channel record slots", "Clear record slots currently owned by the player."],
+      ["records_first_aura_discoveries", "!first / !firsts aura discoveries", "Remove player-owned aura first discoveries. Biome firsts are channel-owned and preserved."],
+      ["player_cooldowns", "Cooldowns", "Delete player-specific command cooldowns."],
+      ["roll_access", "10k roll access", "Remove from the dynamic allowlist."],
+      ["other_exact_player_keys", "Other exact player keys", "Catch additional keys containing the channel ID and exact numeric user ID."],
+    ],
   },
 ] as const;
 
-type CategoryId = (typeof CATEGORY_OPTIONS)[number]["id"];
+type ResetOption = (typeof GROUPS)[number]["items"][number][0];
 
 interface ApiResult {
   ok?: boolean;
@@ -85,8 +107,10 @@ interface ApiResult {
       userId: string;
       displayName: string;
     };
-    deleteKeys?: string[];
-    mutations?: Array<{
+    options?: string[];
+    fullPlayerReset?: boolean;
+    items?: Array<{
+      option: string;
       kind: string;
       key: string;
       matches: number;
@@ -95,20 +119,23 @@ interface ApiResult {
     notes?: string[];
   };
   totals?: {
-    directKeys: number;
-    sharedMutations: number;
-    sharedEntries: number;
+    selectedItems: number;
+    currentlyMatchedEntries: number;
   };
+  selectedItems?: number;
+  fullPlayerReset?: boolean;
+  writes?: number;
   deletedKeys?: number;
-  sharedMutations?: number;
-  sharedEntriesRemoved?: number;
-  categories?: string[];
+  sharedChanges?: number;
   notes?: string[];
 }
 
 export default function PlayerResetPage() {
-  const allCategories = useMemo(
-    () => CATEGORY_OPTIONS.map((category) => category.id),
+  const allOptions = useMemo(
+    () =>
+      GROUPS.flatMap((group) =>
+        group.items.map((item) => item[0])
+      ) as ResetOption[],
     []
   );
 
@@ -116,28 +143,45 @@ export default function PlayerResetPage() {
   const [channelId, setChannelId] = useState("904797805");
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState("");
-  const [selected, setSelected] =
-    useState<CategoryId[]>(allCategories);
+  const [selected, setSelected] = useState<ResetOption[]>([]);
   const [confirmation, setConfirmation] = useState("");
   const [preview, setPreview] = useState<ApiResult | null>(null);
   const [result, setResult] = useState<ApiResult | null>(null);
   const [busy, setBusy] = useState(false);
 
   const resolvedUsername =
-    preview?.plan?.target?.username || username.trim().toLowerCase();
+    preview?.plan?.target?.username ||
+    username.trim().toLowerCase().replace(/^@+/, "");
 
   const expectedConfirmation = resolvedUsername
     ? `RESET ${resolvedUsername}`
     : "RESET username";
 
-  function toggleCategory(id: CategoryId) {
-    setSelected((current) =>
-      current.includes(id)
-        ? current.filter((value) => value !== id)
-        : [...current, id]
-    );
+  function clearPreview() {
     setPreview(null);
     setResult(null);
+    setConfirmation("");
+  }
+
+  function toggle(option: ResetOption) {
+    setSelected((current) =>
+      current.includes(option)
+        ? current.filter((item) => item !== option)
+        : [...current, option]
+    );
+    clearPreview();
+  }
+
+  function selectGroup(options: readonly (readonly [ResetOption, string, string])[]) {
+    const ids = options.map((item) => item[0]);
+    setSelected((current) => [...new Set([...current, ...ids])]);
+    clearPreview();
+  }
+
+  function clearGroup(options: readonly (readonly [ResetOption, string, string])[]) {
+    const ids = new Set(options.map((item) => item[0]));
+    setSelected((current) => current.filter((item) => !ids.has(item)));
+    clearPreview();
   }
 
   async function callApi(execute: boolean) {
@@ -157,7 +201,7 @@ export default function PlayerResetPage() {
     if (selected.length === 0) {
       setResult({
         ok: false,
-        error: "Select at least one reset category.",
+        error: "Select at least one reset item.",
       });
       return;
     }
@@ -176,7 +220,7 @@ export default function PlayerResetPage() {
           channelId,
           username,
           userId,
-          categories: selected,
+          options: selected,
           preview: !execute,
           confirmation: execute ? confirmation : "",
         }),
@@ -210,25 +254,25 @@ export default function PlayerResetPage() {
   return (
     <>
       <Head>
-        <title>Sol&apos;s RNG Player Data Reset</title>
+        <title>Sol&apos;s RNG Granular Player Reset</title>
       </Head>
 
       <main style={pageStyle}>
         <section style={panelStyle}>
           <div style={eyebrowStyle}>SOL&apos;S RNG ADMIN</div>
           <h1 style={{ margin: "8px 0" }}>
-            Single-Player Data Reset
+            Granular Single-Player Reset
           </h1>
+
           <p style={mutedStyle}>
-            Reset one viewer without deleting the channel, other
-            viewers, global rolls, biome/event state, server boosts, or
-            Discord settings.
+            Every player-owned field is selectable separately. A Full
+            Player Reset selects every switch and deletes complete
+            player objects where possible.
           </p>
 
           <div style={warningStyle}>
-            Destructive action. Preview first, verify the resolved
-            Twitch ID and affected keys, then type the confirmation
-            phrase.
+            Protected by CRON_SECRET. Preview is required, followed by
+            an exact confirmation phrase.
           </div>
 
           <div style={gridStyle}>
@@ -237,7 +281,7 @@ export default function PlayerResetPage() {
               value={secret}
               setValue={setSecret}
               type="password"
-              placeholder="Kept in this page only"
+              placeholder="Sent as a Bearer header"
             />
             <Field
               label="Channel ID"
@@ -252,7 +296,7 @@ export default function PlayerResetPage() {
               value={username}
               setValue={(value) => {
                 setUsername(value);
-                setPreview(null);
+                clearPreview();
               }}
               placeholder="viewer_name"
             />
@@ -261,64 +305,100 @@ export default function PlayerResetPage() {
               value={userId}
               setValue={(value) => {
                 setUserId(value.replace(/\D/g, ""));
-                setPreview(null);
+                clearPreview();
               }}
-              placeholder="Recommended for perfect accuracy"
+              placeholder="Strongly recommended"
             />
           </div>
 
           <div style={toolbarStyle}>
             <button
-              style={secondaryButtonStyle}
+              style={dangerSelectStyle}
               onClick={() => {
-                setSelected(allCategories);
-                setPreview(null);
+                setSelected(allOptions);
+                clearPreview();
               }}
             >
-              Select Full Player Reset
+              Select Full Player Reset ({allOptions.length})
             </button>
+
             <button
               style={secondaryButtonStyle}
               onClick={() => {
                 setSelected([]);
-                setPreview(null);
+                clearPreview();
               }}
             >
-              Clear Selection
+              Clear Everything
             </button>
+
+            <span style={selectionStyle}>
+              {selected.length}/{allOptions.length} selected
+            </span>
           </div>
 
-          <div style={categoryGridStyle}>
-            {CATEGORY_OPTIONS.map((category) => {
-              const checked = selected.includes(category.id);
+          {GROUPS.map((group) => (
+            <section key={group.title} style={groupStyle}>
+              <div style={groupHeaderStyle}>
+                <div>
+                  <h2 style={{ margin: 0 }}>{group.title}</h2>
+                  <p style={{ ...mutedStyle, margin: "5px 0 0" }}>
+                    {group.description}
+                  </p>
+                </div>
 
-              return (
-                <label
-                  key={category.id}
-                  style={{
-                    ...categoryStyle,
-                    borderColor: checked ? "#7588ff" : "#30395f",
-                    background: checked
-                      ? "rgba(71,88,180,.22)"
-                      : "rgba(13,17,36,.76)",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleCategory(category.id)}
-                    style={{ width: 18, height: 18 }}
-                  />
-                  <span>
-                    <strong>{category.title}</strong>
-                    <span style={categoryDescriptionStyle}>
-                      {category.description}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                <div style={miniToolbarStyle}>
+                  <button
+                    style={miniButtonStyle}
+                    onClick={() => selectGroup(group.items)}
+                  >
+                    Select group
+                  </button>
+                  <button
+                    style={miniButtonStyle}
+                    onClick={() => clearGroup(group.items)}
+                  >
+                    Clear group
+                  </button>
+                </div>
+              </div>
+
+              <div style={optionGridStyle}>
+                {group.items.map(([id, title, description]) => {
+                  const checked = selected.includes(id);
+
+                  return (
+                    <label
+                      key={id}
+                      style={{
+                        ...optionStyle,
+                        borderColor: checked
+                          ? "#7f91ff"
+                          : "#30395f",
+                        background: checked
+                          ? "rgba(69,86,181,.23)"
+                          : "rgba(12,16,34,.72)",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggle(id)}
+                        style={{ width: 18, height: 18 }}
+                      />
+                      <span>
+                        <strong>{title}</strong>
+                        <span style={descriptionStyle}>
+                          {description}
+                        </span>
+                        <code style={codeStyle}>{id}</code>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
 
           <button
             style={previewButtonStyle}
@@ -341,40 +421,38 @@ export default function PlayerResetPage() {
               </p>
 
               <p>
-                Direct keys:{" "}
-                <strong>{preview.totals?.directKeys ?? 0}</strong> |
-                Shared structures:{" "}
+                Selected:{" "}
                 <strong>
-                  {preview.totals?.sharedMutations ?? 0}
+                  {preview.totals?.selectedItems ?? 0}
                 </strong>{" "}
-                | Matching shared entries:{" "}
+                | Existing shared matches:{" "}
                 <strong>
-                  {preview.totals?.sharedEntries ?? 0}
+                  {preview.totals?.currentlyMatchedEntries ?? 0}
+                </strong>{" "}
+                | Full reset:{" "}
+                <strong>
+                  {preview.plan?.fullPlayerReset ? "YES" : "No"}
                 </strong>
               </p>
 
-              <details>
+              <details open>
                 <summary style={summaryStyle}>
-                  Direct Redis keys
+                  Selected operations
                 </summary>
                 <pre style={preStyle}>
-                  {(preview.plan?.deleteKeys ?? []).join("\n") ||
-                    "No direct keys currently exist."}
+                  {(preview.plan?.items ?? [])
+                    .map(
+                      (item) =>
+                        `${item.option}\n  ${item.description}\n  ${item.key}${item.matches ? ` | matches ${item.matches}` : ""}`
+                    )
+                    .join("\n\n")}
                 </pre>
               </details>
 
               <details>
-                <summary style={summaryStyle}>
-                  Shared-data cleanup
-                </summary>
+                <summary style={summaryStyle}>Safety notes</summary>
                 <pre style={preStyle}>
-                  {(preview.plan?.mutations ?? [])
-                    .map(
-                      (item) =>
-                        `${item.description}\n  ${item.key} (${item.matches})`
-                    )
-                    .join("\n\n") ||
-                    "No matching shared entries."}
+                  {(preview.plan?.notes ?? []).join("\n")}
                 </pre>
               </details>
 
@@ -382,6 +460,7 @@ export default function PlayerResetPage() {
                 Type exactly:{" "}
                 <code>{expectedConfirmation}</code>
               </label>
+
               <input
                 value={confirmation}
                 onChange={(event) =>
@@ -394,18 +473,18 @@ export default function PlayerResetPage() {
 
               <button
                 style={{
-                  ...dangerButtonStyle,
+                  ...executeButtonStyle,
                   opacity:
                     confirmation === expectedConfirmation && !busy
                       ? 1
-                      : 0.55,
+                      : 0.52,
                 }}
                 disabled={
                   confirmation !== expectedConfirmation || busy
                 }
                 onClick={() => callApi(true)}
               >
-                Permanently Reset Selected Player Data
+                Permanently Execute Selected Reset
               </button>
             </section>
           )}
@@ -453,18 +532,18 @@ const pageStyle: CSSProperties = {
   padding: 24,
   color: "#f5f7ff",
   background:
-    "radial-gradient(circle at top, rgba(72,81,180,.34), transparent 35%), #070914",
+    "radial-gradient(circle at top, rgba(72,81,180,.34), transparent 34%), #070914",
   fontFamily:
     "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
 };
 
 const panelStyle: CSSProperties = {
-  maxWidth: 1040,
+  maxWidth: 1180,
   margin: "0 auto",
   padding: 24,
   border: "1px solid #35406f",
   borderRadius: 22,
-  background: "rgba(11,15,31,.94)",
+  background: "rgba(11,15,31,.95)",
   boxShadow: "0 24px 90px rgba(0,0,0,.42)",
 };
 
@@ -476,7 +555,7 @@ const eyebrowStyle: CSSProperties = {
 
 const mutedStyle: CSSProperties = {
   color: "#c7cde2",
-  lineHeight: 1.6,
+  lineHeight: 1.55,
 };
 
 const warningStyle: CSSProperties = {
@@ -515,36 +594,23 @@ const inputStyle: CSSProperties = {
 const toolbarStyle: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
+  alignItems: "center",
   gap: 10,
-  margin: "20px 0 12px",
+  margin: "21px 0",
 };
 
-const categoryGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
-  gap: 11,
-};
-
-const categoryStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 11,
-  padding: 14,
-  border: "1px solid",
-  borderRadius: 14,
+const dangerSelectStyle: CSSProperties = {
+  padding: "11px 15px",
+  border: "1px solid #cc6072",
+  borderRadius: 11,
+  color: "#fff",
+  background: "#7b2839",
   cursor: "pointer",
-};
-
-const categoryDescriptionStyle: CSSProperties = {
-  display: "block",
-  marginTop: 5,
-  color: "#bfc6dc",
-  fontSize: 13,
-  lineHeight: 1.45,
+  fontWeight: 900,
 };
 
 const secondaryButtonStyle: CSSProperties = {
-  padding: "10px 14px",
+  padding: "11px 15px",
   border: "1px solid #4c5c9e",
   borderRadius: 11,
   color: "#fff",
@@ -553,9 +619,78 @@ const secondaryButtonStyle: CSSProperties = {
   fontWeight: 800,
 };
 
+const selectionStyle: CSSProperties = {
+  marginLeft: "auto",
+  color: "#cbd3ff",
+  fontWeight: 900,
+};
+
+const groupStyle: CSSProperties = {
+  marginTop: 18,
+  padding: 16,
+  border: "1px solid #2f385f",
+  borderRadius: 16,
+  background: "rgba(8,11,24,.64)",
+};
+
+const groupHeaderStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  gap: 12,
+  marginBottom: 13,
+};
+
+const miniToolbarStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  alignItems: "center",
+};
+
+const miniButtonStyle: CSSProperties = {
+  padding: "8px 10px",
+  border: "1px solid #48578f",
+  borderRadius: 9,
+  color: "#fff",
+  background: "#1b2554",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const optionGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(285px, 1fr))",
+  gap: 10,
+};
+
+const optionStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 10,
+  padding: 13,
+  border: "1px solid",
+  borderRadius: 13,
+  cursor: "pointer",
+};
+
+const descriptionStyle: CSSProperties = {
+  display: "block",
+  marginTop: 5,
+  color: "#bdc5dc",
+  fontSize: 13,
+  lineHeight: 1.4,
+};
+
+const codeStyle: CSSProperties = {
+  display: "inline-block",
+  marginTop: 7,
+  color: "#9eabef",
+  fontSize: 11,
+};
+
 const previewButtonStyle: CSSProperties = {
   width: "100%",
-  marginTop: 18,
+  marginTop: 20,
   padding: 14,
   border: "1px solid #6375ca",
   borderRadius: 13,
@@ -565,7 +700,7 @@ const previewButtonStyle: CSSProperties = {
   fontWeight: 900,
 };
 
-const dangerButtonStyle: CSSProperties = {
+const executeButtonStyle: CSSProperties = {
   width: "100%",
   marginTop: 14,
   padding: 14,
@@ -592,7 +727,7 @@ const summaryStyle: CSSProperties = {
 };
 
 const preStyle: CSSProperties = {
-  maxHeight: 260,
+  maxHeight: 330,
   overflow: "auto",
   padding: 12,
   borderRadius: 10,
