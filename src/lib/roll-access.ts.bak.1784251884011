@@ -15,12 +15,6 @@ const ROLL_ACCESS_MANAGER_IDS = new Set([
 
 let redis: Redis | null = null;
 
-const DYNAMIC_ALLOWLIST_CACHE = new Map<
-  string,
-  { expiresAt: number; entries: DynamicRollAccessEntry[] }
->();
-const DYNAMIC_ALLOWLIST_CACHE_MS = 5000;
-
 function getRedis(): Redis | null {
   if (redis) return redis;
 
@@ -99,26 +93,11 @@ export function getRollAccessManagerIds(): string[] {
 export async function getDynamicRollAllowlist(
   channelId: string
 ): Promise<DynamicRollAccessEntry[]> {
-  const cached = DYNAMIC_ALLOWLIST_CACHE.get(channelId);
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.entries;
-  }
-
   const r = getRedis();
   if (!r) return [];
 
-  const raw = await r.get<DynamicRollAccessEntry[]>(
-    dynamicAllowlistKey(channelId)
-  );
-  const entries = normalizeEntries(raw);
-
-  DYNAMIC_ALLOWLIST_CACHE.set(channelId, {
-    entries,
-    expiresAt: Date.now() + DYNAMIC_ALLOWLIST_CACHE_MS,
-  });
-
-  return entries;
+  const raw = await r.get<DynamicRollAccessEntry[]>(dynamicAllowlistKey(channelId));
+  return normalizeEntries(raw);
 }
 
 async function saveDynamicRollAllowlist(
@@ -127,14 +106,7 @@ async function saveDynamicRollAllowlist(
 ): Promise<void> {
   const r = getRedis();
   if (!r) throw new Error("Redis is not connected.");
-
-  const normalized = normalizeEntries(entries);
-  await r.set(dynamicAllowlistKey(channelId), normalized);
-
-  DYNAMIC_ALLOWLIST_CACHE.set(channelId, {
-    entries: normalized,
-    expiresAt: Date.now() + DYNAMIC_ALLOWLIST_CACHE_MS,
-  });
+  await r.set(dynamicAllowlistKey(channelId), normalizeEntries(entries));
 }
 
 export async function addDynamicRollAccess(options: {

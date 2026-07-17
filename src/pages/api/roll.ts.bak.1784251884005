@@ -1,5 +1,4 @@
 import { runAfterCommandReply } from "@/lib/delayed-announcement";
-import { runPostResponseSerial } from "@/lib/post-response";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   addGlobalRolls,
@@ -42,7 +41,6 @@ const TRUSTED_MULTIROLL_LIMIT = 10000;
 const SAFE_ROLL_THRESHOLD = 2500;
 const MAX_SAFE_LUCK_MULTIPLIER = 1000000;
 const MAX_DISPLAY_RESULTS = 5;
-const ROLL_REPLY_PERSISTENCE_BUDGET_MS = 2200;
 
 const ROLL_LIMIT_MILESTONES = [
   1000,
@@ -59,7 +57,7 @@ function getRollLimitProgressBonus(totalRolls: number): number {
 }
 
 export const config = {
-  maxDuration: 60,
+  maxDuration: 30,
 };
 
 const SPECIAL_BIOME_IDS = new Set([
@@ -122,27 +120,6 @@ function formatSafeLuckMultiplier(multiplier: number): string {
     .toFixed(2)
     .replace(/0+$/, "")
     .replace(/\.$/, "");
-}
-
-async function waitForPersistence<T>(
-  promise: Promise<T>,
-  timeoutMs: number
-): Promise<{ completed: true; value: T } | { completed: false }> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  try {
-    return await Promise.race([
-      promise.then((value) => ({ completed: true as const, value })),
-      new Promise<{ completed: false }>((resolve) => {
-        timer = setTimeout(
-          () => resolve({ completed: false }),
-          timeoutMs
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
 }
 
 function getUserLevel(userLevel: string | undefined | null): string {
@@ -226,8 +203,7 @@ async function getSafeSimulationState(
   return tick.state;
 }
 
-async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
-  const requestStartedAt = Date.now();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channel, channelId, channelName, channelLoginName, user, isMod } =
     getChannelContext(req);
 
@@ -235,18 +211,10 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
   const amount = parseAmount(rawArgs);
   const requestedSafeLuckMultiplier = parseSafeLuckMultiplier(rawArgs);
   const broadcaster = isBroadcasterUser(user, channel);
-
-  const [allowlisted, preloadedViewerProfile] = await Promise.all([
-    isRollMultiAllowlisted(user, channelLoginName, channelId),
-    broadcaster || !user
-      ? Promise.resolve(null)
-      : getViewerProfile(channelId, user),
-  ]);
-
+  const allowlisted = await isRollMultiAllowlisted(user, channelLoginName, channelId);
   const trustedMultiroll = broadcaster || allowlisted;
-  const viewerProfileForLimit = trustedMultiroll
-    ? null
-    : preloadedViewerProfile;
+
+  const viewerProfileForLimit = trustedMultiroll || !user ? null : await getViewerProfile(channelId, user);
   const totalProfileRollsForLimit =
     (viewerProfileForLimit?.rolls ?? 0) +
     (viewerProfileForLimit?.tokenRolls ?? 0) +
@@ -297,17 +265,10 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
     ? requestedSafeLuckMultiplier
     : 1;
 
-  const [
-    achievementBonuses,
-    coreLuck,
-    serverLuck,
-    megaLuck,
-  ] = await Promise.all([
-    getAchievementBonuses(),
-    getViewerCoreLuck(channelId, user),
-    getServerLuckMultiplier(channelId),
-    getMegaLuckMultiplier(channelId),
-  ]);
+  const achievementBonuses = await getAchievementBonuses();
+  const coreLuck = await getViewerCoreLuck(channelId, user);
+  const serverLuck = await getServerLuckMultiplier(channelId);
+  const megaLuck = await getMegaLuckMultiplier(channelId);
 
   const cooldownMs = Math.max(
     1000,
@@ -330,25 +291,21 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
   const rollCount = baseRollCount + bonusRolls;
   const displayCount = rollCount > 1 ? Math.min(rollCount, MAX_DISPLAY_RESULTS) : 1;
 
-  const [tokenPlan, globalRollsAfter]: [
-    RollTokenPlan,
-    number,
-  ] = await Promise.all([
-    safeSimulation
-      ? Promise.resolve({ effects: [] } as RollTokenPlan)
-      : consumeRollTokenBuffsForRolls({
-          channelId,
-          user,
-          rolls: rollCount,
-        }),
-    safeSimulation
-      ? getGlobalRolls()
-      : addGlobalRolls(rollCount),
-  ]);
+  const tokenPlan: RollTokenPlan = safeSimulation
+    ? { effects: [] }
+    : await consumeRollTokenBuffsForRolls({
+        channelId,
+        user,
+        rolls: rollCount,
+      });
 
   const oneTimeTokenAssisted = tokenPlan.effects.some((effect) =>
     effect.used.some((buff) => buff.consumeOnRoll)
   );
+
+  const globalRollsAfter = safeSimulation
+    ? await getGlobalRolls()
+    : await addGlobalRolls(rollCount);
 
   // Safe mode advances a virtual roll index for luck calculations only.
   // Nothing is committed to the global-roll counter.
@@ -407,41 +364,43 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
     const top = topRarest(results, displayCount);
 
     let unlockText = "";
-    let statsSyncing = false;
-
-    let criticalPersistence:
-      | Promise<
-          [
-            Awaited<ReturnType<typeof recordViewerRolls>>,
-            Awaited<ReturnType<typeof recordCoreRolls>>,
-            Awaited<ReturnType<typeof recordAuraRolls>>
-          ]
-        >
-      | null = null;
 
     if (!safeSimulation) {
-      criticalPersistence = Promise.all([
-        recordViewerRolls(
-          channelId,
-          user,
-          results,
-          oneTimeTokenAssisted ? "token" : "roll"
-        ),
-        recordCoreRolls(channelId, user, results),
-        recordAuraRolls(results),
-      ] as const);
-
-      const persistence = await waitForPersistence(
-        criticalPersistence,
-        ROLL_REPLY_PERSISTENCE_BUDGET_MS
+      const updatedProfile = await recordViewerRolls(
+        channelId,
+        user,
+        results,
+        oneTimeTokenAssisted ? "token" : "roll"
       );
 
-      if (persistence.completed) {
-        const [, , unlocked] = persistence.value;
-        unlockText = formatAchievementUnlocks(unlocked);
-      } else {
-        statsSyncing = true;
-      }
+      await recordCoreRolls(channelId, user, results);
+      await recordSocialRolls(
+        channelId,
+        user,
+        results,
+        oneTimeTokenAssisted ? "token" : "roll",
+        updatedProfile
+      );
+
+      await recordMegaRolls({
+        channelId,
+        channelName: channelLoginName,
+        user,
+        results,
+        source: oneTimeTokenAssisted ? "token" : "roll",
+        profileRolls:
+          updatedProfile.rolls + updatedProfile.tokenRolls,
+      });
+
+      await recordActivityRolls({
+        channelId,
+        channelName: channelLoginName,
+        user,
+        results,
+      });
+
+      const unlocked = await recordAuraRolls(results);
+      unlockText = formatAchievementUnlocks(unlocked);
     }
 
     const tokenUsage = formatConsumedRollTokenEffects(tokenPlan.effects);
@@ -459,74 +418,37 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
           safeLuckMultiplier
         )} luck: no stats/items/quests/records/alerts changed; tokens ignored`
       : "";
-    const syncingText = statsSyncing
-      ? " | ⏳ stats syncing"
-      : "";
-    const suffix = `${safeText}${syncingText}${
+    const suffix = `${safeText}${
       unlockText ? ` | ${unlockText}` : ""
     }${tokenText}${serverBoostText}${megaBoostText}`;
 
-    const sendRollReply = (message: string) => {
-      const replyMs = Date.now() - requestStartedAt;
+    if (displayCount === 1) {
+      const best = top[0];
+      text(res, `${formatRollResult(name, best.aura.name, best.effectiveRarity)}${suffix}`);
 
-      res.setHeader("Server-Timing", `roll;dur=${replyMs}`);
-      res.setHeader("X-Sols-Roll-Ms", String(replyMs));
+      if (!safeSimulation) {
+        await runAfterCommandReply(() =>
+          announceAuraResults({
+            channelId,
+            channelName: channelLoginName,
+            displayName: name,
+            results,
+            source: "roll",
+          })
+        );
+      }
 
-      console.info(
-        `[roll] replied in ${replyMs}ms | channel=${channelId} | user=${
-          user?.providerId ?? "anon"
-        } | rolls=${rollCount} | syncing=${statsSyncing}`
-      );
+      return;
+    }
 
-      return text(res, message);
-    };
+    const msg =
+      `${name} rolled ${rollCount}x — top ${displayCount}: ` +
+      formatMultiRoll(top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity })));
 
-    const queueFollowUp = () => {
-      if (safeSimulation || !criticalPersistence) return;
+    text(res, `${msg}${suffix}`);
 
-      runPostResponseSerial(
-        `roll-follow-up:${channelId}`,
-        "roll-follow-up",
-        async () => {
-          const [updatedProfile] = await criticalPersistence!;
-
-          const outcomes = await Promise.allSettled([
-            recordSocialRolls(
-              channelId,
-              user,
-              results,
-              oneTimeTokenAssisted ? "token" : "roll",
-              updatedProfile
-            ),
-            recordMegaRolls({
-              channelId,
-              channelName: channelLoginName,
-              user,
-              results,
-              source: oneTimeTokenAssisted ? "token" : "roll",
-              profileRolls:
-                updatedProfile.rolls + updatedProfile.tokenRolls,
-            }),
-            recordActivityRolls({
-              channelId,
-              channelName: channelLoginName,
-              user,
-              results,
-            }),
-          ]);
-
-          for (const outcome of outcomes) {
-            if (outcome.status === "rejected") {
-              console.error(
-                "[roll-follow-up] subsystem failed:",
-                outcome.reason
-              );
-            }
-          }
-        }
-      );
-
-      void runAfterCommandReply(() =>
+    if (!safeSimulation) {
+      await runAfterCommandReply(() =>
         announceAuraResults({
           channelId,
           channelName: channelLoginName,
@@ -535,45 +457,8 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
           source: "roll",
         })
       );
-    };
-
-    if (displayCount === 1) {
-      const best = top[0];
-      sendRollReply(
-        `${formatRollResult(
-          name,
-          best.aura.name,
-          best.effectiveRarity
-        )}${suffix}`
-      );
-      queueFollowUp();
-      return;
     }
 
-    const msg =
-      `${name} rolled ${rollCount}x — top ${displayCount}: ` +
-      formatMultiRoll(top.map((r) => ({ name: r.aura.name, rarity: r.effectiveRarity })));
-
-    sendRollReply(`${msg}${suffix}`);
-    queueFollowUp();
     return;
   });
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  try {
-    await handleRoll(req, res);
-  } catch (errorValue) {
-    console.error("[roll] request failed:", errorValue);
-
-    if (!res.headersSent) {
-      return error(
-        res,
-        "Roll service was busy. Try the command again in a few seconds."
-      );
-    }
-  }
 }
