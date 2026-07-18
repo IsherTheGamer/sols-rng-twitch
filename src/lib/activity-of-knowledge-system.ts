@@ -1,10 +1,15 @@
 import { Redis } from "@upstash/redis";
 import type { NightbotUser } from "./nightbot";
 import type { RollHitResult } from "./roll-engine";
-import { formatRarity, truncate } from "./format";
-import { getCoreState } from "./core-system";
+import { truncate } from "./format";
+import {
+  getCoreGuideSnapshot,
+  getCoreState,
+  grantCoreMaterials,
+} from "./core-system";
 
 let redis: Redis | null = null;
+
 function getRedis(): Redis | null {
   if (redis) return redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -14,111 +19,478 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-type Branch = "archive" | "crafting" | "core" | "relic" | "scanner" | "boss" | "market" | "blueprint" | "forecast";
-type Node = { id:string; branch:Branch; name:string; desc:string; cost:number; req?:string[]; core?:number; scanner?:number };
-type Boss = { id:string; name:string; hp:number; maxHp:number; startedAt:number; endsAt:number; participants:Record<string,{name:string;damage:number}>; defeated:boolean };
-type WorldEvent = { id:string; name:string; desc:string; rarity:"common"|"rare"|"legendary"; startedAt:number; endsAt:number; effect:string };
-type Forecast = { date:string; text:string; confidence:"low"|"medium"|"high"; generatedAt:number };
-type MarketItem = { id:string; name:string; cost:number; gives:string };
-type ChannelState = { channelId:string; channelName:string; boss:Boss|null; worldEvent:WorldEvent|null; forecast:Forecast|null; marketDate:string|null; marketItems:MarketItem[]; stats:{bossesDefeated:number;worldEventsStarted:number;globalQuestCompletions:number}; updatedAt:number };
-type RelicRarity = "common"|"uncommon"|"rare"|"epic"|"mythic"|"astral"|"glitched"|"forbidden";
-type Relic = { id:string; name:string; rarity:RelicRarity; level:number; equipped:boolean };
-type PlayerState = { channelId:string; userId:string; displayName:string; knowledge:number; merchantMarks:number; relicShards:number; blueprintFragments:number; scannerLevel:number; unlockedResearch:Record<string,boolean>; blueprints:Record<string,boolean>; relics:Relic[]; stats:{bossDamage:number;bossKills:number;knowledgeEarned:number;worldEventsSeen:number;relicRerolls:number}; updatedAt:number };
+type Branch =
+  | "archive"
+  | "crafting"
+  | "core"
+  | "relic"
+  | "scanner"
+  | "boss"
+  | "market"
+  | "blueprint"
+  | "forecast";
 
-const PCACHE=new Map<string,{expiresAt:number;value:PlayerState}>();
-const CCACHE=new Map<string,{expiresAt:number;value:ChannelState}>();
-const CACHE_TTL_MS=3500;
-const WORLD_EVENT_CHANCE_PER_BIOME_CHANGE=1/250;
-const MIN_WORLD_EVENT_MS=25*60*1000;
-function n(){return Date.now()}
-function today(){return new Date().toISOString().slice(0,10)}
-function pk(c:string,u:string){return `aok:player:${c}:${u}`}
-function ck(c:string){return `aok:channel:${c}`}
-function uid(u:NightbotUser|null){return u?.providerId??"anon"}
-function uname(u:NightbotUser|null){return u?.displayName??u?.name??"Player"}
-function amt(v:number){return Math.floor(v).toLocaleString("en-US")}
-function clamp(v:number,min:number,max:number){return Math.max(min,Math.min(max,Math.floor(v||0)))}
-function defaultPlayer(channelId:string,user:NightbotUser|null):PlayerState{return{channelId,userId:uid(user),displayName:uname(user),knowledge:0,merchantMarks:0,relicShards:0,blueprintFragments:0,scannerLevel:0,unlockedResearch:{},blueprints:{},relics:[],stats:{bossDamage:0,bossKills:0,knowledgeEarned:0,worldEventsSeen:0,relicRerolls:0},updatedAt:n()}}
-function normPlayer(x:Partial<PlayerState>|null|undefined,channelId:string,user:NightbotUser|null):PlayerState{const b=defaultPlayer(channelId,user); if(!x)return b; return{...b,...x,channelId,userId:x.userId??b.userId,displayName:uname(user)||x.displayName||b.displayName,knowledge:clamp(x.knowledge??0,0,Number.MAX_SAFE_INTEGER),merchantMarks:clamp(x.merchantMarks??0,0,Number.MAX_SAFE_INTEGER),relicShards:clamp(x.relicShards??0,0,Number.MAX_SAFE_INTEGER),blueprintFragments:clamp(x.blueprintFragments??0,0,Number.MAX_SAFE_INTEGER),scannerLevel:clamp(x.scannerLevel??0,0,10),unlockedResearch:x.unlockedResearch??{},blueprints:x.blueprints??{},relics:(x.relics??[]).slice(0,50),stats:{...b.stats,...(x.stats??{})},updatedAt:n()}}
-function defaultChannel(channelId:string,channelName:string):ChannelState{return{channelId,channelName,boss:null,worldEvent:null,forecast:null,marketDate:null,marketItems:[],stats:{bossesDefeated:0,worldEventsStarted:0,globalQuestCompletions:0},updatedAt:n()}}
-function normChannel(x:Partial<ChannelState>|null|undefined,channelId:string,channelName:string):ChannelState{const b=defaultChannel(channelId,channelName); if(!x)return b; return{...b,...x,channelId,channelName:channelName||x.channelName||channelId,boss:x.boss??null,worldEvent:x.worldEvent??null,forecast:x.forecast??null,marketItems:x.marketItems??[],stats:{...b.stats,...(x.stats??{})},updatedAt:n()}}
-async function getP(c:string,u:NightbotUser|null){const key=pk(c,uid(u)); const cached=PCACHE.get(key); if(cached&&cached.expiresAt>n())return cached.value; const r=getRedis(); if(!r)return normPlayer(null,c,u); const data=await r.get<PlayerState>(key); const st=normPlayer(data,c,u); PCACHE.set(key,{expiresAt:n()+CACHE_TTL_MS,value:st}); return st}
-async function saveP(p:PlayerState){p.updatedAt=n(); PCACHE.set(pk(p.channelId,p.userId),{expiresAt:n()+CACHE_TTL_MS,value:p}); const r=getRedis(); if(r)await r.set(pk(p.channelId,p.userId),p)}
-async function getC(c:string,name=c){const key=ck(c); const cached=CCACHE.get(key); if(cached&&cached.expiresAt>n())return cached.value; const r=getRedis(); if(!r)return normChannel(null,c,name); const data=await r.get<ChannelState>(key); const st=normChannel(data,c,name); CCACHE.set(key,{expiresAt:n()+CACHE_TTL_MS,value:st}); return st}
-async function saveC(c:ChannelState){c.updatedAt=n(); CCACHE.set(ck(c.channelId),{expiresAt:n()+CACHE_TTL_MS,value:c}); const r=getRedis(); if(r)await r.set(ck(c.channelId),c)}
-function boss(c:ChannelState){const b=c.boss; if(!b||b.defeated||b.endsAt<=n()||b.hp<=0)return null; return b}
-function event(c:ChannelState){const e=c.worldEvent; if(!e||e.endsAt<=n())return null; return e}
-function left(ms:number){const m=Math.floor(Math.max(0,ms)/60000); const h=Math.floor(m/60); const mm=m%60; return h>0?`${h}h ${mm}m`:`${mm}m`}
-
-const TREE:Node[]=[
-{id:"archive_memory_1",branch:"archive",name:"Archive Memory I",desc:"Knowledge foundation.",cost:30},{id:"archive_memory_2",branch:"archive",name:"Archive Memory II",desc:"Better duplicate conversion later.",cost:120,req:["archive_memory_1"]},
-{id:"craft_efficiency_1",branch:"crafting",name:"Efficient Hands I",desc:"Crafting efficiency foundation.",cost:60},{id:"craft_efficiency_2",branch:"crafting",name:"Efficient Hands II",desc:"Advanced crafting support.",cost:180,req:["craft_efficiency_1"]},
-{id:"core_mapping_1",branch:"core",name:"Core Mapping I",desc:"Core wall visibility foundation.",cost:75},{id:"core_mapping_2",branch:"core",name:"Core Mapping II",desc:"Better wall hints.",cost:250,req:["core_mapping_1"],core:25},
-{id:"boss_damage_1",branch:"boss",name:"Hunter Training I",desc:"+10% boss damage.",cost:50},{id:"boss_damage_2",branch:"boss",name:"Hunter Training II",desc:"+25% boss damage.",cost:150,req:["boss_damage_1"]},{id:"boss_damage_3",branch:"boss",name:"Hunter Training III",desc:"+50% boss damage.",cost:400,req:["boss_damage_2"],core:25},{id:"boss_damage_4",branch:"boss",name:"Hunter Training IV",desc:"+100% boss damage.",cost:1000,req:["boss_damage_3"],core:75},{id:"boss_damage_5",branch:"boss",name:"Hunter Training V",desc:"+175% boss damage.",cost:2500,req:["boss_damage_4"],core:150},{id:"boss_damage_6",branch:"boss",name:"Hunter Training VI",desc:"+250% boss damage max.",cost:6000,req:["boss_damage_5"],core:230},
-{id:"relic_slot_2",branch:"relic",name:"Relic Slot II",desc:"Unlocks second relic slot.",cost:300,core:50},{id:"relic_slot_3",branch:"relic",name:"Relic Slot III",desc:"Unlocks third relic slot.",cost:1200,req:["relic_slot_2"],core:150},{id:"relic_attune_1",branch:"relic",name:"Relic Attunement I",desc:"Relic buff foundation.",cost:500,req:["relic_slot_2"]},{id:"relic_attune_2",branch:"relic",name:"Relic Attunement II",desc:"More relic strength later.",cost:1800,req:["relic_attune_1"],core:175},{id:"relic_reforger",branch:"relic",name:"Relic Reforger",desc:"Unlocks expensive relic rarity rerolls.",cost:2500,req:["relic_attune_1"],core:200},
-{id:"scanner_1",branch:"scanner",name:"Scanner I",desc:"Activity signal.",cost:40,scanner:1},{id:"scanner_2",branch:"scanner",name:"Scanner II",desc:"Boss/event summary.",cost:120,req:["scanner_1"],scanner:2,core:5},{id:"scanner_3",branch:"scanner",name:"Scanner III",desc:"Rare signal category.",cost:250,req:["scanner_2"],scanner:3,core:25},{id:"scanner_4",branch:"scanner",name:"Scanner IV",desc:"Event hints.",cost:500,req:["scanner_3"],scanner:4,core:50},{id:"scanner_5",branch:"scanner",name:"Scanner V",desc:"Best action hint.",cost:850,req:["scanner_4"],scanner:5,core:75},{id:"scanner_6",branch:"scanner",name:"Scanner VI",desc:"World event detection.",cost:1400,req:["scanner_5"],scanner:6,core:100},{id:"scanner_7",branch:"scanner",name:"Scanner VII",desc:"Forecast connection.",cost:2200,req:["scanner_6"],scanner:7,core:125},{id:"scanner_8",branch:"scanner",name:"Scanner VIII",desc:"Blueprint/scanner synergy.",cost:3200,req:["scanner_7"],scanner:8,core:150},{id:"scanner_9",branch:"scanner",name:"Scanner IX",desc:"Better website analytics.",cost:4500,req:["scanner_8"],scanner:9,core:165},{id:"scanner_10",branch:"scanner",name:"Scanner X",desc:"Max scanner, never exact guarantees.",cost:6500,req:["scanner_9"],scanner:10,core:175},
-{id:"market_contacts_1",branch:"market",name:"Market Contacts I",desc:"Safer market extras.",cost:150},{id:"market_contacts_2",branch:"market",name:"Market Contacts II",desc:"Blueprint/relic offers.",cost:500,req:["market_contacts_1"]},{id:"market_haggle_1",branch:"market",name:"Market Haggle I",desc:"Small market discount later.",cost:900,req:["market_contacts_2"]},
-{id:"blueprint_reading",branch:"blueprint",name:"Blueprint Reading",desc:"Reveals blueprint sources.",cost:125},{id:"blueprint_assembly",branch:"blueprint",name:"Blueprint Assembly",desc:"Fragment combining foundation.",cost:500,req:["blueprint_reading"]},{id:"wall_breaker_1",branch:"blueprint",name:"Wall Breaker I",desc:"Core-wall blueprint planning.",cost:1200,req:["blueprint_assembly"],core:100},
-{id:"forecast_1",branch:"forecast",name:"Forecast I",desc:"Daily semi-smart forecast.",cost:80},{id:"forecast_2",branch:"forecast",name:"Forecast II",desc:"More activity context.",cost:300,req:["forecast_1"]},{id:"forecast_3",branch:"forecast",name:"Forecast III",desc:"More personalized forecast flavor.",cost:1000,req:["forecast_2"],core:75}
-];
-const BDMG:[string,number][]=[["boss_damage_1",10],["boss_damage_2",25],["boss_damage_3",50],["boss_damage_4",100],["boss_damage_5",175],["boss_damage_6",250]];
-const BLUEPRINTS=[
-{id:"biome_lens",name:"Biome Lens Blueprint",source:"Scanner research, rare biome events, market, boss drops",unlock:"Scanner Lv.5+ and biome components"},
-{id:"relic_forge",name:"Relic Forge Blueprint",source:"Bosses, Relic Echo events, market",unlock:"Relic reroll machine"},
-{id:"quantum_press",name:"Quantum Press Blueprint",source:"Core walls, Blueprint Rain, market",unlock:"Advanced component walls"},
-{id:"boss_beacon",name:"Boss Beacon Blueprint",source:"Boss rewards, world events",unlock:"Special boss starts"},
-{id:"archive_terminal",name:"Archive Terminal Blueprint",source:"Knowledge milestones",unlock:"High-level Knowledge upgrades"},
-{id:"forbidden_frame",name:"Forbidden Frame Blueprint",source:"Core 230+, Forbidden Architect",unlock:"Late core/frame walls"}
-] as const;
-const RTHEMES=["Scrap","Circuit","Stardust","Archive","Hunter","Market","Blueprint","Scanner","Core","Void","Glitched","Forbidden","Solar","Lunar","Astral","Quantum","Reality","Singularity","Echo","Storm","Frost","Ember","Prism","Nebula","Dawn"] as const;
-const RTYPES=["Magnet","Lens","Orb","Quill","Fang","Coin","Prism","Compass","Anvil","Shard","Crown","Engine","Beacon","Thread","Gear","Crystal","Censer","Relay","Sigil","Key"] as const;
-const RR:RelicRarity[]=["common","uncommon","rare","epic","mythic","astral","glitched","forbidden"];
-function catalog(){const out:{id:string;name:string}[]=[]; for(const t of RTHEMES)for(const y of RTYPES)out.push({id:`${t}_${y}`.toLowerCase(),name:`${t} ${y}`}); return out}
-function bdmg(p:PlayerState){let best=0; for(const [id,pct] of BDMG)if(p.unlockedResearch[id])best=Math.max(best,pct); return best}
-function hitDmg(h:RollHitResult){const r=h.effectiveRarity; const tags=(h.aura.tags??[]).map(x=>x.toLowerCase()); let d=1; if(r>=10000)d+=1; if(r>=100000)d+=3; if(r>=1000000)d+=5; if(r>=10000000)d+=10; if(r>=100000000)d+=25; if(r>=1000000000||tags.includes("challenged")||tags.includes("challenged+"))d+=50; return d}
-function kFrom(r:number){if(r>=1e9)return 50; if(r>=1e8)return 25; if(r>=1e7)return 12; if(r>=1e6)return 6; if(r>=1e5)return 3; if(r>=1e4)return 1; return 0}
-function pick<T>(a:readonly T[]):T{return a[Math.floor(Math.random()*a.length)]}
-function makeBoss():Boss{const b=pick([{id:"scrap_titan",name:"Scrap Titan",hp:3500},{id:"circuit_hydra",name:"Circuit Hydra",hp:6500},{id:"stardust_warden",name:"Stardust Warden",hp:11000},{id:"void_leviathan",name:"Void Leviathan",hp:18000},{id:"glitched_monarch",name:"Glitched Monarch",hp:30000},{id:"forbidden_architect",name:"Forbidden Architect",hp:50000},{id:"archive_devourer",name:"Archive Devourer",hp:75000}] as const); return{id:b.id,name:b.name,hp:b.hp,maxHp:b.hp,startedAt:n(),endsAt:n()+3*60*60*1000,participants:{},defeated:false}}
-function makeEvent():WorldEvent{const e=pick([{id:"meteor_shower",name:"Meteor Shower",desc:"+basic material focus.",effect:"materials",rarity:"common" as const},{id:"circuit_storm",name:"Circuit Storm",desc:"Circuit Scrap and Signal Fragment feel stronger.",effect:"circuits",rarity:"common" as const},{id:"stardust_bloom",name:"Stardust Bloom",desc:"Stardust activity is boosted.",effect:"stardust",rarity:"common" as const},{id:"archive_surge",name:"Archive Surge",desc:"Knowledge gains from rare pulls are boosted.",effect:"knowledge",rarity:"rare" as const},{id:"relic_echo",name:"Relic Echo",desc:"Relic Shards are more likely from activity rewards.",effect:"relics",rarity:"rare" as const},{id:"blueprint_rain",name:"Blueprint Rain",desc:"Blueprint Fragment rewards are more common.",effect:"blueprints",rarity:"rare" as const},{id:"market_festival",name:"Market Festival",desc:"Merchant Marks and market offers feel better.",effect:"market",rarity:"common" as const},{id:"boss_omen",name:"Boss Omen",desc:"Boss activity is favored.",effect:"boss",rarity:"rare" as const},{id:"glitched_signal",name:"Glitched Signal",desc:"Scanner rare-signal hints become sharper.",effect:"scanner",rarity:"legendary" as const},{id:"void_leak",name:"Void Leak",desc:"Rare material activity is unstable.",effect:"void",rarity:"legendary" as const}] as const); const dur=e.rarity==="legendary"?75*60000:e.rarity==="rare"?50*60000:35*60000; return{...e,startedAt:n(),endsAt:n()+Math.max(MIN_WORLD_EVENT_MS,dur)}}
-function line(node:Node,p:PlayerState){const st=p.unlockedResearch[node.id]?"✅":`🧠 ${amt(node.cost)}`; const gate=node.core?` Core ${node.core}+`:""; return `${st} ${node.id}: ${node.name}${gate}`}
-
-const RESEARCH_BRANCHES:Branch[]=["archive","crafting","core","relic","scanner","boss","market","blueprint","forecast"];
-const RESEARCH_BRANCH_LABELS:Record<Branch,string>={archive:"Archive / Knowledge",crafting:"Crafting",core:"Core Walls",relic:"Relics",scanner:"Scanner",boss:"Boss Damage",market:"Marketplace",blueprint:"Blueprints",forecast:"Forecast"};
-const RESEARCH_BRANCH_HELP:Record<Branch,string>={
-archive:"Knowledge economy upgrades. Archive Memory means your account is learning from rare activity and duplicate systems.",
-crafting:"Crafting quality-of-life and future efficiency upgrades. Kept small so crafting does not become broken.",
-core:"Core-wall planning. Helps reveal walls, blueprint gates, frames, chassis, and late-core requirements.",
-relic:"Relic slots, relic strength, and the expensive relic rarity reroll machine.",
-scanner:"Information upgrades. More signal/detail, but never exact rare-biome guarantees.",
-boss:"Boss damage upgrades. Max bonus is +250%, meaning 3.5x total damage.",
-market:"Safer merchant economy. Better offers, blueprint/relic shard access, and tiny discount tools.",
-blueprint:"Blueprint discovery, fragment use, and wall-breaking systems.",
-forecast:"Semi-smart daily advice using recent activity, but intentionally not exact predictions."
+type ResearchNode = {
+  id: string;
+  branch: Branch;
+  name: string;
+  effect: string;
+  cost: number;
+  requires?: string[];
+  coreRequired?: number;
+  scannerLevel?: number;
 };
-function rnorm(raw:string|undefined|null){return(raw??"").toLowerCase().trim().replace(/^!+/,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")}
-function findNode(raw:string){const q=rnorm(raw);return TREE.find(x=>x.id===q||rnorm(x.name)===q||rnorm(x.name).replace(/_/g,"")===q.replace(/_/g,""))}
-function isBranch(raw:string):raw is Branch{return RESEARCH_BRANCHES.includes(raw as Branch)}
-function effectNow(node:Node){if(node.scanner)return `Unlocks Scanner Lv.${node.scanner}.`; if(node.id.startsWith("boss_damage_")){const pct=BDMG.find(([id])=>id===node.id)?.[1]??0;return `Boss damage bonus becomes +${pct}% if this is your highest boss damage upgrade.`} if(node.id==="relic_slot_2")return"Unlocks the second relic slot."; if(node.id==="relic_slot_3")return"Unlocks the third relic slot. Balanced around Core 150+."; if(node.id==="relic_reforger")return"Unlocks the expensive relic rarity reroll machine."; if(node.id==="relic_attune_1")return"Relic effect strength foundation. Intended +5% relic effect scaling."; if(node.id==="relic_attune_2")return"Relic effect strength foundation. Intended +10% relic effect scaling."; if(node.id==="archive_memory_1")return"Archive/Knowledge foundation. Your activity becomes easier to convert into Knowledge rewards later."; if(node.id==="archive_memory_2")return"Deeper Archive memory. Improves duplicate blueprint/relic conversion into Knowledge later."; if(node.id==="forecast_1")return"Unlocks/justifies basic daily forecast usage."; if(node.id==="forecast_2")return"Forecast starts caring more about activity context."; if(node.id==="forecast_3")return"Forecast becomes more personalized once later systems use player progress."; if(node.branch==="blueprint")return"Blueprint wall/planning upgrade. Used to reveal or prepare late unlock requirements."; if(node.branch==="core")return"Core wall planning upgrade. Used for future wall visibility and recipe planning."; if(node.branch==="market")return"Marketplace upgrade foundation. Used for safer offers and later market improvements."; if(node.branch==="crafting")return"Crafting efficiency foundation. Kept small to protect balance."; return"Progression foundation upgrade."}
-function whyNode(node:Node){if(node.branch==="archive")return"This branch answers: how do I earn/use Knowledge better?"; if(node.branch==="crafting")return"This branch answers: how do I craft smoother without making materials worthless?"; if(node.branch==="core")return"This branch answers: what wall is coming and what blueprint/frame/chassis do I need?"; if(node.branch==="relic")return"This branch answers: how many relics can I use and how far can relic rarity go?"; if(node.branch==="scanner")return"This branch answers: what is happening now, and what should I focus on?"; if(node.branch==="boss")return"This branch answers: how hard do my rolls hit bosses?"; if(node.branch==="market")return"This branch answers: what safe items can I buy without breaking the economy?"; if(node.branch==="blueprint")return"This branch answers: how do I unlock walls, machines, and special recipes?"; return"This branch answers: what is a good direction today without exact spoilers?"}
-function reqText(node:Node){return[(node.req?.length?`Requires: ${node.req.join(", ")}`:null),(node.core?`Core ${node.core}+`:null),`Cost: ${amt(node.cost)} Knowledge`].filter(Boolean).join(" | ")}
-function fmtBranches(){return truncate(`🧠 Research Branches: ${RESEARCH_BRANCHES.map(b=>`${b}=${RESEARCH_BRANCH_LABELS[b]}`).join(" | ")} | Use !research <branch>, !research info <id>, or !research unlock <id>`,390)}
-function fmtBranch(branch:Branch,p:PlayerState,rawPage?:string){const nodes=TREE.filter(x=>x.branch===branch); const total=Math.max(1,Math.ceil(nodes.length/4)); const page=Math.max(1,Math.min(total,Number(rawPage||1)||1)); const shown=nodes.slice((page-1)*4,page*4).map(x=>line(x,p)); return truncate(`🧠 ${RESEARCH_BRANCH_LABELS[branch]} ${page}/${total}: ${RESEARCH_BRANCH_HELP[branch]} | ${shown.join(" | ")}`,390)}
-function fmtNode(node:Node,p:PlayerState,rawPage?:string){const page=Math.max(1,Math.min(2,Number(rawPage||1)||1)); const unlocked=p.unlockedResearch[node.id]?"Unlocked ✅":"Locked ⬜"; if(page===2)return truncate(`🧠 ${node.name} 2/2 | Why: ${whyNode(node)} | Branch: ${RESEARCH_BRANCH_LABELS[node.branch]} | ID: ${node.id} | Unlock: !research unlock ${node.id}`,390); return truncate(`🧠 ${node.name} 1/2 | ${unlocked} | ${reqText(node)} | Effect: ${effectNow(node)} | Page 2: !research info ${node.id} 2`,390)}
 
-export async function formatKnowledge(channelId:string,user:NightbotUser|null){const p=await getP(channelId,user); const un=Object.values(p.unlockedResearch).filter(Boolean).length; return truncate(`🧠 ${p.displayName} | Knowledge: ${amt(p.knowledge)} | Research: ${un}/${TREE.length} | Scanner Lv.${p.scannerLevel}/10 | Merchant Marks: ${amt(p.merchantMarks)} | Relic Shards: ${amt(p.relicShards)}`)}
-export async function formatResearch(channelId:string,user:NightbotUser|null,raw=""){const p=await getP(channelId,user); const parts=raw.trim().split(/\s+/).filter(Boolean); const mode=rnorm(parts[0]??""); if(!mode||mode==="help")return truncate(`🧠 Research | Knowledge ${amt(p.knowledge)} | Use !research branches, !research <branch>, !research info <id>, !research unlock <id>. Example: !research boss`,390); if(mode==="branches"||mode==="tree")return fmtBranches(); if(mode==="info"||mode==="detail"||mode==="details"){const rawNode=parts.slice(1).filter(x=>!/^[12]$/.test(x)).join(" "); const node=findNode(rawNode); if(!node)return "Unknown research upgrade. Use !research branches or !research <branch>."; return fmtNode(node,p,parts[parts.length-1])} if(isBranch(mode))return fmtBranch(mode,p,parts[1]); const direct=findNode(parts[0]); if(direct)return fmtNode(direct,p,parts[1]); const page=clamp(Number(parts[0]||1),1,99); const size=5,total=Math.max(1,Math.ceil(TREE.length/size)),safe=Math.min(page,total); const shown=TREE.slice((safe-1)*size,safe*size).map(x=>line(x,p)); return truncate(`🧠 Research All ${safe}/${total} | Knowledge ${amt(p.knowledge)} | ${shown.join(" | ")} | Details: !research info <id>`,390)}
-export async function unlockResearch(channelId:string,user:NightbotUser|null,rawId:string){const id=rawId.trim().toLowerCase(); const node=TREE.find(x=>x.id===id); if(!node)return "Unknown research. Use !research branches or !research info <id>."; const p=await getP(channelId,user); if(p.unlockedResearch[id])return `${node.name} is already unlocked.`; for(const req of node.req??[])if(!p.unlockedResearch[req])return `${node.name} requires ${req} first.`; if(node.core){const core=await getCoreState(channelId,user); if(core.coreTier<node.core)return `${node.name} requires Core ${node.core}. Current Core: ${core.coreTier}.`} if(p.knowledge<node.cost)return `${node.name} needs ${amt(node.cost)} Knowledge. You have ${amt(p.knowledge)}.`; p.knowledge-=node.cost; p.unlockedResearch[id]=true; if(node.scanner)p.scannerLevel=Math.max(p.scannerLevel,node.scanner); await saveP(p); return `✅ Unlocked ${node.name}! ${node.desc}`}
-export async function formatScanner(channelId:string,channelName:string,user:NightbotUser|null){const p=await getP(channelId,user); const c=await getC(channelId,channelName); const e=event(c),b=boss(c); const signal=p.scannerLevel>=3?(e?.rarity==="legendary"?"High":e?.rarity==="rare"?"Medium":"Low"):"Locked"; const parts=[`📡 Scanner Lv.${p.scannerLevel}/10`,`Rare Signal: ${signal}`]; if(p.scannerLevel>=2)parts.push(`Boss: ${b?`${b.name} ${amt(b.hp)}/${amt(b.maxHp)} HP`:"None"}`); if(p.scannerLevel>=4)parts.push(`Event: ${e?`${e.name} ${left(e.endsAt-n())}`:"None"}`); if(p.scannerLevel>=5)parts.push(`Best action: ${e?.effect==="knowledge"?"hunt 1/10k+ auras for Knowledge":b?"roll to damage boss":"build Knowledge"}`); return truncate(parts.join(" | "))}
-export async function formatWorldEvent(channelId:string,channelName:string){const c=await getC(channelId,channelName); const e=event(c); if(!e)return `🌍 No Activity world event. 1/250 chance on biome change, 25m minimum.`; return truncate(`🌍 ${e.name} (${e.rarity}) | ${e.desc} | Left: ${left(e.endsAt-n())}`)}
-export async function maybeStartActivityWorldEvent(o:{channelId:string;channelName:string;biomeId:string}){if(Math.random()>=WORLD_EVENT_CHANCE_PER_BIOME_CHANGE)return{started:false,message:null as string|null}; const c=await getC(o.channelId,o.channelName); if(event(c))return{started:false,message:null as string|null}; const e=makeEvent(); c.worldEvent=e; c.stats.worldEventsStarted+=1; await saveC(c); return{started:true,message:`🌍 Activity Of Knowledge World Event: ${e.name} started for ${left(e.endsAt-e.startedAt)}! ${e.desc}`}}
-export async function formatForecast(channelId:string,channelName:string,user?:NightbotUser|null){const c=await getC(channelId,channelName); const date=today(); if(c.forecast?.date===date)return truncate(c.forecast.text); const e=event(c),b=boss(c); const focus=e?.effect==="knowledge"?"Knowledge":pick(["Knowledge","Blueprint Fragments","Relic Shards","Merchant Marks","Scanner upgrades","Core walls"] as const); const conf:Forecast["confidence"]=b||e?"medium":"low"; const tip=b?`Boss activity is live: ${b.name}. Rolling contributes damage.`:e?`${e.name} is active, so ${focus} looks interesting.`:`Signals are calm. Focus ${focus}, quests, and steady rolls.`; c.forecast={date,confidence:conf,generatedAt:n(),text:`🔮 Forecast (${conf}): Focus: ${focus}. ${tip} Not exact — just an activity read.`}; await saveC(c); return truncate(c.forecast.text)}
-export async function formatBoss(channelId:string,channelName:string){const c=await getC(channelId,channelName); const b=c.boss; if(!b)return `🐉 No boss active. Mods can use !boss start.`; if(b.defeated||b.hp<=0)return `🏆 ${b.name} was defeated! Use !boss start for a new boss.`; const top=Object.values(b.participants).sort((a,b)=>b.damage-a.damage).slice(0,3).map(p=>`${p.name} ${amt(p.damage)}`).join(", "); return truncate(`🐉 ${b.name} | HP ${amt(Math.max(0,b.hp))}/${amt(b.maxHp)} | Left ${left(b.endsAt-n())} | Top: ${top||"none yet"}`)}
-export async function startBoss(channelId:string,channelName:string){const c=await getC(channelId,channelName); const cur=boss(c); if(cur)return `${cur.name} is already active. HP ${amt(cur.hp)}/${amt(cur.maxHp)}.`; c.boss=makeBoss(); await saveC(c); return `🐉 Boss started: ${c.boss.name}! HP ${amt(c.boss.maxHp)} | Rolls now deal boss damage.`}
-export async function recordActivityRolls(o:{channelId:string;channelName:string;user:NightbotUser|null;results:RollHitResult[]}){if(!o.user||o.results.length===0)return; const best=Math.max(...o.results.map(r=>r.effectiveRarity)); const kg=kFrom(best); const c=await getC(o.channelId,o.channelName); const b=boss(c),e=event(c); if(!b&&!e&&kg<=0)return; const p=await getP(o.channelId,o.user); let sp=false, sc=false; if(kg>0){const gain=Math.max(1,Math.floor(kg*(e?.effect==="knowledge"?1.25:1))); p.knowledge+=gain; p.stats.knowledgeEarned+=gain; sp=true} if(e&&p.stats.worldEventsSeen===0){p.stats.worldEventsSeen+=1; sp=true} if(b){const base=o.results.reduce((s,r)=>s+hitDmg(r),0); const dmg=Math.max(1,Math.floor(base*(1+bdmg(p)/100))); b.hp=Math.max(0,b.hp-dmg); const ent=b.participants[p.userId]??{name:p.displayName,damage:0}; ent.name=p.displayName; ent.damage+=dmg; b.participants[p.userId]=ent; p.stats.bossDamage+=dmg; p.merchantMarks+=Math.max(1,Math.floor(dmg/25)); sp=true; sc=true; if(b.hp<=0&&!b.defeated){b.defeated=true; c.stats.bossesDefeated+=1; p.stats.bossKills+=1; p.knowledge+=100; p.relicShards+=5; p.blueprintFragments+=2}} if(sp)await saveP(p); if(sc)await saveC(c)}
-function marketItems(date:string):MarketItem[]{const seed=date.split("").reduce((s,ch)=>s+ch.charCodeAt(0),0); return[{id:"scrap_pack",name:"Scrap Pack",cost:8,gives:"basic materials"},{id:"circuit_pack",name:"Circuit Pack",cost:20,gives:"Circuit Scrap + Signal Fragments"},{id:"knowledge_note",name:"Knowledge Note",cost:35,gives:"Knowledge"},{id:"relic_shards",name:"Relic Shards",cost:50,gives:"Relic Shards"},{id:"blueprint_fragment",name:"Blueprint Fragment",cost:60,gives:"Blueprint Fragment"},{id:"boss_beacon",name:"Boss Beacon",cost:120,gives:"boss-start material later"}].map((x,i)=>({...x,cost:x.cost+((seed+i*7)%9)})).slice(0,5)}
-export async function formatMarket(channelId:string,channelName:string){const c=await getC(channelId,channelName),date=today(); if(c.marketDate!==date||c.marketItems.length===0){c.marketDate=date;c.marketItems=marketItems(date);await saveC(c)} return truncate(`🏪 Activity Market | ${c.marketItems.map(x=>`${x.id} ${x.cost} Marks`).join(" | ")} | Use !market buy <id>`)}
-export async function buyMarketItem(channelId:string,channelName:string,user:NightbotUser|null,itemId:string){const c=await getC(channelId,channelName),date=today(); if(c.marketDate!==date||c.marketItems.length===0){c.marketDate=date;c.marketItems=marketItems(date);await saveC(c)} const item=c.marketItems.find(x=>x.id===itemId.trim().toLowerCase()); if(!item)return "Unknown market item. Use !market."; const p=await getP(channelId,user); if(p.merchantMarks<item.cost)return `${item.name} costs ${item.cost} Merchant Marks. You have ${amt(p.merchantMarks)}.`; p.merchantMarks-=item.cost; if(item.id==="knowledge_note")p.knowledge+=25; else if(item.id==="relic_shards")p.relicShards+=5; else if(item.id==="blueprint_fragment")p.blueprintFragments+=1; else p.knowledge+=5; await saveP(p); return `✅ Bought ${item.name}. Gained ${item.gives}.`}
-export async function formatBlueprints(channelId:string,user:NightbotUser|null,raw=""){const p=await getP(channelId,user); const q=raw.trim().toLowerCase(); if(q){const bp=BLUEPRINTS.find(x=>x.id===q||x.name.toLowerCase().includes(q)); if(!bp)return "Unknown blueprint. Use !blueprints."; return truncate(`📘 ${bp.name}: unlocks ${bp.unlock}. Sources: ${bp.source}. Owned: ${p.blueprints[bp.id]?"yes":"no"}`)} return truncate(`📘 Blueprints | Fragments: ${amt(p.blueprintFragments)} | ${BLUEPRINTS.map(bp=>`${p.blueprints[bp.id]?"✅":"⬜"} ${bp.id}`).join(" | ")} | !blueprints <id>`)}
-export async function formatRelics(channelId:string,user:NightbotUser|null){const p=await getP(channelId,user); const owned=p.relics.length?p.relics.slice(0,4).map(r=>`${r.equipped?"⭐":""}${r.name} ${r.rarity} Lv.${r.level}`).join(" | "):"No relics yet. Bosses/market/events can give shards and relic access."; return truncate(`🧿 Relics | Catalog: ${catalog().length} | Owned: ${p.relics.length} | Shards: ${amt(p.relicShards)} | ${owned}`)}
-function nextR(r:RelicRarity):RelicRarity{const i=RR.indexOf(r),roll=Math.random(); let x=i; if(roll<.01)x+=2; else if(roll<.26)x+=1; else if(roll>.90)x-=1; return RR[clamp(x,0,RR.length-1)]}
-export async function rerollRelic(channelId:string,user:NightbotUser|null,raw=""){const p=await getP(channelId,user); if(!p.unlockedResearch.relic_reforger)return "Relic reroll machine requires Relic Reforger research."; const wanted=raw.trim().toLowerCase(); const relic=p.relics.find(r=>r.id===wanted||r.name.toLowerCase()===wanted); if(!relic)return "Relic not found. Use !relics."; const idx=RR.indexOf(relic.rarity),shards=50+idx*150,know=500+idx*1000; if(p.relicShards<shards||p.knowledge<know)return `Reroll ${relic.name} costs ${amt(shards)} Relic Shards + ${amt(know)} Knowledge.`; const old=relic.rarity; p.relicShards-=shards; p.knowledge-=know; relic.rarity=nextR(relic.rarity); p.stats.relicRerolls+=1; await saveP(p); return `🧿 Rerolled ${relic.name}: ${old} → ${relic.rarity}.`}
+type Boss = {
+  id: string;
+  name: string;
+  hp: number;
+  maxHp: number;
+  startedAt: number;
+  endsAt: number;
+  participants: Record<string, { name: string; damage: number }>;
+  defeated: boolean;
+};
+
+type WorldEvent = {
+  id: string;
+  name: string;
+  description: string;
+  rarity: "common" | "rare" | "legendary";
+  effect:
+    | "materials"
+    | "knowledge"
+    | "relics"
+    | "blueprints"
+    | "market"
+    | "boss"
+    | "scanner";
+  startedAt: number;
+  endsAt: number;
+};
+
+type Forecast = {
+  date: string;
+  text: string;
+  confidence: "low" | "medium" | "high";
+  generatedAt: number;
+};
+
+type MarketItem = {
+  id: string;
+  name: string;
+  baseCost: number;
+  reward: string;
+  research?: string;
+};
+
+type ChannelState = {
+  channelId: string;
+  channelName: string;
+  boss: Boss | null;
+  worldEvent: WorldEvent | null;
+  forecast: Forecast | null;
+  marketDate: string | null;
+  marketItems: MarketItem[];
+  stats: {
+    bossesDefeated: number;
+    worldEventsStarted: number;
+    globalQuestCompletions: number;
+  };
+  updatedAt: number;
+};
+
+type RelicRarity =
+  | "common"
+  | "uncommon"
+  | "rare"
+  | "epic"
+  | "mythic"
+  | "astral"
+  | "glitched"
+  | "forbidden";
+
+type RelicEffect =
+  | "knowledge"
+  | "boss_damage"
+  | "merchant_marks"
+  | "market_discount"
+  | "blueprint_find"
+  | "relic_shards"
+  | "scanner";
+
+type Relic = {
+  id: string;
+  name: string;
+  rarity: RelicRarity;
+  level: number;
+  equipped: boolean;
+  effect?: RelicEffect;
+};
+
+type PlayerState = {
+  channelId: string;
+  userId: string;
+  displayName: string;
+  knowledge: number;
+  merchantMarks: number;
+  relicShards: number;
+  blueprintFragments: number;
+  scannerLevel: number;
+  unlockedResearch: Record<string, boolean>;
+  blueprints: Record<string, boolean>;
+  relics: Relic[];
+  stats: {
+    bossDamage: number;
+    bossKills: number;
+    knowledgeEarned: number;
+    worldEventsSeen: number;
+    relicRerolls: number;
+  };
+  updatedAt: number;
+};
+
+type Blueprint = {
+  id: string;
+  name: string;
+  cost: number;
+  source: string;
+  effect: string;
+  research?: string;
+  scanner?: number;
+  core?: number;
+};
+
+const PCACHE = new Map<string, { expiresAt: number; value: PlayerState }>();
+const CCACHE = new Map<string, { expiresAt: number; value: ChannelState }>();
+const CACHE_MS = 3500;
+const EVENT_CHANCE = 1 / 250;
+const EVENT_MIN_MS = 25 * 60 * 1000;
+
+const BRANCHES: Branch[] = [
+  "archive",
+  "crafting",
+  "core",
+  "relic",
+  "scanner",
+  "boss",
+  "market",
+  "blueprint",
+  "forecast",
+];
+
+const BRANCH_NAMES: Record<Branch, string> = {
+  archive: "Knowledge Income",
+  crafting: "Workshop Supplies",
+  core: "Core Guidance",
+  relic: "Relics",
+  scanner: "Scanner",
+  boss: "Boss Damage",
+  market: "Marketplace",
+  blueprint: "Blueprints",
+  forecast: "Forecast",
+};
+
+const BRANCH_HELP: Record<Branch, string> = {
+  archive: "Increase Knowledge earned from rare rolls.",
+  crafting: "Make Activity Market material packs larger.",
+  core: "Reveal your Core path and upcoming wall.",
+  relic: "Unlock slots, stronger effects, and rerolls.",
+  scanner: "Reveal useful live information and next actions.",
+  boss: "Increase damage dealt to bosses.",
+  market: "Unlock offers and lower prices.",
+  blueprint: "Reveal sources and assemble permanent upgrades.",
+  forecast: "Improve the daily recommendation.",
+};
+
+const TREE: ResearchNode[] = [
+  { id: "archive_memory_1", branch: "archive", name: "Archive Memory I", effect: "+10% Knowledge from rare rolls.", cost: 30 },
+  { id: "archive_memory_2", branch: "archive", name: "Archive Memory II", effect: "Knowledge multiplier becomes +25%.", cost: 120, requires: ["archive_memory_1"] },
+  { id: "craft_efficiency_1", branch: "crafting", name: "Workshop Logistics I", effect: "Market material packs give +25%.", cost: 60 },
+  { id: "craft_efficiency_2", branch: "crafting", name: "Workshop Logistics II", effect: "Market material packs give +50%.", cost: 180, requires: ["craft_efficiency_1"] },
+  { id: "core_mapping_1", branch: "core", name: "Core Mapping I", effect: "Scanner shows your current Core/path.", cost: 75 },
+  { id: "core_mapping_2", branch: "core", name: "Core Mapping II", effect: "Scanner shows the next wall component.", cost: 250, requires: ["core_mapping_1"], coreRequired: 25 },
+  { id: "boss_damage_1", branch: "boss", name: "Hunter Training I", effect: "+10% boss damage.", cost: 50 },
+  { id: "boss_damage_2", branch: "boss", name: "Hunter Training II", effect: "+25% boss damage.", cost: 150, requires: ["boss_damage_1"] },
+  { id: "boss_damage_3", branch: "boss", name: "Hunter Training III", effect: "+50% boss damage.", cost: 400, requires: ["boss_damage_2"], coreRequired: 25 },
+  { id: "boss_damage_4", branch: "boss", name: "Hunter Training IV", effect: "+100% boss damage.", cost: 1000, requires: ["boss_damage_3"], coreRequired: 75 },
+  { id: "boss_damage_5", branch: "boss", name: "Hunter Training V", effect: "+175% boss damage.", cost: 2500, requires: ["boss_damage_4"], coreRequired: 150 },
+  { id: "boss_damage_6", branch: "boss", name: "Hunter Training VI", effect: "+250% boss damage.", cost: 6000, requires: ["boss_damage_5"], coreRequired: 230 },
+  { id: "relic_slot_2", branch: "relic", name: "Relic Slot II", effect: "Equip up to 2 relics.", cost: 200, coreRequired: 25 },
+  { id: "relic_slot_3", branch: "relic", name: "Relic Slot III", effect: "Equip up to 3 relics.", cost: 800, requires: ["relic_slot_2"], coreRequired: 100 },
+  { id: "relic_attune_1", branch: "relic", name: "Relic Attunement I", effect: "All equipped relic effects are 5% stronger.", cost: 300, requires: ["relic_slot_2"] },
+  { id: "relic_attune_2", branch: "relic", name: "Relic Attunement II", effect: "All equipped relic effects are 10% stronger.", cost: 1000, requires: ["relic_attune_1"], coreRequired: 100 },
+  { id: "relic_reforger", branch: "relic", name: "Relic Reforger", effect: "Unlocks !relics reroll.", cost: 1500, requires: ["relic_attune_1"], coreRequired: 125 },
+  ...Array.from({ length: 10 }, (_, index): ResearchNode => {
+    const level = index + 1;
+    const roman = ["I","II","III","IV","V","VI","VII","VIII","IX","X"][index];
+    const costs = [40,120,250,500,850,1400,2200,3200,4500,6500];
+    const cores = [0,5,25,50,75,100,125,150,175,200];
+    const effects = [
+      "Shows whether Activity signals exist.",
+      "Shows active boss information.",
+      "Shows rare-signal strength.",
+      "Shows active world events.",
+      "Shows a recommended next action.",
+      "Shows event reward focus.",
+      "Connects to Forecast confidence.",
+      "Shows blueprint/relic opportunity hints.",
+      "Improves signal detail.",
+      "Maximum detail; never guarantees RNG.",
+    ];
+    return {
+      id: `scanner_${level}`,
+      branch: "scanner",
+      name: `Scanner ${roman}`,
+      effect: effects[index],
+      cost: costs[index],
+      requires: level > 1 ? [`scanner_${level - 1}`] : undefined,
+      coreRequired: cores[index] || undefined,
+      scannerLevel: level,
+    };
+  }),
+  { id: "market_contacts_1", branch: "market", name: "Market Contacts I", effect: "Unlocks Relic Shard and Blueprint Fragment offers.", cost: 150 },
+  { id: "market_contacts_2", branch: "market", name: "Market Contacts II", effect: "Unlocks Stabilized Supply Packs.", cost: 500, requires: ["market_contacts_1"] },
+  { id: "market_haggle_1", branch: "market", name: "Market Haggle I", effect: "Activity Market prices are 10% cheaper.", cost: 900, requires: ["market_contacts_2"] },
+  { id: "blueprint_reading", branch: "blueprint", name: "Blueprint Reading", effect: "Blueprint info reveals exact sources.", cost: 125 },
+  { id: "blueprint_assembly", branch: "blueprint", name: "Blueprint Assembly", effect: "Unlocks !blueprints assemble.", cost: 350, requires: ["blueprint_reading"] },
+  { id: "wall_breaker_1", branch: "blueprint", name: "Wall Breaker I", effect: "+50% Blueprint Fragments from boss defeats.", cost: 900, requires: ["blueprint_assembly"], coreRequired: 75 },
+  { id: "forecast_1", branch: "forecast", name: "Forecast I", effect: "Forecast considers boss/event state.", cost: 80 },
+  { id: "forecast_2", branch: "forecast", name: "Forecast II", effect: "Forecast gives a more specific next command.", cost: 300, requires: ["forecast_1"] },
+  { id: "forecast_3", branch: "forecast", name: "Forecast III", effect: "Forecast includes Core and blueprint progress.", cost: 1000, requires: ["forecast_2"], coreRequired: 75 },
+];
+
+const BOSS_RESEARCH: Array<[string, number]> = [
+  ["boss_damage_1", 10],
+  ["boss_damage_2", 25],
+  ["boss_damage_3", 50],
+  ["boss_damage_4", 100],
+  ["boss_damage_5", 175],
+  ["boss_damage_6", 250],
+];
+
+const BLUEPRINTS: Blueprint[] = [
+  { id: "biome_lens", name: "Biome Lens Blueprint", cost: 3, source: "Boss defeats, Blueprint Rain, and Market.", effect: "+10% Knowledge during Activity world events.", research: "blueprint_assembly", scanner: 5 },
+  { id: "relic_forge", name: "Relic Forge Blueprint", cost: 4, source: "Boss defeats, Relic Echo, and Market.", effect: "Unlocks !relics forge.", research: "blueprint_assembly" },
+  { id: "quantum_press", name: "Quantum Press Blueprint", cost: 6, source: "Boss defeats and Blueprint Rain.", effect: "Relic costs -20%; material packs +25%.", research: "blueprint_assembly", core: 50 },
+  { id: "boss_beacon", name: "Boss Beacon Blueprint", cost: 7, source: "Boss defeats and advanced Market contacts.", effect: "Unlocks !boss beacon for 150 Marks.", research: "blueprint_assembly", core: 50 },
+  { id: "archive_terminal", name: "Archive Terminal Blueprint", cost: 8, source: "Knowledge milestones and major bosses.", effect: "+15% Knowledge from rare rolls.", research: "archive_memory_2", core: 75 },
+  { id: "forbidden_frame", name: "Forbidden Frame Blueprint", cost: 12, source: "Forbidden Architect and Core 200+.", effect: "+50% boss Relic Shard rewards.", research: "wall_breaker_1", core: 200 },
+];
+
+const RARITIES: RelicRarity[] = ["common","uncommon","rare","epic","mythic","astral","glitched","forbidden"];
+const RELIC_LABELS: Record<RelicEffect, string> = {
+  knowledge: "Knowledge gain",
+  boss_damage: "Boss damage",
+  merchant_marks: "Merchant Mark gain",
+  market_discount: "Market discount",
+  blueprint_find: "Blueprint Fragment chance",
+  relic_shards: "Relic Shard rewards",
+  scanner: "Scanner signal strength",
+};
+const THEMES = ["Archive","Hunter","Market","Blueprint","Relic","Scanner","Core","Void","Astral","Quantum","Reality","Singularity"] as const;
+const TYPES = ["Lens","Orb","Quill","Fang","Coin","Prism","Compass","Anvil","Shard","Crown","Engine","Beacon","Thread","Gear","Sigil"] as const;
+const THEME_EFFECT: Record<string, RelicEffect> = {
+  Archive: "knowledge",
+  Hunter: "boss_damage",
+  Market: "market_discount",
+  Blueprint: "blueprint_find",
+  Relic: "relic_shards",
+  Scanner: "scanner",
+  Core: "boss_damage",
+  Void: "merchant_marks",
+  Astral: "knowledge",
+  Quantum: "blueprint_find",
+  Reality: "merchant_marks",
+  Singularity: "relic_shards",
+};
+
+function n(){ return Date.now(); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function pk(c:string,u:string){ return `aok:player:${c}:${u}`; }
+function ck(c:string){ return `aok:channel:${c}`; }
+function uid(u:NightbotUser|null){ return u?.providerId ?? "anon"; }
+function uname(u:NightbotUser|null){ return u?.displayName ?? u?.name ?? "Player"; }
+function amt(v:number){ return Math.floor(v).toLocaleString("en-US"); }
+function clamp(v:number,min:number,max:number){ return Math.max(min,Math.min(max,Math.floor(v||0))); }
+function norm(raw:string|undefined|null){ return (raw??"").toLowerCase().trim().replace(/^!+/,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,""); }
+function pick<T>(items:readonly T[]):T{ return items[Math.floor(Math.random()*items.length)]; }
+function left(ms:number){ const m=Math.floor(Math.max(0,ms)/60000),h=Math.floor(m/60); return h>0?`${h}h ${m%60}m`:`${m}m`; }
+
+function defaultP(c:string,u:NightbotUser|null):PlayerState{
+  return {channelId:c,userId:uid(u),displayName:uname(u),knowledge:0,merchantMarks:0,relicShards:0,blueprintFragments:0,scannerLevel:0,unlockedResearch:{},blueprints:{},relics:[],stats:{bossDamage:0,bossKills:0,knowledgeEarned:0,worldEventsSeen:0,relicRerolls:0},updatedAt:n()};
+}
+function inferEffect(r:Partial<Relic>):RelicEffect{
+  if(r.effect)return r.effect;
+  return THEME_EFFECT[String(r.name??"").split(/\s+/)[0]] ?? "knowledge";
+}
+function normP(x:Partial<PlayerState>|null|undefined,c:string,u:NightbotUser|null):PlayerState{
+  const b=defaultP(c,u); if(!x)return b;
+  return {...b,...x,channelId:c,userId:x.userId??b.userId,displayName:uname(u)||x.displayName||b.displayName,knowledge:clamp(x.knowledge??0,0,Number.MAX_SAFE_INTEGER),merchantMarks:clamp(x.merchantMarks??0,0,Number.MAX_SAFE_INTEGER),relicShards:clamp(x.relicShards??0,0,Number.MAX_SAFE_INTEGER),blueprintFragments:clamp(x.blueprintFragments??0,0,Number.MAX_SAFE_INTEGER),scannerLevel:clamp(x.scannerLevel??0,0,10),unlockedResearch:x.unlockedResearch??{},blueprints:x.blueprints??{},relics:(x.relics??[]).slice(0,50).map((r,i)=>({id:String(r.id??`legacy_${i}`),name:String(r.name??`Relic ${i+1}`),rarity:RARITIES.includes(r.rarity as RelicRarity)?r.rarity as RelicRarity:"common",level:clamp(r.level??1,1,10),equipped:Boolean(r.equipped),effect:inferEffect(r)})),stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
+}
+function defaultC(c:string,name:string):ChannelState{
+  return {channelId:c,channelName:name,boss:null,worldEvent:null,forecast:null,marketDate:null,marketItems:[],stats:{bossesDefeated:0,worldEventsStarted:0,globalQuestCompletions:0},updatedAt:n()};
+}
+function normC(x:Partial<ChannelState>|null|undefined,c:string,name:string):ChannelState{
+  const b=defaultC(c,name); if(!x)return b;
+  return {...b,...x,channelId:c,channelName:name||x.channelName||c,boss:x.boss??null,worldEvent:x.worldEvent??null,forecast:x.forecast??null,marketItems:x.marketItems??[],stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
+}
+async function getP(c:string,u:NightbotUser|null){ const key=pk(c,uid(u)),cached=PCACHE.get(key); if(cached&&cached.expiresAt>n())return cached.value; const r=getRedis(); if(!r)return defaultP(c,u); const state=normP(await r.get<PlayerState>(key),c,u); PCACHE.set(key,{expiresAt:n()+CACHE_MS,value:state}); return state; }
+async function saveP(p:PlayerState){ p.updatedAt=n(); PCACHE.set(pk(p.channelId,p.userId),{expiresAt:n()+CACHE_MS,value:p}); const r=getRedis(); if(r)await r.set(pk(p.channelId,p.userId),p); }
+async function getC(c:string,name=c){ const key=ck(c),cached=CCACHE.get(key); if(cached&&cached.expiresAt>n())return cached.value; const r=getRedis(); if(!r)return defaultC(c,name); const state=normC(await r.get<ChannelState>(key),c,name); CCACHE.set(key,{expiresAt:n()+CACHE_MS,value:state}); return state; }
+async function saveC(c:ChannelState){ c.updatedAt=n(); CCACHE.set(ck(c.channelId),{expiresAt:n()+CACHE_MS,value:c}); const r=getRedis(); if(r)await r.set(ck(c.channelId),c); }
+function boss(c:ChannelState){ const b=c.boss; return !b||b.defeated||b.endsAt<=n()||b.hp<=0?null:b; }
+function event(c:ChannelState){ const e=c.worldEvent; return !e||e.endsAt<=n()?null:e; }
+
+function findNode(raw:string){ const q=norm(raw); return TREE.find(x=>[x.id,x.name].map(norm).some(v=>v===q||v.replace(/_/g,"")===q.replace(/_/g,""))); }
+function prereqs(p:PlayerState,node:ResearchNode){ return (node.requires??[]).every(id=>p.unlockedResearch[id]); }
+function nextNode(p:PlayerState){ return TREE.filter(x=>!p.unlockedResearch[x.id]&&prereqs(p,x)).sort((a,b)=>a.cost-b.cost).find(x=>x.cost<=p.knowledge) ?? TREE.filter(x=>!p.unlockedResearch[x.id]&&prereqs(p,x)).sort((a,b)=>a.cost-b.cost)[0] ?? null; }
+function knowledgeMult(p:PlayerState){ return p.unlockedResearch.archive_memory_2?1.25:p.unlockedResearch.archive_memory_1?1.1:1; }
+function bossResearch(p:PlayerState){ let best=0; for(const [id,pct] of BOSS_RESEARCH)if(p.unlockedResearch[id])best=Math.max(best,pct); return best; }
+function slots(p:PlayerState){ return p.unlockedResearch.relic_slot_3?3:p.unlockedResearch.relic_slot_2?2:1; }
+function attune(p:PlayerState){ return p.unlockedResearch.relic_attune_2?1.1:p.unlockedResearch.relic_attune_1?1.05:1; }
+function basePct(r:RelicRarity){ return [2,3,5,8,12,18,28,45][RARITIES.indexOf(r)]; }
+function relicPct(p:PlayerState,r:Relic){ return basePct(r.rarity)*(1+(r.level-1)*.12)*attune(p); }
+function relicTotal(p:PlayerState,e:RelicEffect){ return p.relics.filter(r=>r.equipped&&inferEffect(r)===e).reduce((s,r)=>s+relicPct(p,r),0); }
+function workshop(p:PlayerState){ let m=p.unlockedResearch.craft_efficiency_2?1.5:p.unlockedResearch.craft_efficiency_1?1.25:1; if(p.blueprints.quantum_press)m*=1.25; return m; }
+function discount(p:PlayerState){ return Math.min(.35,(p.unlockedResearch.market_haggle_1 ? .1 : 0)+relicTotal(p,"market_discount")/100); }
+function relicDiscount(p:PlayerState){ return p.blueprints.quantum_press ? .2 : 0; }
+function discounted(v:number,d:number){ return Math.max(1,Math.floor(v*(1-d))); }
+
+function makeBoss():Boss{
+  const t=pick([{id:"scrap_titan",name:"Scrap Titan",hp:3500},{id:"circuit_hydra",name:"Circuit Hydra",hp:6500},{id:"stardust_warden",name:"Stardust Warden",hp:11000},{id:"void_leviathan",name:"Void Leviathan",hp:18000},{id:"glitched_monarch",name:"Glitched Monarch",hp:30000},{id:"forbidden_architect",name:"Forbidden Architect",hp:50000},{id:"archive_devourer",name:"Archive Devourer",hp:75000}] as const);
+  return {...t,maxHp:t.hp,startedAt:n(),endsAt:n()+3*60*60*1000,participants:{},defeated:false};
+}
+function makeEvent():WorldEvent{
+  const t=pick([
+    {id:"meteor_shower",name:"Meteor Shower",description:"Basic material activity is favored.",effect:"materials" as const,rarity:"common" as const},
+    {id:"archive_surge",name:"Archive Surge",description:"+25% Knowledge from rare rolls.",effect:"knowledge" as const,rarity:"rare" as const},
+    {id:"relic_echo",name:"Relic Echo",description:"1M+ rolls can find Relic Shards.",effect:"relics" as const,rarity:"rare" as const},
+    {id:"blueprint_rain",name:"Blueprint Rain",description:"1M+ rolls can find Blueprint Fragments.",effect:"blueprints" as const,rarity:"rare" as const},
+    {id:"market_festival",name:"Market Festival",description:"+25% Merchant Marks from boss damage.",effect:"market" as const,rarity:"common" as const},
+    {id:"boss_omen",name:"Boss Omen",description:"+25% boss damage.",effect:"boss" as const,rarity:"rare" as const},
+    {id:"glitched_signal",name:"Glitched Signal",description:"Scanner signals are stronger.",effect:"scanner" as const,rarity:"legendary" as const},
+  ] as const);
+  const duration=t.rarity==="legendary"?75*60000:t.rarity==="rare"?50*60000:35*60000;
+  return {...t,startedAt:n(),endsAt:n()+Math.max(EVENT_MIN_MS,duration)};
+}
+function kFrom(r:number){ if(r>=1e9)return 50;if(r>=1e8)return 25;if(r>=1e7)return 12;if(r>=1e6)return 6;if(r>=1e5)return 3;if(r>=1e4)return 1;return 0; }
+function hitDmg(h:RollHitResult){ const r=h.effectiveRarity,tags=(h.aura.tags??[]).map((x: string)=>x.toLowerCase()); let d=1;if(r>=1e4)d+=1;if(r>=1e5)d+=3;if(r>=1e6)d+=5;if(r>=1e7)d+=10;if(r>=1e8)d+=25;if(r>=1e9||tags.includes("challenged")||tags.includes("challenged+"))d+=50;return d; }
+
+function findBlueprint(raw:string){ const q=norm(raw); return BLUEPRINTS.find(x=>[x.id,x.name].map(norm).some(v=>v===q||v.replace(/_/g,"")===q.replace(/_/g,""))); }
+function findRelic(p:PlayerState,raw:string){ const index=Number(raw.trim()); if(Number.isInteger(index)&&index>=1&&index<=p.relics.length)return p.relics[index-1]; const q=norm(raw); return p.relics.find(r=>[r.id,r.name].map(norm).some(v=>v===q||v.replace(/_/g,"")===q.replace(/_/g,""))); }
+function relicRef(p:PlayerState,r:Relic){ return Math.max(1,p.relics.indexOf(r)+1); }
+function effectText(p:PlayerState,r:Relic){ return `+${relicPct(p,r).toFixed(1)}% ${RELIC_LABELS[inferEffect(r)]}`; }
+function newRelic():Relic{ const theme=pick(THEMES); return {id:`relic_${n()}_${Math.random().toString(36).slice(2,8)}`,name:`${theme} ${pick(TYPES)}`,rarity:Math.random()<.01?"epic":Math.random()<.08?"rare":Math.random()<.3?"uncommon":"common",level:1,equipped:false,effect:THEME_EFFECT[theme]}; }
+function nextRarity(r:RelicRarity){ const i=RARITIES.indexOf(r),roll=Math.random(); return RARITIES[clamp(i+(roll<.03?2:roll<.53?1:roll>.92?-1:0),0,RARITIES.length-1)]; }
+
+function marketItems(p:PlayerState):MarketItem[]{
+  return [
+    {id:"scrap_pack",name:"Scrap Supply Pack",baseCost:8,reward:"100 Scrap, 50 Metal Bits, 10 Mechanical Scrap"},
+    {id:"circuit_pack",name:"Circuit Supply Pack",baseCost:20,reward:"50 Circuit Scrap, 5 Signal Fragments"},
+    {id:"knowledge_note",name:"Knowledge Note",baseCost:35,reward:"25 Knowledge"},
+    {id:"relic_shards",name:"Relic Shard Bundle",baseCost:50,reward:"5 Relic Shards",research:"market_contacts_1"},
+    {id:"blueprint_fragment",name:"Blueprint Fragment",baseCost:60,reward:"1 Blueprint Fragment",research:"market_contacts_1"},
+    {id:"stabilized_pack",name:"Stabilized Supply Pack",baseCost:95,reward:"30 Refined Alloy, 3 Stabilized Flux",research:"market_contacts_2"},
+  ].filter(x=>!x.research||p.unlockedResearch[x.research]);
+}
+
+export async function formatKnowledge(channelId:string,user:NightbotUser|null){
+  const p=await getP(channelId,user),next=nextNode(p);
+  return truncate(`🧠 ${p.displayName} | Knowledge ${amt(p.knowledge)} → !research | Marks ${amt(p.merchantMarks)} → !market | Relic Shards ${amt(p.relicShards)} → !relics guide | Blueprint Fragments ${amt(p.blueprintFragments)} → !blueprints guide | Next: ${next?`${next.name} (${amt(next.cost)}): !research next`:"Research complete"}`);
+}
+
+export async function formatResearch(channelId:string,user:NightbotUser|null,raw=""){
+  const p=await getP(channelId,user),parts=raw.trim().split(/\s+/).filter(Boolean),mode=norm(parts[0]??"");
+  if(!mode||mode==="help"||mode==="guide")return truncate(`🧠 Research Guide | Earn Knowledge from 1/10k+ rolls → !research next → !research info <id> → !research unlock <id>. Current: ${amt(p.knowledge)} Knowledge.`);
+  if(mode==="branches"||mode==="tree")return truncate(`🧠 Branches: ${BRANCHES.map(b=>`${b}=${BRANCH_NAMES[b]}`).join(" | ")} | Open: !research scanner`);
+  if(mode==="next"||mode==="recommend"){const x=nextNode(p);if(!x)return"✅ All research unlocked.";return truncate(`🧠 Recommended: ${x.name} | ${p.knowledge>=x.cost?"Affordable now":`Need ${amt(x.cost-p.knowledge)} more Knowledge`} | Effect: ${x.effect} | Command: !research unlock ${x.id}`);}
+  if(mode==="info"||mode==="detail"){const x=findNode(parts.slice(1).join(" "));if(!x)return"Unknown research. Use !research branches.";return truncate(`🧠 ${x.name} | ${p.unlockedResearch[x.id]?"Unlocked ✅":"Locked ⬜"} | Cost ${amt(x.cost)} Knowledge${x.coreRequired?` | Core ${x.coreRequired}+`:""}${x.requires?.length?` | Requires ${x.requires.join(", ")}`:""} | Effect: ${x.effect}`);}
+  if(BRANCHES.includes(mode as Branch)){const b=mode as Branch,nodes=TREE.filter(x=>x.branch===b),page=clamp(Number(parts[1]||1),1,99),size=4,total=Math.max(1,Math.ceil(nodes.length/size)),safe=Math.min(page,total),shown=nodes.slice((safe-1)*size,safe*size);return truncate(`🧠 ${BRANCH_NAMES[b]} ${safe}/${total} | ${BRANCH_HELP[b]} | ${shown.map(x=>`${p.unlockedResearch[x.id]?"✅":prereqs(p,x)?p.knowledge>=x.cost?"🟢":"⬜":"🔒"} ${x.id} ${amt(x.cost)}`).join(" | ")} | !research info <id>`);}
+  const direct=findNode(raw);if(direct)return truncate(`🧠 ${direct.name} | ${p.unlockedResearch[direct.id]?"Unlocked ✅":"Locked ⬜"} | Cost ${amt(direct.cost)} | Effect: ${direct.effect} | !research unlock ${direct.id}`);
+  return"Unknown research command. Use !research guide, next, or branches.";
+}
+
+export async function unlockResearch(channelId:string,user:NightbotUser|null,rawId:string){
+  const node=findNode(rawId);if(!node)return"Unknown research. Use !research next.";
+  const p=await getP(channelId,user);if(p.unlockedResearch[node.id])return`${node.name} already unlocked. Effect: ${node.effect}`;
+  for(const req of node.requires??[])if(!p.unlockedResearch[req])return`${node.name} requires ${findNode(req)?.name??req} first.`;
+  if(node.coreRequired){const core=await getCoreState(channelId,user);if(core.coreTier<node.coreRequired)return`${node.name} requires Core ${node.coreRequired}. Current: ${core.coreTier}.`;}
+  if(p.knowledge<node.cost)return`${node.name} needs ${amt(node.cost)} Knowledge. You have ${amt(p.knowledge)}; need ${amt(node.cost-p.knowledge)} more.`;
+  p.knowledge-=node.cost;p.unlockedResearch[node.id]=true;if(node.scannerLevel)p.scannerLevel=Math.max(p.scannerLevel,node.scannerLevel);await saveP(p);
+  return`✅ Unlocked ${node.name}! Effect active: ${node.effect}`;
+}
+
+export async function formatScanner(channelId:string,channelName:string,user:NightbotUser|null){
+  const [p,c]=await Promise.all([getP(channelId,user),getC(channelId,channelName)]);if(p.scannerLevel<=0)return"📡 Scanner locked. Earn 40 Knowledge, then !research unlock scanner_1.";
+  const e=event(c),b=boss(c),parts=[`📡 Scanner Lv.${p.scannerLevel}/10`];
+  if(p.scannerLevel>=2)parts.push(`Boss: ${b?`${b.name} ${amt(b.hp)}/${amt(b.maxHp)} HP`:"none"}`);
+  if(p.scannerLevel>=3)parts.push(`Signal: ${e?.rarity==="legendary"||relicTotal(p,"scanner")>=10?"High":e?.rarity==="rare"?"Medium":"Low"}`);
+  if(p.scannerLevel>=4)parts.push(`Event: ${e?`${e.name} ${left(e.endsAt-n())}`:"none"}`);
+  if(p.unlockedResearch.core_mapping_1&&p.scannerLevel>=4){const s=await getCoreGuideSnapshot(channelId,user);parts.push(`Core: ${s.path} ${s.currentTier}`);if(p.unlockedResearch.core_mapping_2&&p.scannerLevel>=5)parts.push(`Next: Core ${s.nextTier}${s.isWall?` wall ${s.wallComponent}`:""}`);}
+  if(p.scannerLevel>=5)parts.push(`Do now: ${b?"roll to damage boss":e?.effect==="knowledge"?"roll 1/10k+ for boosted Knowledge":e?.effect==="relics"?"roll 1M+ for Shards":e?.effect==="blueprints"?"roll 1M+ for Fragments":"use !research next"}`);
+  if(p.scannerLevel<10)parts.push(`Upgrade: !research unlock scanner_${p.scannerLevel+1}`);
+  return truncate(parts.join(" | "));
+}
+
+export async function formatWorldEvent(channelId:string,channelName:string){const c=await getC(channelId,channelName),e=event(c);return e?truncate(`🌍 ${e.name} (${e.rarity}) | ${e.description} | Left ${left(e.endsAt-n())}`):"🌍 No Activity world event. Use !scanner or !forecast.";}
+export async function maybeStartActivityWorldEvent(o:{channelId:string;channelName:string;biomeId:string}){if(Math.random()>=EVENT_CHANCE)return{started:false,message:null as string|null};const c=await getC(o.channelId,o.channelName);if(event(c))return{started:false,message:null as string|null};const e=makeEvent();c.worldEvent=e;c.stats.worldEventsStarted+=1;await saveC(c);return{started:true,message:`🌍 Activity Event: ${e.name} started for ${left(e.endsAt-e.startedAt)}! ${e.description}`};}
+
+export async function formatForecast(channelId:string,channelName:string,user:NightbotUser|null=null){
+  const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]);if(!p.unlockedResearch.forecast_1)return"🔮 Forecast locked. Use !research unlock forecast_1.";
+  const e=event(c),b=boss(c);let confidence:Forecast["confidence"]=b||e?"medium":"low";if(p.unlockedResearch.forecast_3&&p.scannerLevel>=7)confidence=b||e?"high":"medium";
+  let tip=b?`Roll now to damage ${b.name}.`:e?.effect==="knowledge"?"Roll 1/10k+ for boosted Knowledge.":e?.effect==="relics"?"Roll 1M+ for Relic Shards.":e?.effect==="blueprints"?"Roll 1M+ for Blueprint Fragments.":"Use !research next and keep rolling.";
+  if(p.unlockedResearch.forecast_3){const s=await getCoreGuideSnapshot(channelId,user);if(s.isWall)tip+=` Prepare ${s.wallComponent} for Core ${s.nextTier}.`;}
+  const text=`🔮 Forecast (${confidence}) | ${tip}`;c.forecast={date:today(),text,confidence,generatedAt:n()};await saveC(c);return truncate(text);
+}
+
+export async function formatBoss(channelId:string,channelName:string){const c=await getC(channelId,channelName),b=c.boss;if(!b)return"🐉 No boss active. Mods: !boss start | Boss Beacon owners: !boss beacon";if(b.defeated||b.hp<=0)return`🏆 ${b.name} defeated!`;if(b.endsAt<=n())return`⌛ ${b.name} expired.`;const top=Object.values(b.participants).sort((a,b)=>b.damage-a.damage).slice(0,3).map(x=>`${x.name} ${amt(x.damage)}`).join(", ");return truncate(`🐉 ${b.name} | HP ${amt(b.hp)}/${amt(b.maxHp)} | Left ${left(b.endsAt-n())} | Roll to damage | Top: ${top||"none"}`);}
+export async function startBoss(channelId:string,channelName:string){const c=await getC(channelId,channelName),cur=boss(c);if(cur)return`${cur.name} already active. HP ${amt(cur.hp)}/${amt(cur.maxHp)}.`;c.boss=makeBoss();await saveC(c);return`🐉 Boss started: ${c.boss.name}! HP ${amt(c.boss.maxHp)}.`;}
+export async function startBossWithBeacon(channelId:string,channelName:string,user:NightbotUser|null){const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]);if(!p.blueprints.boss_beacon)return"Boss Beacon requires !blueprints assemble boss_beacon.";const cur=boss(c);if(cur)return`${cur.name} already active.`;if(p.merchantMarks<150)return`Boss Beacon costs 150 Marks. You have ${amt(p.merchantMarks)}.`;p.merchantMarks-=150;c.boss=makeBoss();await Promise.all([saveP(p),saveC(c)]);return`📡 Boss Beacon used! ${c.boss.name} started for 150 Marks.`;}
+
+export async function recordActivityRolls(o:{channelId:string;channelName:string;user:NightbotUser|null;results:RollHitResult[]}){
+  if(!o.user||o.results.length===0)return;const best=Math.max(...o.results.map(r=>r.effectiveRarity)),baseK=kFrom(best),c=await getC(o.channelId,o.channelName),b=boss(c),e=event(c);if(!b&&!e&&baseK<=0)return;
+  const p=await getP(o.channelId,o.user);let sp=false,sc=false;
+  if(baseK>0){let m=knowledgeMult(p)*(1+relicTotal(p,"knowledge")/100);if(e?.effect==="knowledge")m*=1.25;if(e&&p.blueprints.biome_lens)m*=1.1;if(p.blueprints.archive_terminal)m*=1.15;const gain=Math.max(1,Math.floor(baseK*m));p.knowledge+=gain;p.stats.knowledgeEarned+=gain;sp=true;}
+  if(e&&p.stats.worldEventsSeen===0){p.stats.worldEventsSeen=1;sp=true;}
+  if(e?.effect==="relics"&&best>=1e6&&Math.random()<.15+Math.min(.25,relicTotal(p,"relic_shards")/100)){p.relicShards+=1;sp=true;}
+  if(e?.effect==="blueprints"&&best>=1e6&&Math.random()<.12+Math.min(.25,relicTotal(p,"blueprint_find")/100)){p.blueprintFragments+=1;sp=true;}
+  if(b){const base=o.results.reduce((s,r)=>s+hitDmg(r),0),mult=(1+bossResearch(p)/100+relicTotal(p,"boss_damage")/100)*(e?.effect==="boss"?1.25:1),damage=Math.max(1,Math.floor(base*mult));b.hp=Math.max(0,b.hp-damage);const ent=b.participants[p.userId]??{name:p.displayName,damage:0};ent.name=p.displayName;ent.damage+=damage;b.participants[p.userId]=ent;p.stats.bossDamage+=damage;let marks=Math.max(1,Math.floor(damage/25)*(1+relicTotal(p,"merchant_marks")/100));if(e?.effect==="market")marks*=1.25;p.merchantMarks+=Math.max(1,Math.floor(marks));sp=sc=true;if(b.hp<=0&&!b.defeated){b.defeated=true;c.stats.bossesDefeated+=1;p.stats.bossKills+=1;p.knowledge+=100;p.blueprintFragments+=Math.max(1,Math.floor(2*(p.unlockedResearch.wall_breaker_1||p.blueprints.forbidden_frame?1.5:1)));p.relicShards+=Math.max(1,Math.floor(5*(p.blueprints.forbidden_frame?1.5:1)*(1+relicTotal(p,"relic_shards")/100)));}}
+  await Promise.all([sp?saveP(p):Promise.resolve(),sc?saveC(c):Promise.resolve()]);
+}
+
+export async function formatMarket(channelId:string,channelName:string,user:NightbotUser|null=null){const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),items=marketItems(p);c.marketDate=today();c.marketItems=items;await saveC(c);return truncate(`🏪 Market | Marks ${amt(p.merchantMarks)} | ${items.map(x=>`${x.id} ${discounted(x.baseCost,discount(p))}`).join(" | ")} | !market buy <id>`);}
+export async function buyMarketItem(channelId:string,channelName:string,user:NightbotUser|null,itemId:string){
+  const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),item=marketItems(p).find(x=>x.id===norm(itemId));if(!item)return"Unknown/locked item. Use !market.";const cost=discounted(item.baseCost,discount(p));if(p.merchantMarks<cost)return`${item.name} costs ${cost} Marks. You have ${amt(p.merchantMarks)}.`;p.merchantMarks-=cost;let reward="";
+  if(item.id==="knowledge_note"){p.knowledge+=25;reward="25 Knowledge";}else if(item.id==="relic_shards"){p.relicShards+=5;reward="5 Relic Shards";}else if(item.id==="blueprint_fragment"){p.blueprintFragments+=1;reward="1 Blueprint Fragment";}else{const m=workshop(p),materials:Record<string,number>=item.id==="scrap_pack"?{scrap:Math.floor(100*m),metal_bits:Math.floor(50*m),mechanical_scrap:Math.floor(10*m)}:item.id==="circuit_pack"?{circuit_scrap:Math.floor(50*m),signal_fragment:Math.floor(5*m)}:{refined_alloy:Math.floor(30*m),stabilized_flux:Math.floor(3*m)};await grantCoreMaterials(channelId,user,materials);reward=Object.entries(materials).map(([id,v])=>`${amt(v)} ${id.replace(/_/g," ")}`).join(", ");}
+  c.marketDate=today();c.marketItems=marketItems(p);await Promise.all([saveP(p),saveC(c)]);return`✅ Bought ${item.name} for ${cost} Marks. Received ${reward}.`;
+}
+
+export async function formatBlueprints(channelId:string,user:NightbotUser|null,raw=""){
+  const p=await getP(channelId,user),parts=raw.trim().split(/\s+/).filter(Boolean),mode=norm(parts[0]??"");
+  if(!mode||mode==="list")return truncate(`📘 Blueprints | Fragments ${amt(p.blueprintFragments)} | ${BLUEPRINTS.map(x=>`${p.blueprints[x.id]?"✅":"⬜"} ${x.id}(${x.cost})`).join(" | ")} | !blueprints guide`);
+  if(mode==="guide"||mode==="help")return"📘 Guide | Earn Fragments from bosses/Blueprint Rain/Market → unlock blueprint_assembly → !blueprints info <id> → !blueprints assemble <id>.";
+  if(mode==="assemble"||mode==="unlock"){const x=findBlueprint(parts.slice(1).join(" "));if(!x)return"Unknown blueprint.";if(p.blueprints[x.id])return`${x.name} already owned. Effect: ${x.effect}`;if(x.research&&!p.unlockedResearch[x.research])return`${x.name} requires research ${x.research}.`;if(x.scanner&&p.scannerLevel<x.scanner)return`${x.name} requires Scanner Lv.${x.scanner}.`;if(x.core){const core=await getCoreState(channelId,user);if(core.coreTier<x.core)return`${x.name} requires Core ${x.core}. Current ${core.coreTier}.`;}if(p.blueprintFragments<x.cost)return`${x.name} needs ${x.cost} Fragments. You have ${amt(p.blueprintFragments)}.`;p.blueprintFragments-=x.cost;p.blueprints[x.id]=true;await saveP(p);return`✅ Assembled ${x.name}! Effect: ${x.effect}`;}
+  if(mode==="info"||mode==="detail")parts.shift();const x=findBlueprint(parts.join(" ")||raw);if(!x)return"Unknown blueprint. Use !blueprints.";
+  return truncate(`📘 ${x.name} | ${p.blueprints[x.id]?"Owned ✅":"Not owned ⬜"} | Cost ${x.cost} Fragments${x.core?` | Core ${x.core}+`:""}${x.scanner?` | Scanner ${x.scanner}+`:""} | Effect: ${x.effect} | Sources: ${p.unlockedResearch.blueprint_reading?x.source:"unlock Blueprint Reading"} | !blueprints assemble ${x.id}`);
+}
+
+export async function formatRelics(channelId:string,user:NightbotUser|null,raw=""): Promise<string>{
+  const p=await getP(channelId,user),parts=raw.trim().split(/\s+/).filter(Boolean),mode=norm(parts[0]??"");
+  if(!mode)return truncate(`🧿 Relics | Owned ${p.relics.length}/50 | Equipped ${p.relics.filter(x=>x.equipped).length}/${slots(p)} | Shards ${amt(p.relicShards)} | !relics guide/list/forge/info/equip/upgrade/reroll`);
+  if(mode==="guide"||mode==="help")return"🧿 Guide | Earn Shards → !blueprints assemble relic_forge → !relics forge → !relics info 1 → !relics equip 1 → !relics upgrade 1.";
+  if(mode==="list"){const page=clamp(Number(parts[1]||1),1,99),size=4,total=Math.max(1,Math.ceil(p.relics.length/size)),safe=Math.min(page,total),shown=p.relics.slice((safe-1)*size,safe*size);return truncate(`🧿 Relics ${safe}/${total}: ${shown.length?shown.map(r=>`${relicRef(p,r)}.${r.equipped?"⭐":""}${r.name} ${r.rarity} L${r.level}`).join(" | "):"None; !relics guide"}`);}
+  if(mode==="forge"){if(!p.blueprints.relic_forge)return"Forge requires !blueprints assemble relic_forge.";if(p.relics.length>=50)return"Relic storage full.";const d=relicDiscount(p),shards=discounted(15,d),knowledge=discounted(100,d);if(p.relicShards<shards||p.knowledge<knowledge)return`Forge costs ${shards} Shards + ${knowledge} Knowledge. You have ${amt(p.relicShards)} + ${amt(p.knowledge)}.`;p.relicShards-=shards;p.knowledge-=knowledge;const relic=newRelic();p.relics.push(relic);await saveP(p);return`🧿 Forged #${p.relics.length} ${relic.name} [${relic.rarity}] | ${effectText(p,relic)} | !relics equip ${p.relics.length}`;}
+  if(mode==="info"||mode==="detail"){const r=findRelic(p,parts.slice(1).join(" "));if(!r)return"Relic not found. !relics list";return truncate(`🧿 #${relicRef(p,r)} ${r.name} | ${r.rarity} Lv.${r.level}/10 | ${r.equipped?"Equipped ⭐":"Unequipped"} | ${effectText(p,r)} | !relics equip/upgrade/reroll ${relicRef(p,r)}`);}
+  if(mode==="equip"){const r=findRelic(p,parts.slice(1).join(" "));if(!r)return"Relic not found.";if(r.equipped)return`${r.name} already equipped.`;if(p.relics.filter(x=>x.equipped).length>=slots(p))return`All ${slots(p)} slot(s) full. Unequip one or research another slot.`;r.equipped=true;await saveP(p);return`⭐ Equipped ${r.name}! ${effectText(p,r)}`;}
+  if(mode==="unequip"){if(norm(parts.slice(1).join(" "))==="all"){p.relics.forEach(r=>r.equipped=false);await saveP(p);return"✅ Unequipped all relics.";}const r=findRelic(p,parts.slice(1).join(" "));if(!r)return"Relic not found.";r.equipped=false;await saveP(p);return`✅ Unequipped ${r.name}.`;}
+  if(mode==="upgrade"){const r=findRelic(p,parts.slice(1).join(" "));if(!r)return"Relic not found.";if(r.level>=10)return`${r.name} already Lv.10.`;const d=relicDiscount(p),ri=RARITIES.indexOf(r.rarity)+1,shards=discounted(5+r.level*ri*2,d),knowledge=discounted(25+r.level*ri*20,d);if(p.relicShards<shards||p.knowledge<knowledge)return`Upgrade costs ${shards} Shards + ${knowledge} Knowledge.`;p.relicShards-=shards;p.knowledge-=knowledge;r.level+=1;await saveP(p);return`✅ ${r.name} Lv.${r.level}! ${effectText(p,r)}`;}
+  if(mode==="reroll")return rerollRelic(channelId,user,parts.slice(1).join(" "));
+  const r=findRelic(p,raw);return r?formatRelics(channelId,user,`info ${relicRef(p,r)}`):"Unknown relic command. Use !relics guide.";
+}
+
+export async function rerollRelic(channelId:string,user:NightbotUser|null,raw=""){
+  const p=await getP(channelId,user);if(!p.unlockedResearch.relic_reforger)return"Rerolls require Relic Reforger research.";const r=findRelic(p,raw);if(!r)return"Relic not found.";
+  const d=relicDiscount(p),ri=RARITIES.indexOf(r.rarity)+1,shards=discounted(20+ri*20,d),knowledge=discounted(200+ri*250,d);if(p.relicShards<shards||p.knowledge<knowledge)return`Reroll costs ${shards} Shards + ${knowledge} Knowledge.`;
+  p.relicShards-=shards;p.knowledge-=knowledge;const old=r.rarity;r.rarity=nextRarity(r.rarity);p.stats.relicRerolls+=1;await saveP(p);return`🧿 ${r.name}: ${old} → ${r.rarity} | ${effectText(p,r)}`;
+}

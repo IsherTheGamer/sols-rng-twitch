@@ -129,7 +129,6 @@ const TITLES: TitleDef[] = [
 ];
 
 const UPDATE_NOTES = [
-  "Progression clarity overhaul: all Core paths now have six balanced wall stages; Core tokens have exact uses; Research, Blueprints, Relics, Scanner, Market, !info, and the Activity website were rebuilt around real effects and next-step guidance.",
   "Anomaly path progression rebuilt: six staged wall components now scale from Core 16 to 250; early walls no longer require billion-rarity materials.",
   "Single-player reset dashboard added: preview and selectively wipe every player-owned system using CRON_SECRET, including a protected Full Player Reset.",
   "Claim reward visibility: quest claims, achievement claims, global quest activations, and box openings now show the exact items or currency granted.",

@@ -264,40 +264,35 @@ const CORE_LUCK_TARGET_PERCENT: Record<CorePath, number> = {
   anomaly: 2600,
 };
 
-const PATH_WALL_COMPONENTS: Record<CorePath, readonly string[]> = {
-  universal: ["stability_buffer","stability_lock","quantum_anchor","reality_bastion","singularity_seal","absolute_lock"],
-  safe: ["stability_buffer","stability_lock","quantum_anchor","reality_bastion","singularity_seal","absolute_lock"],
-  risk: ["volatile_capacitor","risk_compressor","chaos_engine","rupture_core","singularity_overdrive","cataclysm_drive"],
-  support: ["support_relay","support_regulator","logistics_matrix","restoration_hub","quantum_coordinator","celestial_network"],
-  biome: ["biome_sensor","biome_lens","climate_resonator","dimensional_ecoscope","worldseed_prism","omnibiome_array"],
-  precision: ["targeting_filter","precision_filter","probability_calibrator","reality_sieve","singularity_scope","absolute_predictor"],
-  token: ["token_socket","token_amplifier","voucher_encoder","token_reactor","infinite_ledger","sovereign_mint"],
-  anomaly: ["instability_buffer","anomaly_compressor","rift_decoder","null_processor","paradox_engine","forbidden_singularity"],
+const WALL_COMPONENT_BY_PATH: Record<CorePath, string> = {
+  universal: "stability_lock",
+  safe: "stability_lock",
+  risk: "anomaly_compressor",
+  support: "support_regulator",
+  biome: "biome_lens",
+  precision: "precision_filter",
+  token: "token_amplifier",
+  anomaly: "instability_buffer",
 };
 
-const PATH_WALL_RANGES = [
-  "Core 16-49",
-  "Core 50-89",
-  "Core 90-129",
-  "Core 130-169",
-  "Core 170-219",
-  "Core 220-250",
-] as const;
-
-function getWallStageIndex(coreTier: number): number {
-  if (coreTier < 50) return 0;
-  if (coreTier < 90) return 1;
-  if (coreTier < 130) return 2;
-  if (coreTier < 170) return 3;
-  if (coreTier < 220) return 4;
-  return 5;
+function getAnomalyWallComponent(coreTier: number): string {
+  if (coreTier < 50) return "instability_buffer";
+  if (coreTier < 90) return "anomaly_compressor";
+  if (coreTier < 130) return "rift_decoder";
+  if (coreTier < 170) return "null_processor";
+  if (coreTier < 220) return "paradox_engine";
+  return "forbidden_singularity";
 }
 
 function getWallComponentForPath(
   path: CorePath,
   coreTier: number
 ): string {
-  return PATH_WALL_COMPONENTS[path][getWallStageIndex(coreTier)];
+  if (path === "anomaly") {
+    return getAnomalyWallComponent(coreTier);
+  }
+
+  return WALL_COMPONENT_BY_PATH[path];
 }
 
 const COMPONENT_FAMILIES = [
@@ -777,72 +772,6 @@ function formatUsedCosts(costs: CraftCosts): string {
   return parts.length > 0 ? parts.join(", ") : "Free";
 }
 
-type WallRecipePath = Exclude<CorePath, "universal">;
-
-const WALL_RECIPE_FAMILIES: Record<
-  WallRecipePath,
-  readonly [string, string][]
-> = {
-  safe: [["stabilizer","plate"],["stabilizer","plate"],["matrix","stabilizer"],["regulator","plate"],["matrix","stabilizer"],["matrix","regulator"]],
-  risk: [["capacitor","coil"],["processor","conduit"],["processor","coil"],["processor","conduit"],["power_cell","coil"],["processor","power_cell"]],
-  support: [["relay","regulator"],["regulator","relay"],["matrix","relay"],["regulator","conduit"],["matrix","regulator"],["relay","matrix"]],
-  biome: [["sensor","lens"],["lens","sensor"],["sensor","emitter"],["lens","matrix"],["sensor","matrix"],["lens","emitter"]],
-  precision: [["sensor","logic_chip"],["sensor","logic_chip"],["logic_chip","processor"],["sensor","matrix"],["logic_chip","matrix"],["processor","matrix"]],
-  token: [["emitter","power_cell"],["emitter","power_cell"],["logic_chip","emitter"],["power_cell","regulator"],["logic_chip","matrix"],["emitter","matrix"]],
-  anomaly: [["processor","stabilizer"],["processor","conduit"],["processor","matrix"],["processor","matrix"],["processor","matrix"],["processor","matrix"]],
-};
-
-function wallStageMaterials(stage: number): Record<string, number> {
-  if (stage === 0) return { circuit_scrap: 60, signal_fragment: 12, refined_alloy: 4 };
-  if (stage === 1) return { refined_alloy: 40, stabilized_flux: 8 };
-  if (stage === 2) return { stabilized_flux: 35, quantum_residue: 6, chrono_dust: 2 };
-  if (stage === 3) return { quantum_residue: 30, reality_thread: 5 };
-  if (stage === 4) return { reality_thread: 18, dimensional_seal: 6, anomaly_matter: 2, singularity_shard: 1 };
-  return { anomaly_matter: 20, glitched_alloy: 5, forbidden_circuit: 1 };
-}
-
-function buildPathWallComponentRecipes(): Record<string, ComponentRecipe> {
-  const out: Record<string, ComponentRecipe> = {};
-  const paths: WallRecipePath[] = ["safe","risk","support","biome","precision","token","anomaly"];
-  const componentTiers = [1, 2, 4, 6, 8, 9];
-
-  for (const path of paths) {
-    const ids = PATH_WALL_COMPONENTS[path];
-
-    for (let stage = 0; stage < ids.length; stage++) {
-      const id = ids[stage];
-      const tier = componentTiers[stage];
-      const [primary, secondary] = WALL_RECIPE_FAMILIES[path][stage];
-      const components: Record<string, number> = {
-        [`${primary}_${tier}`]: stage >= 4 ? 2 : 1,
-        [`${secondary}_${tier}`]: stage >= 3 ? 2 : 1,
-      };
-
-      if (stage > 0) components[ids[stage - 1]] = 1;
-
-      const tokens: Record<string, number> | undefined =
-        path === "anomaly" && stage >= 3
-          ? { anomaly_token: stage >= 5 ? 2 : 1 }
-          : stage >= 4
-          ? { recipe_token: 1 }
-          : undefined;
-
-      out[id] = {
-        id,
-        name: titleCase(id),
-        outputAmount: 2,
-        costs: {
-          materials: wallStageMaterials(stage),
-          components,
-          tokens,
-        },
-      };
-    }
-  }
-
-  return out;
-}
-
 function buildComponentRecipes(): Record<string, ComponentRecipe> {
   const recipes: Record<string, ComponentRecipe> = {};
 
@@ -1077,8 +1006,6 @@ function buildComponentRecipes(): Record<string, ComponentRecipe> {
     },
   } satisfies Record<string, ComponentRecipe>);
 
-  Object.assign(recipes, buildPathWallComponentRecipes());
-
   return recipes;
 }
 
@@ -1255,34 +1182,6 @@ function scaleBag(
   const out: Record<string, number> = {};
   for (const [id, value] of Object.entries(bag)) out[id] = value * amount;
   return out;
-}
-
-function discountCraftCosts(
-  costs: CraftCosts,
-  percent: number
-): CraftCosts {
-  const scale = (value: number) =>
-    Math.max(1, Math.floor(value * (1 - percent)));
-  const bag = (
-    input: Record<string, number> | undefined
-  ): Record<string, number> | undefined =>
-    input
-      ? Object.fromEntries(
-          Object.entries(input).map(([id, value]) => [
-            id,
-            scale(value),
-          ])
-        )
-      : undefined;
-
-  return {
-    ...costs,
-    stardust: costs.stardust ? scale(costs.stardust) : undefined,
-    materials: bag(costs.materials),
-    components: bag(costs.components),
-    frames: bag(costs.frames),
-    tokens: costs.tokens,
-  };
 }
 
 function hashPick<T>(seed: string, items: T[]): T {
@@ -2383,49 +2282,6 @@ export function getCoreLuckBonusPercent(state: CoreSystemState): number {
   return Math.floor(target * Math.pow(ratio, 1.08) + sub + path);
 }
 
-export async function grantCoreMaterials(
-  channelId: string,
-  user: NightbotUser | null,
-  materials: Record<string, number>
-): Promise<void> {
-  const state = await touchCoreState(channelId, user);
-
-  for (const [id, value] of Object.entries(materials)) {
-    addToBag(state.materials, id, value);
-    state.stats.materialsCollected += Math.max(0, Math.floor(value));
-  }
-
-  await saveCoreState(state);
-}
-
-export async function getCoreGuideSnapshot(
-  channelId: string,
-  user: NightbotUser | null
-): Promise<{
-  currentTier: number;
-  nextTier: number;
-  path: string;
-  isWall: boolean;
-  wallComponent: string;
-  stageRange: string;
-}> {
-  const state = await touchCoreState(channelId, user);
-  const nextTier = Math.min(TOTAL_CORES, state.coreTier + 1);
-  const path = normalizePathForTier(state, nextTier);
-  const stage = getWallStageIndex(nextTier);
-
-  return {
-    currentTier: state.coreTier,
-    nextTier,
-    path: titleCase(path),
-    isWall: isWallCore(state, nextTier),
-    wallComponent: componentName(
-      getWallComponentForPath(path, nextTier)
-    ),
-    stageRange: PATH_WALL_RANGES[stage],
-  };
-}
-
 export async function getViewerCoreLuck(
   channelId: string,
   user: NightbotUser | null
@@ -2463,36 +2319,21 @@ export async function craftByIdAmount(
     return `Unknown component: ${id}. Try !craft recipe wire_1, !craft recipe circuit_board_1, or !craft recipe divergence_matrix.`;
   }
 
-  const baseScaledCosts: CraftCosts = {
-    stardust: recipe.costs.stardust
-      ? recipe.costs.stardust * batches
-      : undefined,
+  const scaledCosts: CraftCosts = {
+    stardust: recipe.costs.stardust ? recipe.costs.stardust * batches : undefined,
     materials: scaleBag(recipe.costs.materials, batches),
     components: scaleBag(recipe.costs.components, batches),
     frames: scaleBag(recipe.costs.frames, batches),
     tokens: scaleBag(recipe.costs.tokens, batches),
     coreTierRequired: recipe.costs.coreTierRequired,
     shdLevelRequired: recipe.costs.shdLevelRequired,
-    activeRolls: recipe.costs.activeRolls?.map((req) => ({
-      ...req,
-      amount: req.amount * batches,
-    })),
+    activeRolls: recipe.costs.activeRolls?.map((req) => ({ ...req, amount: req.amount * batches })),
   };
-
-  const craftingTokenActive =
-    state.unlocks.crafting_token_discount_ready === true;
-  const scaledCosts = craftingTokenActive
-    ? discountCraftCosts(baseScaledCosts, 0.25)
-    : baseScaledCosts;
 
   const missing = getMissingCosts(state, scaledCosts);
   if (missing.length > 0) return `${recipe.name} x${formatAmount(batches)} missing: ${missing.join(" | ")}`;
 
   consumeCosts(state, scaledCosts);
-
-  if (craftingTokenActive) {
-    delete state.unlocks.crafting_token_discount_ready;
-  }
 
   const globalRolls = await getGlobalRolls();
   const tier = getComponentTier(recipe.id);
@@ -2511,29 +2352,9 @@ export async function craftByIdAmount(
 
   await saveCoreState(state);
 
-  const bonusText =
-    bonusBatches > 0
-      ? ` + ${formatAmount(bonusBatches)} duplicate batch(es)`
-      : "";
-  const chanceText =
-    doubleChance > 0
-      ? ` | Double chance ${(doubleChance * 100).toFixed(1)}%`
-      : "";
-  const discountText = craftingTokenActive
-    ? " | Crafting Token: -25% costs"
-    : "";
-
-  return truncate(
-    `✅ Crafted ${recipe.name}: ${formatAmount(
-      batches
-    )} batch(es) x${formatAmount(
-      baseOutputPerBatch
-    )}${bonusText} = ${formatAmount(
-      outputAmount
-    )} total. Used: ${formatUsedCosts(
-      scaledCosts
-    )}.${chanceText}${discountText}`
-  );
+  const bonusText = bonusBatches > 0 ? ` + ${formatAmount(bonusBatches)} duplicate batch(es)` : "";
+  const chanceText = doubleChance > 0 ? ` | Double chance ${(doubleChance * 100).toFixed(1)}%` : "";
+  return truncate(`✅ Crafted ${recipe.name}: ${formatAmount(batches)} batch(es) x${formatAmount(baseOutputPerBatch)}${bonusText} = ${formatAmount(outputAmount)} total. Used: ${formatUsedCosts(scaledCosts)}.${chanceText}`);
 }
 
 export async function craftComponent(
@@ -2917,145 +2738,6 @@ export async function formatComponentsStatus(
   return formatPagedItems("🧰 Components/Materials", items, rawPage, 6);
 }
 
-const CORE_TOKEN_HELP: Record<
-  string,
-  { name: string; automatic: boolean; use: string; command: string }
-> = {
-  recipe_token: { name: "Recipe Token", automatic: true, use: "High-tier component, Core, SHD, and Reactor recipes consume it.", command: "!core token recipe" },
-  path_token: { name: "Path Token", automatic: true, use: "Path choosing/switching and Realignment consume it.", command: "!core token path" },
-  reactor_token: { name: "Reactor Token", automatic: true, use: "Higher Reactor upgrades consume it.", command: "!core token reactor" },
-  crafting_token: { name: "Crafting Token", automatic: false, use: "Activates -25% cost on your next successful component craft.", command: "!core token use crafting" },
-  quest_token: { name: "Quest Token", automatic: false, use: "Adds 25% progress to one unfinished daily/weekly Core quest.", command: "!core token use quest" },
-  wall_token: { name: "Wall Token", automatic: true, use: "Random wall Cores and Sub-Cores consume it.", command: "!core token wall" },
-  anomaly_token: { name: "Anomaly Token", automatic: true, use: "Late Anomaly wall components consume it.", command: "!core token anomaly" },
-};
-
-function normalizeCoreTokenId(raw: string): string {
-  const id = raw.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  const aliases: Record<string, string> = {
-    recipe: "recipe_token",
-    path: "path_token",
-    reactor: "reactor_token",
-    crafting: "crafting_token",
-    craft: "crafting_token",
-    quest: "quest_token",
-    wall: "wall_token",
-    anomaly: "anomaly_token",
-  };
-  return aliases[id] ?? id;
-}
-
-export async function formatCoreTokenGuide(
-  channelId: string,
-  user: NightbotUser | null,
-  raw = ""
-): Promise<string> {
-  const state = await touchCoreState(channelId, user);
-  const id = normalizeCoreTokenId(raw);
-
-  if (id && CORE_TOKEN_HELP[id]) {
-    const guide = CORE_TOKEN_HELP[id];
-    return truncate(
-      `🎟️ ${guide.name} x${formatAmount(
-        state.tokens[id] ?? 0
-      )} | ${guide.automatic ? "AUTOMATIC" : "MANUAL"} | Use: ${
-        guide.use
-      } | Command: ${guide.command}`
-    );
-  }
-
-  return truncate(
-    `🎟️ Core Tokens: ${Object.entries(CORE_TOKEN_HELP)
-      .map(
-        ([tokenId, guide]) =>
-          `${guide.name} x${formatAmount(
-            state.tokens[tokenId] ?? 0
-          )} [${guide.automatic ? "AUTO" : "USE"}]`
-      )
-      .join(" | ")} | Details: !core token <name>`
-  );
-}
-
-export async function useCoreToken(
-  channelId: string,
-  user: NightbotUser | null,
-  raw = ""
-): Promise<string> {
-  const parts = raw.trim().split(/\s+/).filter(Boolean);
-  const id = normalizeCoreTokenId(parts[0] ?? "");
-  const state = await touchCoreState(channelId, user);
-
-  if (id === "crafting_token") {
-    if (state.unlocks.crafting_token_discount_ready) {
-      return "A Crafting Token is already active. Your next successful component craft has -25% costs.";
-    }
-    if ((state.tokens.crafting_token ?? 0) < 1) {
-      return "No Crafting Token. Obtain one from Daily Crafting or Quest Boxes.";
-    }
-    removeFromBag(state.tokens, "crafting_token", 1);
-    state.unlocks.crafting_token_discount_ready = true;
-    await saveCoreState(state);
-    return "🛠️ Crafting Token activated: next successful component craft costs 25% less. Missing-material attempts do not consume it.";
-  }
-
-  if (id === "quest_token") {
-    if ((state.tokens.quest_token ?? 0) < 1) {
-      return "No Quest Token. Obtain one from Daily Rolling, quests, or boxes.";
-    }
-
-    const requested =
-      parts[1]?.toLowerCase() === "weekly"
-        ? "weekly"
-        : parts[1]?.toLowerCase() === "daily"
-        ? "daily"
-        : null;
-
-    const quest = getActiveQuests(state)
-      .filter(
-        (item) =>
-          (item.kind === "daily" || item.kind === "weekly") &&
-          !["core", "shd", "stardust"].includes(item.type) &&
-          (!requested || item.kind === requested) &&
-          !state.questClaimed[item.id] &&
-          getQuestProgressValue(state, item) < item.target
-      )
-      .sort((a, b) => {
-        if (a.kind !== b.kind) return a.kind === "daily" ? -1 : 1;
-        return (
-          getQuestProgressValue(state, b) / b.target -
-          getQuestProgressValue(state, a) / a.target
-        );
-      })[0];
-
-    if (!quest) {
-      return requested
-        ? `No unfinished ${requested} Core quest can use it.`
-        : "No unfinished daily/weekly Core quest can use it.";
-    }
-
-    const current = getQuestProgressValue(state, quest);
-    const next = Math.min(
-      quest.target,
-      current + Math.max(1, Math.ceil(quest.target * 0.25))
-    );
-
-    state.questProgress[quest.id] = next;
-    removeFromBag(state.tokens, "quest_token", 1);
-    await saveCoreState(state);
-
-    return `📜 Quest Token: ${quest.title} ${formatAmount(
-      current
-    )} → ${formatAmount(next)}/${formatAmount(
-      quest.target
-    )}${next >= quest.target ? " | Ready to claim!" : ""}`;
-  }
-
-  const guide = CORE_TOKEN_HELP[id];
-  if (guide) return `${guide.name} is automatic: ${guide.use}`;
-
-  return "Manual uses: !core token use quest [daily/weekly] or !core token use crafting.";
-}
-
 export async function formatTokensStatus(
   channelId: string,
   user: NightbotUser | null,
@@ -3067,19 +2749,7 @@ export async function formatTokensStatus(
     ...bagItems(state.lootboxes, lootboxName, "Box "),
   ];
 
-  const active =
-    state.unlocks.crafting_token_discount_ready
-      ? " | Crafting discount ACTIVE"
-      : "";
-
-  return truncate(
-    `${formatPagedItems(
-      "🎟️ Core Tokens/Boxes",
-      items,
-      rawPage,
-      7
-    )}${active} | Explain/use: !core tokens or !core token <name>`
-  );
+  return formatPagedItems("🎟️ Core Tokens/Boxes", items, rawPage, 7);
 }
 
 export async function formatCraftRecipe(

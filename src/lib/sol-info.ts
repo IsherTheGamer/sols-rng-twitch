@@ -6,381 +6,105 @@ import {
   formatComponentGuide,
   formatMaterialGuide,
   formatObtainGuide,
+  formatPathComponentGuide,
   formatTokenSourceGuide,
   isKnownTokenGuide,
 } from "./progression-info";
 
-const PAGE_SIZE = 8;
-
-const ACTIVITY_INFO = [
-  "The Activity Of Knowledge commands:",
-  "!knowledge = Knowledge, Research, Scanner, Merchant Marks, and Relic Shards.",
-  "!research branches / <branch> / info <id> / unlock <id>.",
-  "!scanner = activity signals, boss/event data, and best-action hints.",
-  "!boss = active boss. Mods can use !boss start.",
-  "!worldevent = current Activity world event.",
-  "!forecast = activity-based forecast, not an exact prediction.",
-  "!market = safe Merchant Marks marketplace.",
-  "!blueprints = blueprint unlocks and sources.",
-  "!relics = relic catalog, forge, collect, equip, info, and reroll.",
-  "Website: /activity",
+const START = [
+  "1) !roll earns profile progress, Core materials, Stardust, and Knowledge from 1/10k+ results.",
+  "2) !core shows exactly what the next Core needs; !core recipe shows the complete cost.",
+  "3) !knowledge explains every Activity currency and recommends research.",
+  "4) !research next chooses a useful available upgrade.",
+  "5) !scanner tells you what is active and what to do next.",
+  "6) Confused by an item? Use !info obtain <name>.",
+];
+const CURRENCIES = [
+  "Stardust: SHD storage; spent on Cores and Reactor.",
+  "Knowledge: earned from 1/10k+ rolls; spent with !research.",
+  "Merchant Marks: boss-damage currency; spent with !market.",
+  "Relic Shards: bosses/Relic Echo/market; spent with !relics.",
+  "Blueprint Fragments: bosses/Blueprint Rain/market; !blueprints assemble.",
+  "Core Tokens: inspect/use with !core tokens and !core token <name>.",
+];
+const ACTIVITY = [
+  "!knowledge: balances plus recommended research.",
+  "!research next / branches / info / unlock.",
+  "!scanner: boss, event, Core-wall, and action guidance.",
+  "!market: exact offers and rewards.",
+  "!blueprints guide / info / assemble.",
+  "!relics guide / list / forge / equip / upgrade / reroll.",
+  "!boss / !boss beacon / !forecast.",
+];
+const RELICS = [
+  "Earn Shards from bosses, Relic Echo, or !market.",
+  "Assemble relic_forge with !blueprints.",
+  "Forge: !relics forge; inspect: !relics info 1.",
+  "Equip: !relics equip 1; research unlocks slots 2 and 3.",
+  "Upgrade level: !relics upgrade 1; rarity: !relics reroll 1.",
+  "Effects are real: Knowledge, boss damage, Marks, discounts, fragments, shards, Scanner.",
+];
+const RESEARCH = [
+  "Knowledge comes from the best 1/10k+ aura in a real roll command.",
+  "!research next recommends a useful node and exact command.",
+  "Every node has an active implemented effect.",
+  "Inspect before spending: !research info <id>.",
+];
+const BLUEPRINTS = [
+  "Fragments come from bosses, Blueprint Rain, and Market.",
+  "Unlock blueprint_reading then blueprint_assembly.",
+  "!blueprints info <id> shows source/effect/cost.",
+  "!blueprints assemble <id> permanently activates it.",
+];
+const COMMANDS = [
+  "!info start / currencies / paths / token <name>",
+  "!core / recipe / tokens / token use quest|crafting",
+  "!knowledge / !research next / !scanner",
+  "!relics guide / !blueprints guide / !market",
+  "!pquests / !gquests / !lb / !records / !firsts",
+  "!replay / !aotd / !botd / !event / !update",
 ];
 
-const COMMAND_INFO = [
-  "!update [page]: latest changes and balance notes",
-  "!info sol commands [page]: command help",
-  "!info material <name>: exact obtain source",
-  "!info component <name_tier>: how to craft it",
-  "!info token sources [page]: Core token sources",
-  "!info box <name>: box source and contents",
-  "!info obtain <item>: search material/token/box/component",
-  "!rollaccess add/remove/list/check: 10k allowlist, managers only",
-  "!dcalerts: Discord webhook alert settings",
-  "Discord: /sols info, material, leaderboard, records, firsts, alerts, rollaccess",
-  "!replay [user/page]: major rare pull replay",
-  "!records: channel records and best pulls",
-  "!firsts / !firsts biomes: first discoveries",
-  "!aotd / !botd: aura/biome of the day",
-  "!event: seasonal and channel event controls",
-  "!pquests and !gquests: personal/global quests",
-  "!lb daily/weekly/monthly/yearly rolls/best/rare/value",
-];
+function norm(raw:string|undefined|null){return(raw??"").toLowerCase().trim().replace(/^!+/,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");}
+function title(raw:string){return raw.split(/[_\-\s:]+/g).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(" ");}
+function rarity(v:number){return`1/${Math.floor(v).toLocaleString("en-US")}`;}
+function page(raw:string|undefined,total:number){const n=Number(String(raw??"1").replace(/,/g,""));return Math.max(1,Math.min(total,Number.isFinite(n)?Math.floor(n):1));}
+function paginate<T>(items:T[],raw:string|undefined,fmt:(x:T)=>string,name:string,size=8){const total=Math.max(1,Math.ceil(items.length/size)),p=page(raw,total),shown=items.slice((p-1)*size,p*size).map(fmt);return truncate(`${name} ${p}/${total}: ${shown.join(" | ")||"None"}`,390);}
+function split(parts:string[]){const copy=[...parts];let p="";if(copy.length>1&&/^\d+$/.test(copy[copy.length-1]))p=copy.pop()??"";return{query:copy.join(" "),page:p};}
+function findAura(q:string){const n=norm(q);return auras.find(x=>norm(x.id)===n||norm(x.name)===n||norm(x.name).replace(/_/g,"")===n.replace(/_/g,""));}
+function findBiome(q:string){const n=norm(q);return biomes.find(x=>norm(x.id)===n||norm(x.name)===n);}
+function findPotion(q:string){const n=norm(q);return potions.find(x=>norm(x.id)===n||norm(x.name)===n||x.aliases.some(a=>norm(a)===n));}
+function staticGuide(items:string[],p:string,name:string){return paginate(items,p,x=>x,name,4);}
 
-const MEGA_INFO = [
-  "Discord: !dcalerts test/on/off/aura/biome controls webhook alerts.",
-  "Discord website: /discord-test safely previews the real aura alert style.",
-  "Discord /sols commands mirror read-only info/leaderboards plus admin config.",
-  "Replay/records: !replay shows 100M+ pulls; !records shows server records.",
-  "Firsts: !firsts shows first aura and rare-biome discoveries.",
-  "Quests: !pquests and !gquests have daily, weekly, monthly, yearly periods.",
-  "Leaderboards support rolls, best, rare, value, level, and pages.",
-  "Black Market uses Stardust and remains Twitch-only gameplay.",
-];
+function auraInfo(q:string,p?:string){if(q&&!/^\d+$/.test(q)){const a=findAura(q);if(!a)return`Unknown aura: ${q}`;const flags=[a.biome?`Biome ${title(a.biome)}`:null,a.event?`Event ${title(a.event)}`:null,a.devBiome?`Dev ${title(a.devBiome)}`:null,a.potion?`Potion ${title(a.potion.id)} ${rarity(a.potion.rarity)}`:null,a.luckImmune?"Raw luck only":null,a.unobtainable?"Unobtainable":null,a.deleted?"Deleted":null].filter(Boolean);return truncate(`✨ ${a.name} | ${rarity(a.rarity)}${flags.length?` | ${flags.join(" | ")}`:""}`,390);}return paginate([...auras].sort((a,b)=>a.rarity-b.rarity),/^\d+$/.test(q)?q:p,a=>`${a.name} ${rarity(a.rarity)}`,"✨ Auras");}
+function biomeInfo(q:string,p?:string){if(q&&!/^\d+$/.test(q)){const b=findBiome(q);if(!b)return`Unknown biome: ${q}`;const chance=b.spawnPerSecond?`Spawn/sec 1/${Math.round(1/b.spawnPerSecond).toLocaleString("en-US")}`:b.spawnOnChange?`On-change 1/${Math.round(1/b.spawnOnChange).toLocaleString("en-US")}`:b.deviceChance?`Device 1/${b.deviceChance.toLocaleString("en-US")}`:b.manualOnly||b.devOnly?"Manual/dev only":"Normal pool";return truncate(`🌍 ${b.name} | ${chance} | BT x${b.breakthroughMultiplier}${b.isRareBiome?" | Rare":""}`,390);}return paginate(biomes,/^\d+$/.test(q)?q:p,b=>`${b.name}${b.isRareBiome?" rare":""}`,"🌍 Biomes");}
+function potionInfo(q:string,p?:string){if(q&&!/^\d+$/.test(q)){const x=findPotion(q);if(!x)return`Unknown potion: ${q}`;return truncate(`🧪 ${x.name} | +${Math.floor(x.luck).toLocaleString("en-US")} luck${x.clearsBuffs?" | Clears buffs":""}${x.requiresEvent?` | Event ${title(x.requiresEvent)}`:""}${x.exclusiveAuras?.length?` | ${x.exclusiveAuras.length} exclusive aura(s)`:""}`,390);}return paginate(potions,/^\d+$/.test(q)?q:p,x=>`${x.name} +${Math.floor(x.luck).toLocaleString("en-US")}`,"🧪 Potions");}
+function rollTokens(kind:string,p?:string){const mode=norm(kind||"boosts"),all=getAllTokenDefinitions(),special=(t:(typeof all)[number])=>Boolean((t.flatLuck??0)>0||(t.rareBiomePercentLuck??0)>0||(t.finalLuckMultiplier??1)>1),list=mode.includes("potion")||mode.includes("roll")?all.filter(t=>t.kind==="potion"):mode.includes("special")?all.filter(t=>t.kind==="percent_luck"&&special(t)):all.filter(t=>t.kind==="percent_luck"&&!special(t));return formatTokenDefinitionPage(list,p,mode.includes("potion")?"🧪 Roll/Potion Tokens":mode.includes("special")?"✨ Special Luck Tokens":"🎟️ Luck Boost Tokens");}
 
-function normalize(raw: string | undefined | null): string {
-  return (raw ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/^!+/, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-function titleCase(raw: string): string {
-  return raw
-    .split(/[_\-\s:]+/g)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function rarity(value: number): string {
-  return `1/${Math.floor(value).toLocaleString("en-US")}`;
-}
-
-function pageNumber(raw: string | undefined, totalPages: number): number {
-  const n = Number(String(raw ?? "1").replace(/,/g, ""));
-  return Math.max(1, Math.min(totalPages, Number.isFinite(n) ? Math.floor(n) : 1));
-}
-
-function paginate<T>(
-  items: T[],
-  rawPage: string | undefined,
-  formatter: (item: T) => string,
-  title: string,
-  pageSize = PAGE_SIZE
-): string {
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const page = pageNumber(rawPage, totalPages);
-  const shown = items.slice((page - 1) * pageSize, page * pageSize).map(formatter);
-  return truncate(`${title} ${page}/${totalPages}: ${shown.join(" | ") || "None"}`, 390);
-}
-
-function splitQueryPage(parts: string[]): { query: string; page: string } {
-  const copy = [...parts];
-  let page = "";
-
-  if (copy.length > 1 && /^\d+$/.test(copy[copy.length - 1])) {
-    page = copy.pop() ?? "";
-  }
-
-  return { query: copy.join(" "), page };
-}
-
-function findAura(query: string) {
-  const q = normalize(query);
-  return auras.find(
-    (a) =>
-      normalize(a.id) === q ||
-      normalize(a.name) === q ||
-      normalize(a.name).replace(/_/g, "") === q.replace(/_/g, "")
-  );
-}
-
-function findBiome(query: string) {
-  const q = normalize(query);
-  return biomes.find((b) => normalize(b.id) === q || normalize(b.name) === q);
-}
-
-function findPotion(query: string) {
-  const q = normalize(query);
-  return potions.find(
-    (p) =>
-      normalize(p.id) === q ||
-      normalize(p.name) === q ||
-      p.aliases.some((a) => normalize(a) === q)
-  );
-}
-
-function auraInfo(query: string, pageRaw?: string): string {
-  if (query && !/^\d+$/.test(query)) {
-    const aura = findAura(query);
-    if (!aura) return `Unknown aura: ${query}`;
-
-    const flags = [
-      aura.biome ? `Biome ${titleCase(aura.biome)}` : null,
-      aura.event ? `Event ${titleCase(aura.event)}` : null,
-      aura.devBiome ? `Dev ${titleCase(aura.devBiome)}` : null,
-      aura.potion ? `Potion ${titleCase(aura.potion.id)} ${rarity(aura.potion.rarity)}` : null,
-      aura.luckImmune ? "Raw luck only" : null,
-      aura.unobtainable ? "Unobtainable" : null,
-      aura.deleted ? "Deleted" : null,
-    ].filter(Boolean);
-
-    return truncate(
-      `✨ ${aura.name} | ${rarity(aura.rarity)}${flags.length ? ` | ${flags.join(" | ")}` : ""}`,
-      390
-    );
-  }
-
-  const page = /^\d+$/.test(query) ? query : pageRaw;
-  return paginate(
-    [...auras].sort((a, b) => a.rarity - b.rarity),
-    page,
-    (a) => `${a.name} ${rarity(a.rarity)}`,
-    "✨ Auras"
-  );
-}
-
-function biomeInfo(query: string, pageRaw?: string): string {
-  if (query && !/^\d+$/.test(query)) {
-    const biome = findBiome(query);
-    if (!biome) return `Unknown biome: ${query}`;
-
-    const chance = biome.spawnPerSecond
-      ? `Spawn/sec 1/${Math.round(1 / biome.spawnPerSecond).toLocaleString("en-US")}`
-      : biome.spawnOnChange
-      ? `On-change 1/${Math.round(1 / biome.spawnOnChange).toLocaleString("en-US")}`
-      : biome.deviceChance
-      ? `Device 1/${biome.deviceChance.toLocaleString("en-US")}`
-      : biome.manualOnly || biome.devOnly
-      ? "Manual/dev only"
-      : "Normal pool";
-
-    return truncate(
-      `🌍 ${biome.name} | ${chance} | BT x${biome.breakthroughMultiplier}${biome.isRareBiome ? " | Rare" : ""}`,
-      390
-    );
-  }
-
-  const page = /^\d+$/.test(query) ? query : pageRaw;
-  return paginate(
-    biomes,
-    page,
-    (b) => `${b.name}${b.isRareBiome ? " rare" : ""}`,
-    "🌍 Biomes"
-  );
-}
-
-function potionInfo(query: string, pageRaw?: string): string {
-  if (query && !/^\d+$/.test(query)) {
-    const potion = findPotion(query);
-    if (!potion) return `Unknown potion: ${query}`;
-
-    const extras = [
-      potion.clearsBuffs ? "Clears buffs" : null,
-      potion.requiresEvent ? `Event ${titleCase(potion.requiresEvent)}` : null,
-      potion.exclusiveAuras?.length ? `${potion.exclusiveAuras.length} exclusive aura(s)` : null,
-    ].filter(Boolean);
-
-    return truncate(
-      `🧪 ${potion.name} | +${Math.floor(potion.luck).toLocaleString("en-US")} luck${extras.length ? ` | ${extras.join(" | ")}` : ""}`,
-      390
-    );
-  }
-
-  const page = /^\d+$/.test(query) ? query : pageRaw;
-  return paginate(
-    potions,
-    page,
-    (p) => `${p.name} +${Math.floor(p.luck).toLocaleString("en-US")}`,
-    "🧪 Potions"
-  );
-}
-
-function tokenInfo(kind: string, pageRaw?: string): string {
-  const mode = normalize(kind || "boosts");
-  const all = getAllTokenDefinitions();
-  const special = (t: (typeof all)[number]) =>
-    Boolean(
-      (t.flatLuck ?? 0) > 0 ||
-        (t.rareBiomePercentLuck ?? 0) > 0 ||
-        (t.finalLuckMultiplier ?? 1) > 1
-    );
-
-  const list =
-    mode.includes("potion") || mode.includes("roll")
-      ? all.filter((t) => t.kind === "potion")
-      : mode.includes("special") ||
-        mode.includes("rare") ||
-        mode.includes("flat") ||
-        mode.includes("final")
-      ? all.filter((t) => t.kind === "percent_luck" && special(t))
-      : all.filter((t) => t.kind === "percent_luck" && !special(t));
-
-  return formatTokenDefinitionPage(
-    list,
-    pageRaw,
-    mode.includes("potion")
-      ? "🧪 Potion Tokens"
-      : mode.includes("special")
-      ? "✨ Special Tokens"
-      : "🎟️ Boost Tokens"
-  );
-}
-
-function coreTopic(topic: string, query = "", pageRaw = ""): string {
-  const mode = normalize(topic);
-
-  if (mode === "commands" || mode === "cmds" || mode === "new_commands") {
-    return paginate(COMMAND_INFO, pageRaw || query, (x) => x, "🤖 Commands", 4);
-  }
-
-  if (mode === "mega" || mode === "expansion" || mode === "features") {
-    return paginate(MEGA_INFO, pageRaw || query, (x) => x, "✨ Mega Features", 4);
-  }
-
-  if (["activity", "knowledge", "research", "aok"].includes(mode)) {
-    return paginate(ACTIVITY_INFO, pageRaw || query, (x) => x, "🧠 Activity Of Knowledge", 4);
-  }
-
-  if (mode === "paths" || mode === "path") {
-    return paginate(
-      [
-        "Safe: stable/easier walls",
-        "Risk: harder/more rewards",
-        "Support: crafting discounts",
-        "Biome: biome/material scaling",
-        "Precision: focused luck",
-        "Token: stronger token value",
-        "Anomaly: weird late-game scaling",
-      ],
-      pageRaw || query,
-      (x) => x,
-      "🧭 Paths",
-      4
-    );
-  }
-
-  if (mode === "materials" || mode === "material") return formatMaterialGuide(query, pageRaw);
-  if (mode === "components" || mode === "component") return formatComponentGuide(query, pageRaw);
-  if (mode === "boxes" || mode === "box") return formatBoxGuide(query, pageRaw);
-  if (["obtain", "source", "sources", "how", "get"].includes(mode)) {
-    return formatObtainGuide(query, pageRaw);
-  }
-
-  if (mode === "events" || mode === "event") {
-    return paginate(events as Array<{ name: string }>, pageRaw || query, (e) => e.name, "🎉 Events");
-  }
-
-  if (mode === "dev" || mode === "devs") {
-    return paginate(
-      devEvents as Array<{ name?: string; id: string }>,
-      pageRaw || query,
-      (d) => d.name ?? titleCase(d.id),
-      "🛠️ Dev Biomes"
-    );
-  }
-
-  if (mode === "devices" || mode === "device") {
-    return paginate(
-      devices as Array<{ name: string }>,
-      pageRaw || query,
-      (d) => d.name,
-      "📟 Devices"
-    );
-  }
-
-  return truncate(
-    "📘 !info <what> [name/page] | commands, mega, activity, aura, biome, potion, token boosts/potions/special/sources, paths, materials, components, boxes, obtain, events, dev, devices.",
-    390
-  );
-}
-
-export function formatSolInfo(rawQuery: string): string {
-  const parts = rawQuery.trim().split(/\s+/).filter(Boolean);
-  if (normalize(parts[0]) === "sol") parts.shift();
-
-  const topic = normalize(parts.shift() ?? "help");
-  const { query, page } = splitQueryPage(parts);
-
-  if (topic === "help" || topic === "info") return coreTopic("help");
-  if (topic === "commands" || topic === "cmds") return coreTopic("commands", query, page);
-  if (["mega", "features", "expansion"].includes(topic)) return coreTopic("mega", query, page);
-  if (["activity", "knowledge", "research", "aok"].includes(topic)) {
-    return coreTopic(topic, query, page);
-  }
-
-  if (topic === "aura" || topic === "auras") return auraInfo(query, page);
-  if (topic === "biome" || topic === "biomes") return biomeInfo(query, page);
-  if (topic === "potion" || topic === "potions") return potionInfo(query, page);
-
-  if (topic === "token" || topic === "tokens") {
-    const first = normalize(query.split(/\s+/)[0] ?? "");
-
-    if (["source", "sources", "obtain", "how", "get"].includes(first)) {
-      const remainder = query.split(/\s+/).slice(1).join(" ");
-      return formatTokenSourceGuide(remainder, page);
-    }
-
-    if (isKnownTokenGuide(query)) return formatTokenSourceGuide(query, page);
-    return tokenInfo(query || "boosts", page);
-  }
-
-  if (topic === "boost" || topic === "boosts") return tokenInfo("boosts", query || page);
-  if (topic === "special") return tokenInfo("special", query || page);
-
-  if (
-    [
-      "path",
-      "paths",
-      "material",
-      "materials",
-      "component",
-      "components",
-      "box",
-      "boxes",
-      "obtain",
-      "source",
-      "sources",
-      "how",
-      "get",
-      "event",
-      "events",
-      "dev",
-      "devs",
-      "device",
-      "devices",
-      "core",
-      "cores",
-      "shd",
-      "reactor",
-      "quest",
-      "quests",
-    ].includes(topic)
-  ) {
-    return coreTopic(topic, query, page);
-  }
-
-  return auraInfo([topic, query].filter(Boolean).join(" "));
+export function formatSolInfo(rawQuery:string){
+  const parts=rawQuery.trim().split(/\s+/).filter(Boolean);if(norm(parts[0])==="sol")parts.shift();const topic=norm(parts.shift()??"help"),{query,page:p}=split(parts),pq=p||query;
+  if(topic==="help"||topic==="info")return"📘 Help | !info start | currencies | paths | token <name> | obtain <item> | research | relics | blueprints";
+  if(topic==="start"||topic==="begin")return staticGuide(START,pq,"🚀 Start Guide");
+  if(["currency","currencies","money"].includes(topic))return staticGuide(CURRENCIES,pq,"💰 Currency Guide");
+  if(topic==="commands"||topic==="cmds")return staticGuide(COMMANDS,pq,"🤖 Commands");
+  if(["activity","knowledge","aok"].includes(topic))return staticGuide(ACTIVITY,pq,"🧠 Activity Guide");
+  if(topic==="research")return staticGuide(RESEARCH,pq,"🧠 Research Guide");
+  if(topic==="relic"||topic==="relics")return staticGuide(RELICS,pq,"🧿 Relic Guide");
+  if(topic==="blueprint"||topic==="blueprints")return staticGuide(BLUEPRINTS,pq,"📘 Blueprint Guide");
+  if(topic==="aura"||topic==="auras")return auraInfo(query,p);
+  if(topic==="biome"||topic==="biomes")return biomeInfo(query,p);
+  if(topic==="potion"||topic==="potions")return potionInfo(query,p);
+  if(topic==="token"||topic==="tokens"){const first=norm(query.split(/\s+/)[0]??"");if(["boost","boosts","potion","potions","special"].includes(first))return rollTokens(first,p);if(["source","sources","obtain","how","get"].includes(first))return formatTokenSourceGuide(query.split(/\s+/).slice(1).join(" "),p);if(isKnownTokenGuide(query))return formatTokenSourceGuide(query,p);return"🎟️ Two token systems | Core tokens: !info token quest | Roll tokens: !info token boosts/potions | Owned Core tokens: !core tokens";}
+  if(topic==="boost"||topic==="boosts")return rollTokens("boosts",query||p);
+  if(topic==="special")return rollTokens("special",query||p);
+  if(topic==="path"||topic==="paths")return formatPathComponentGuide(query,p);
+  if(topic==="material"||topic==="materials")return formatMaterialGuide(query,p);
+  if(topic==="component"||topic==="components")return formatComponentGuide(query,p);
+  if(topic==="box"||topic==="boxes")return formatBoxGuide(query,p);
+  if(["obtain","source","sources","how","get"].includes(topic))return formatObtainGuide(query,p);
+  if(topic==="events"||topic==="event")return paginate(events as Array<{name:string}>,pq,e=>e.name,"🎉 Events");
+  if(topic==="dev"||topic==="devs")return paginate(devEvents as Array<{name?:string;id:string}>,pq,e=>e.name??title(e.id),"🛠️ Dev Biomes");
+  if(topic==="device"||topic==="devices")return paginate(devices as Array<{name:string}>,pq,d=>d.name,"📟 Devices");
+  if(["core","cores","shd","reactor","quest","quests"].includes(topic))return truncate(`📘 ${title(topic)} | Status: !${topic==="cores"?"core":topic} | Exact source: !info obtain <name> | Token help: !core tokens`,390);
+  return auraInfo([topic,query].filter(Boolean).join(" "));
 }
