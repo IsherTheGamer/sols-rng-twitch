@@ -272,28 +272,8 @@ const WALL_COMPONENT_BY_PATH: Record<CorePath, string> = {
   biome: "biome_lens",
   precision: "precision_filter",
   token: "token_amplifier",
-  anomaly: "instability_buffer",
+  anomaly: "null_processor",
 };
-
-function getAnomalyWallComponent(coreTier: number): string {
-  if (coreTier < 50) return "instability_buffer";
-  if (coreTier < 90) return "anomaly_compressor";
-  if (coreTier < 130) return "rift_decoder";
-  if (coreTier < 170) return "null_processor";
-  if (coreTier < 220) return "paradox_engine";
-  return "forbidden_singularity";
-}
-
-function getWallComponentForPath(
-  path: CorePath,
-  coreTier: number
-): string {
-  if (path === "anomaly") {
-    return getAnomalyWallComponent(coreTier);
-  }
-
-  return WALL_COMPONENT_BY_PATH[path];
-}
 
 const COMPONENT_FAMILIES = [
   "wire",
@@ -365,24 +345,12 @@ const LEGACY_RECIPE_ALIASES: Record<string, string> = {
   divergence_matrix: "divergence_matrix",
   realignment_matrix: "realignment_matrix",
   stability_lock: "stability_lock",
-  instability: "instability_buffer",
-  instability_buffer: "instability_buffer",
-  buffer: "instability_buffer",
   anomaly_compressor: "anomaly_compressor",
-  compressor: "anomaly_compressor",
-  rift: "rift_decoder",
-  rift_decoder: "rift_decoder",
-  decoder: "rift_decoder",
-  null: "null_processor",
-  null_processor: "null_processor",
-  paradox: "paradox_engine",
-  paradox_engine: "paradox_engine",
-  forbidden_singularity: "forbidden_singularity",
-  forbidden_core: "forbidden_singularity",
   support_regulator: "support_regulator",
   biome_lens: "biome_lens",
   precision_filter: "precision_filter",
   token_amplifier: "token_amplifier",
+  null_processor: "null_processor",
   stellar_regulator: "stellar_regulator",
 };
 
@@ -860,54 +828,12 @@ function buildComponentRecipes(): Record<string, ComponentRecipe> {
         components: { stabilizer_3: 1, plate_4: 2 },
       },
     },
-    instability_buffer: {
-      id: "instability_buffer",
-      name: "Instability Buffer",
-      outputAmount: 2,
-      costs: {
-        materials: {
-          circuit_scrap: 60,
-          signal_fragment: 12,
-          refined_alloy: 4,
-        },
-        components: {
-          circuit_board_1: 2,
-          processor_1: 1,
-          stabilizer_1: 1,
-        },
-      },
-    },
     anomaly_compressor: {
       id: "anomaly_compressor",
       name: "Anomaly Compressor",
-      outputAmount: 2,
       costs: {
-        materials: {
-          refined_alloy: 40,
-          stabilized_flux: 8,
-        },
-        components: {
-          instability_buffer: 1,
-          processor_2: 1,
-          conduit_2: 2,
-        },
-      },
-    },
-    rift_decoder: {
-      id: "rift_decoder",
-      name: "Rift Decoder",
-      outputAmount: 2,
-      costs: {
-        materials: {
-          stabilized_flux: 35,
-          quantum_residue: 6,
-          chrono_dust: 2,
-        },
-        components: {
-          anomaly_compressor: 1,
-          processor_4: 1,
-          matrix_4: 1,
-        },
+        materials: { anomaly_matter: 20, glitched_alloy: 10 },
+        components: { processor_4: 1, conduit_3: 2 },
       },
     },
     support_regulator: {
@@ -946,62 +872,10 @@ function buildComponentRecipes(): Record<string, ComponentRecipe> {
     null_processor: {
       id: "null_processor",
       name: "Null Processor",
-      outputAmount: 2,
       costs: {
-        materials: {
-          quantum_residue: 30,
-          reality_thread: 4,
-          dimensional_seal: 1,
-        },
-        components: {
-          rift_decoder: 1,
-          processor_6: 1,
-          matrix_6: 1,
-        },
-        tokens: {
-          anomaly_token: 1,
-        },
-      },
-    },
-    paradox_engine: {
-      id: "paradox_engine",
-      name: "Paradox Engine",
-      outputAmount: 2,
-      costs: {
-        materials: {
-          reality_thread: 18,
-          dimensional_seal: 6,
-          anomaly_matter: 2,
-          singularity_shard: 1,
-        },
-        components: {
-          null_processor: 1,
-          processor_8: 1,
-          matrix_8: 1,
-        },
-        tokens: {
-          anomaly_token: 1,
-        },
-      },
-    },
-    forbidden_singularity: {
-      id: "forbidden_singularity",
-      name: "Forbidden Singularity",
-      outputAmount: 2,
-      costs: {
-        materials: {
-          anomaly_matter: 20,
-          glitched_alloy: 5,
-          forbidden_circuit: 1,
-        },
-        components: {
-          paradox_engine: 1,
-          processor_9: 1,
-          matrix_9: 1,
-        },
-        tokens: {
-          anomaly_token: 2,
-        },
+        materials: { anomaly_matter: 25, forbidden_circuit: 3 },
+        components: { processor_5: 1, matrix_5: 1 },
+        tokens: { anomaly_token: 1 },
       },
     },
   } satisfies Record<string, ComponentRecipe>);
@@ -1498,7 +1372,7 @@ function getCoreRecipe(state: CoreSystemState, tier: number): ComponentRecipe {
   if (isWallCore(state, tier)) {
     costs.components = {
       ...(costs.components ?? {}),
-      [getWallComponentForPath(path, tier)]: 1,
+      [WALL_COMPONENT_BY_PATH[path]]: 1,
     };
     costs.tokens = {
       ...(costs.tokens ?? {}),
@@ -1545,7 +1419,7 @@ function getSubCoreRecipe(state: CoreSystemState): ComponentRecipe | null {
       components: {
         [`smd_resistor_${compTier}`]: Math.max(1, Math.ceil(nextTier / 18)),
         [`power_cell_${compTier}`]: Math.max(1, Math.ceil(nextTier / 35)),
-        [getWallComponentForPath(path, nextTier)]: 1,
+        [WALL_COMPONENT_BY_PATH[path]]: 1,
       },
       tokens: {
         wall_token: Math.max(1, Math.ceil(nextTier / 100)),
@@ -1593,10 +1467,7 @@ function getPathSwitchRecipe(state: CoreSystemState, targetPath: CorePath): Comp
       },
       components: {
         realignment_matrix: 1,
-        [getWallComponentForPath(
-          targetPath,
-          Math.max(PATH_SPLIT_CORE + 1, state.coreTier)
-        )]: Math.max(1, Math.ceil(scale / 5)),
+        [WALL_COMPONENT_BY_PATH[targetPath]]: Math.max(1, Math.ceil(scale / 5)),
       },
       tokens: {
         path_token: Math.max(1, Math.ceil(scale / 4)),
@@ -2636,14 +2507,7 @@ export async function formatCoreStatus(
   const state = await touchCoreState(channelId, user);
   const nextTier = Math.min(TOTAL_CORES, state.coreTier + 1);
   const bonus = getCoreLuckBonusPercent(state);
-  const wall = isWallCore(state, nextTier)
-    ? ` | Next wall: ${componentName(
-        getWallComponentForPath(
-          normalizePathForTier(state, nextTier),
-          nextTier
-        )
-      )}; Sub-Core available`
-    : "";
+  const wall = isWallCore(state, nextTier) ? " | Next wall: Sub-Core available" : "";
   const pathText = titleCase(state.corePath);
 
   if (nextTier > PATH_SPLIT_CORE && state.corePath === "universal") {

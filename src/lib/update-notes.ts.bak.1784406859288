@@ -1,7 +1,6 @@
 import { truncate } from "./format";
 
 const UPDATE_NOTES = [
-  "Anomaly path progression rebuilt: six staged wall components now scale from Core 16 to 250; early walls no longer require billion-rarity materials.",
   "Single-player reset dashboard added: preview and selectively wipe every player-owned system using CRON_SECRET, including a protected Full Player Reset.",
   "Claim reward visibility: quest claims, achievement claims, global quest activations, and box openings now show the exact items or currency granted.",
   "Discord Control Update: added /discord-test for safe fake aura announcements. Tests do not roll, consume HP/tokens, change stats, or touch player progression, and the embed ends with a small Test marker.",
