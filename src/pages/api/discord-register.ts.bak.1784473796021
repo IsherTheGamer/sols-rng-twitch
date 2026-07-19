@@ -41,7 +41,7 @@ const categoryChoices = [
 const solsCommand = {
   name: "sols",
   description:
-    "Twitch command runner, command browser and account linking",
+    "Sol's RNG command center, Twitch linking and administration",
   type: 1,
   integration_types: [...GLOBAL_COMMAND_INTEGRATIONS],
   contexts: [...GLOBAL_COMMAND_CONTEXTS],
@@ -170,6 +170,174 @@ const solsCommand = {
         },
       ],
     },
+    {
+      type: SUBCOMMAND,
+      name: "info",
+      description: "Read Sol's RNG bot information",
+      options: [
+        {
+          type: STRING,
+          name: "topic",
+          description:
+            "commands, aura, biome, materials, components, tokens, boxes...",
+          required: false,
+        },
+        {
+          type: STRING,
+          name: "query",
+          description: "Name or search value",
+          required: false,
+        },
+        {
+          type: INTEGER,
+          name: "page",
+          description: "Page number",
+          required: false,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
+      name: "update",
+      description: "View bot update notes",
+      options: [
+        {
+          type: INTEGER,
+          name: "page",
+          description: "Update page",
+          required: false,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
+      name: "material",
+      description:
+        "Learn exactly how an item is obtained",
+      options: [
+        {
+          type: STRING,
+          name: "name",
+          description:
+            "Material, token, box, or component ID",
+          required: false,
+        },
+        {
+          type: INTEGER,
+          name: "page",
+          description: "Page number",
+          required: false,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
+      name: "leaderboard",
+      description:
+        "View the Twitch all-time leaderboard",
+      options: [
+        {
+          type: STRING,
+          name: "mode",
+          description: "Leaderboard category",
+          required: false,
+          choices: [
+            { name: "Rolls", value: "rolls" },
+            { name: "Best aura", value: "best" },
+            {
+              name: "Best token/potion",
+              value: "token",
+            },
+            { name: "Level", value: "level" },
+            {
+              name: "Total rarity value",
+              value: "value",
+            },
+          ],
+        },
+        {
+          type: INTEGER,
+          name: "page",
+          description: "Page number",
+          required: false,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
+      name: "records",
+      description: "View channel records",
+    },
+    {
+      type: SUBCOMMAND,
+      name: "rollaccess",
+      description:
+        "Admin: manage the Twitch 10k-roll allowlist",
+      options: [
+        {
+          type: STRING,
+          name: "action",
+          description: "Action",
+          required: true,
+          choices: [
+            { name: "List", value: "list" },
+            { name: "Add", value: "add" },
+            { name: "Remove", value: "remove" },
+            { name: "Check", value: "check" },
+            { name: "Clear", value: "clear" },
+          ],
+        },
+        {
+          type: STRING,
+          name: "username",
+          description:
+            "Twitch username for add/remove/check",
+          required: false,
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
+      name: "alerts",
+      description:
+        "Admin: configure Discord webhook alerts",
+      options: [
+        {
+          type: STRING,
+          name: "action",
+          description: "Alert action",
+          required: true,
+          choices: [
+            { name: "Status", value: "status" },
+            { name: "Turn on", value: "on" },
+            { name: "Turn off", value: "off" },
+            { name: "Send test", value: "test" },
+            {
+              name: "Set aura rarity",
+              value: "aura",
+            },
+            {
+              name: "Add biome",
+              value: "biome-add",
+            },
+            {
+              name: "Remove biome",
+              value: "biome-remove",
+            },
+          ],
+        },
+        {
+          type: STRING,
+          name: "value",
+          description: "Rarity or biome ID",
+          required: false,
+        },
+      ],
+    },
   ],
 };
 
@@ -234,27 +402,6 @@ export default async function handler(
     solsCommand,
     ...TWITCH_COMMANDS.map(directCommand),
   ];
-
-  const allowedSolsUtilities = new Set([
-    "run",
-    "commands",
-    "link",
-    "unlink",
-    "whoami",
-  ]);
-
-  const unexpectedSolsSubcommands = solsCommand.options
-    .map((option) => option.name)
-    .filter((name) => !allowedSolsUtilities.has(name));
-
-  if (unexpectedSolsSubcommands.length > 0) {
-    return text(
-      res,
-      `❌ Duplicate /sols command entries detected: ${unexpectedSolsSubcommands.join(
-        ", "
-      )}`
-    );
-  }
 
   function validateRequiredOptionOrder(
     options: Array<Record<string, any>> | undefined,

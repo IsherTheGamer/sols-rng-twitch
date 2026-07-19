@@ -194,7 +194,7 @@ function subcommand(interaction: DiscordInteraction): {
   const option = interaction.data?.options?.[0];
 
   return {
-    name: option?.name ?? "commands",
+    name: option?.name ?? "info",
     options: option?.options ?? [],
   };
 }
@@ -571,6 +571,8 @@ export default async function handler(
   }
 
   const current = subcommand(interaction);
+  const channelId =
+    process.env.DEFAULT_CHANNEL_ID ?? "904797805";
 
   try {
     if (current.name === "run") {
@@ -620,9 +622,100 @@ export default async function handler(
       );
     }
 
+    if (current.name === "info") {
+      const topic = optionValue(
+        current.options,
+        "topic",
+        "help"
+      );
+      const query = optionValue(current.options, "query");
+      const page = optionValue(current.options, "page");
+
+      return respond(
+        res,
+        formatSolInfo(
+          [topic, query, page].filter(Boolean).join(" ")
+        )
+      );
+    }
+
+    if (current.name === "update") {
+      return respond(
+        res,
+        formatUpdateNotes(
+          optionValue(current.options, "page", "1")
+        )
+      );
+    }
+
+    if (current.name === "material") {
+      const name = optionValue(current.options, "name");
+      const page = optionValue(
+        current.options,
+        "page",
+        "1"
+      );
+
+      return respond(res, formatObtainGuide(name, page));
+    }
+
+    if (current.name === "leaderboard") {
+      const mode = optionValue(
+        current.options,
+        "mode",
+        "rolls"
+      );
+      const page = optionValue(
+        current.options,
+        "page",
+        "1"
+      );
+
+      return respond(
+        res,
+        await formatLeaderboard(channelId, `${mode} ${page}`)
+      );
+    }
+
+    if (current.name === "records") {
+      return respond(res, await formatRecords(channelId));
+    }
+
+    if (current.name === "rollaccess") {
+      if (!isDiscordAdmin(interaction)) {
+        return respond(
+          res,
+          "❌ Discord admin command locked. Add your Discord user ID to DISCORD_ADMIN_USER_IDS.",
+          true
+        );
+      }
+
+      return respond(
+        res,
+        await handleRollAccess(interaction, current.options),
+        true
+      );
+    }
+
+    if (current.name === "alerts") {
+      if (!isDiscordAdmin(interaction)) {
+        return respond(
+          res,
+          "❌ Discord admin command locked. Add your Discord user ID to DISCORD_ADMIN_USER_IDS.",
+          true
+        );
+      }
+
+      return respond(
+        res,
+        await handleAlerts(current.options),
+        true
+      );
+    }
+
     return respond(
       res,
-      "Unknown /sols utility. Use /sols commands or /sols run.",
+      "Unknown /sols subcommand.",
       true
     );
   } catch (error) {
