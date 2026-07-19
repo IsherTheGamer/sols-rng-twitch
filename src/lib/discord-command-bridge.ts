@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NextApiRequest } from "next";
 import {
   aliasSuggestionText,
@@ -436,8 +437,6 @@ export interface DiscordTwitchLink {
   linkedByDiscordUserId: string;
 }
 
-let redis: Redis | null | undefined;
-
 const DISCORD_LINK_CACHE_TTL_MS = 5 * 60 * 1000;
 const DISCORD_LINK_NEGATIVE_TTL_MS = 30 * 1000;
 const DISCORD_LINK_CACHE_MAX = 2000;
@@ -451,12 +450,7 @@ const DISCORD_LINK_CACHE = new Map<
 >();
 
 function getRedis(): Redis | null {
-  if (redis !== undefined) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  redis = url && token ? new Redis({ url, token }) : null;
-  return redis;
+  return getCoalescedRedis();
 }
 
 function scopedLinkKey(

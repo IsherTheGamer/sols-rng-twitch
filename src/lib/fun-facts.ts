@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 
 const INFO_SUFFIX = "Use !info for more info.";
 
@@ -27,18 +28,8 @@ const SOL_RNG_TIPS = [
   "Use !update to see the newest systems and balance changes.",
 ];
 
-let redis: Redis | null = null;
-
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 function indexKey(channelId: string): string {

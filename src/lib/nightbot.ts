@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NextApiRequest } from "next";
 
 export interface NightbotUser {
@@ -34,8 +35,6 @@ interface NightbotTokenResponse {
   scope: string;
 }
 
-let redis: Redis | null = null;
-
 function parseKv(header: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const part of header.split("&")) {
@@ -46,15 +45,7 @@ function parseKv(header: string): Record<string, string> {
 }
 
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 function normalizeChannelName(input: string | undefined | null): string {

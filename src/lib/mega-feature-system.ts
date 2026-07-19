@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NextApiRequest } from "next";
 import type { AuraDef } from "../types/data";
 import type { NightbotUser } from "./nightbot";
@@ -9,8 +10,6 @@ import { addServerBoost, getServerLuckMultiplier } from "./social-system";
 import { findEvent, events } from "./data";
 import { getChannelState, setChannelState } from "./state";
 import { getGlobalRolls, getGlobalLuck, getNextLuckMilestone } from "./global-stats";
-
-let redis: Redis | null = null;
 
 const MEGA_DISCORD_SETTINGS_CACHE = new Map<
   string,
@@ -29,12 +28,7 @@ const CHANNEL_EVENT_CACHE = new Map<
 >();
 
 function getRedis(): Redis | null {
-  if (redis) return redis;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 function clean(input: string | undefined | null): string {

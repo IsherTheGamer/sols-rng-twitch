@@ -1,21 +1,12 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NightbotUser } from "./nightbot";
 import { findPotion, potions } from "./data";
 import type { PotionDef } from "../types/data";
 import type { LevelReward } from "./levels";
 
-let redis: Redis | null = null;
-
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 export type TokenKind = "potion" | "percent_luck";

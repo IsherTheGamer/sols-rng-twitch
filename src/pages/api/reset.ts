@@ -1,20 +1,11 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "@/lib/redis-coalescer";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { text } from "@/lib/api-helpers";
 import { getChannelContext } from "@/lib/nightbot";
 
-let redis: Redis | null = null;
-
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 function getFirst(input: string | string[] | undefined): string | undefined {

@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NightbotUser } from "./nightbot";
 
 export interface DynamicRollAccessEntry {
@@ -13,8 +14,6 @@ const ROLL_ACCESS_MANAGER_IDS = new Set([
   "904797805", // zipittt
 ]);
 
-let redis: Redis | null = null;
-
 const DYNAMIC_ALLOWLIST_CACHE = new Map<
   string,
   { expiresAt: number; entries: DynamicRollAccessEntry[] }
@@ -22,15 +21,7 @@ const DYNAMIC_ALLOWLIST_CACHE = new Map<
 const DYNAMIC_ALLOWLIST_CACHE_MS = 5000;
 
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 export function normalizeRollAccessName(input: string | undefined | null): string {

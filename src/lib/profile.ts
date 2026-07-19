@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { AuraDef } from "../types/data";
 import type { NightbotChannel, NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
@@ -16,18 +17,8 @@ import {
   type WeeklyXpState,
 } from "./levels";
 
-let redis: Redis | null = null;
-
 function getRedis(): Redis | null {
-  if (redis) return redis;
-
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) return null;
-
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 export type ProfileTierId =
@@ -329,7 +320,22 @@ async function getIndexedProfileKeys(
 
   if (legacy.length > 0) {
     for (let index = 0; index < legacy.length; index += 500) {
-      await r.sadd(setKey, ...legacy.slice(index, index + 500));
+      const members = legacy.slice(
+        index,
+        index + 500
+      );
+      const [
+        firstMember,
+        ...remainingMembers
+      ] = members;
+
+      if (firstMember !== undefined) {
+        await r.sadd(
+          setKey,
+          firstMember,
+          ...remainingMembers
+        );
+      }
     }
   }
 

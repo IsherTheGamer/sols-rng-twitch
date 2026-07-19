@@ -1,4 +1,5 @@
-import { Redis } from "@upstash/redis";
+import type { Redis } from "@upstash/redis";
+import { getCoalescedRedis } from "./redis-coalescer";
 import type { NightbotUser } from "./nightbot";
 import { getCoreState, saveCoreState } from "./core-system";
 import { findEvent, events } from "./data";
@@ -12,14 +13,8 @@ import {
 } from "./fuzzy-alias";
 import { initialism } from "./abbreviations";
 
-let redis: Redis | null = null;
 function getRedis(): Redis | null {
-  if (redis) return redis;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
-  return redis;
+  return getCoalescedRedis();
 }
 
 function clean(value: string | undefined | null): string {
