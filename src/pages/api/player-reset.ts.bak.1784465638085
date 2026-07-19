@@ -346,17 +346,6 @@ function resetProfileFields(
   profile.updatedAt = Date.now();
 }
 
-function resetLeaderboardProfileFields(profile: Record<string, any>): void {
-  profile.rolls = 0;
-  profile.tokenRolls = 0;
-  profile.potionRolls = 0;
-  profile.rarityTotal = 0;
-  profile.bestAura = null;
-  profile.bestTokenAura = null;
-  profile.bestPotionAura = null;
-  profile.updatedAt = Date.now();
-}
-
 function resetInventoryFields(
   inventory: Record<string, any>,
   selected: Set<ResetOption>
@@ -474,7 +463,7 @@ function optionDescription(option: ResetOption): string {
     profile_highest_tier: "Reset highest tier/rank.",
     profile_best_aura: "Reset best normal aura.",
     profile_best_token: "Reset best token/potion aura.",
-    profile_index: "Remove player from the profile lookup index only.",
+    profile_index: "Remove player from profile lookup/standard leaderboard index.",
     inventory_tokens: "Delete stored roll/potion tokens.",
     inventory_active_buffs: "Delete active and queued token effects.",
     inventory_pending_grants: "Delete username-based pending token grants.",
@@ -512,7 +501,7 @@ function optionDescription(option: ResetOption): string {
     quest_period_claims: "Delete personal/global period quest claim keys.",
     quest_npc_claims: "Remove NPC quest claimed-by markers.",
     mega_luck_history: "Delete stored best-luck history.",
-    leaderboard_channel_periods: "Reset all channel leaderboard values and remove channel period rows.",
+    leaderboard_channel_periods: "Remove player rows from channel period leaderboards.",
     leaderboard_global_periods: "Remove player rows from cross-channel period leaderboards.",
     records_replay: "Remove player from rare-pull replay history.",
     records_slots: "Clear channel record slots owned by player.",
@@ -523,84 +512,6 @@ function optionDescription(option: ResetOption): string {
   };
 
   return descriptions[option];
-}
-
-
-function periodLeaderboardRowMatches(
-  rowKey: string,
-  entry: Record<string, any> | null | undefined,
-  target: TargetPlayer,
-  global: boolean
-): boolean {
-  const expectedKey = global
-    ? `${target.channelId}:${target.userId}`
-    : target.userId;
-
-  if (rowKey === expectedKey) return true;
-
-  if (
-    global &&
-    rowKey.startsWith(`${target.channelId}:`) &&
-    rowKey.endsWith(`:${target.userId}`)
-  ) {
-    return true;
-  }
-
-  const storedId = String(entry?.id ?? entry?.userId ?? "").trim();
-  if (
-    storedId === expectedKey ||
-    storedId === target.userId ||
-    storedId === `${target.channelId}:${target.userId}`
-  ) {
-    return true;
-  }
-
-  const rawName = String(
-    entry?.name ??
-      entry?.userName ??
-      entry?.username ??
-      entry?.displayName ??
-      ""
-  );
-  const nameTail = rawName.includes("/")
-    ? rawName.split("/").pop() ?? rawName
-    : rawName;
-
-  return (
-    Boolean(target.username) &&
-    normalizeUsername(nameTail) === target.username
-  );
-}
-
-async function countPeriodLeaderboardRows(
-  r: Redis,
-  target: TargetPlayer,
-  global: boolean
-): Promise<number> {
-  const pattern = global
-    ? "mega:gstats:*"
-    : `mega:stats:${target.channelId}:*`;
-
-  const keys = await keysByPattern(r, pattern);
-  const values = await mgetValues(r, keys);
-  let matches = 0;
-
-  for (const stats of values) {
-    for (const [rowKey, entry] of Object.entries(stats?.users ?? {})) {
-      if (
-        periodLeaderboardRowMatches(
-          rowKey,
-          entry as Record<string, any>,
-          target,
-          global
-        )
-      ) {
-        matches++;
-      }
-    }
-  }
-
-  return matches;
 }
 
 async function buildPlan(
@@ -673,24 +584,6 @@ async function buildPlan(
   const valueByKey = new Map<string, any>(
     sharedKeys.map((key, index) => [key, values[index]])
   );
-
-  const profileIndexMatches = (
-    (valueByKey.get(keys.profileIndex) as string[] | null) ?? []
-  ).filter(
-    (entry) =>
-      entry === target.profileKey ||
-      entry.endsWith(`:${target.userId}`)
-  ).length;
-
-  const [channelLeaderboardMatches, globalLeaderboardMatches] =
-    await Promise.all([
-      options.includes("leaderboard_channel_periods")
-        ? countPeriodLeaderboardRows(r, target, false)
-        : Promise.resolve(0),
-      options.includes("leaderboard_global_periods")
-        ? countPeriodLeaderboardRows(r, target, true)
-        : Promise.resolve(0),
-    ]);
 
   const items: ResetPlanItem[] = options.map((option) => {
     let key = "player object";
@@ -765,15 +658,15 @@ async function buildPlan(
     }
 
     if (option === "leaderboard_channel_periods") {
-      key = `profiles:${channelId}:keys + mega:stats:${channelId}:*`;
+      key = `mega:stats:${channelId}:*`;
       kind = "shared";
-      matches = profileIndexMatches + channelLeaderboardMatches;
+      matches = 0;
     }
 
     if (option === "leaderboard_global_periods") {
       key = "mega:gstats:*";
       kind = "shared";
-      matches = globalLeaderboardMatches;
+      matches = 0;
     }
 
     if (option === "records_replay") {
@@ -845,8 +738,7 @@ async function buildPlan(
   const notes = [
     "Aura discoveries from !first/!firsts are player-owned and can be removed independently.",
     "Biome firsts are channel-owned in the current schema and do not store a player ID, so they are intentionally preserved.",
-    "All channel leaderboards also reset the profile values used by !leaderboard and all-time !lb, preventing old totals from returning after one new roll.",
-    "Period cleanup removes only the player rows. Channel/global aggregate quest totals are preserved so other viewers are not punished.",
+    "Period leaderboard cleanup removes only the player's row. Channel/global aggregate quest totals are preserved so other viewers are not punished.",
     "Full Player Reset does not delete global rolls, biome/event state, Discord settings, server boosts, Black Market state, or other viewers.",
   ];
 
@@ -862,28 +754,11 @@ async function buildPlan(
 async function removeProfileIndex(
   r: Redis,
   target: TargetPlayer
-): Promise<number> {
+): Promise<void> {
   const key = `profiles:${target.channelId}:keys`;
   const list = (await r.get<string[]>(key)) ?? [];
-  const values = await mgetValues(r, list);
-
-  const next = list.filter((entry, index) => {
-    const profile = values[index] as Record<string, any> | null;
-    const entryUserId = cleanId(entry.split(":").pop());
-    const profileUserId = cleanId(profile?.userId);
-    const profileUsername = normalizeUsername(profile?.displayName);
-
-    return !(
-      entry === target.profileKey ||
-      entryUserId === target.userId ||
-      profileUserId === target.userId ||
-      (Boolean(target.username) && profileUsername === target.username)
-    );
-  });
-
-  const removed = list.length - next.length;
-  if (removed > 0) await r.set(key, next);
-  return removed;
+  const next = list.filter((entry) => entry !== target.profileKey);
+  if (next.length !== list.length) await r.set(key, next);
 }
 
 async function resetPeriodLeaderboards(
@@ -900,46 +775,36 @@ async function resetPeriodLeaderboards(
   const writes: Record<string, any> = {};
   let changed = 0;
 
+  const userKey = global
+    ? `${target.channelId}:${target.userId}`
+    : target.userId;
+
   for (let index = 0; index < keys.length; index++) {
     const stats = values[index];
-    if (!stats?.users) continue;
+    if (!stats?.users?.[userKey]) continue;
 
-    let removedFromTable = 0;
+    delete stats.users[userKey];
 
-    for (const [rowKey, entry] of Object.entries(stats.users)) {
-      if (
-        periodLeaderboardRowMatches(
-          rowKey,
-          entry as Record<string, any>,
-          target,
-          global
-        )
-      ) {
-        delete stats.users[rowKey];
-        removedFromTable++;
-      }
+    if (stats.bestAura?.user) {
+      const remainingBestUser = Object.values(stats.users)
+        .filter((entry: any) => entry?.bestAura)
+        .sort(
+          (a: any, b: any) =>
+            b.bestAura.rarity - a.bestAura.rarity
+        )[0] as any;
+
+      stats.bestAura = remainingBestUser
+        ? {
+            name: remainingBestUser.bestAura.name,
+            rarity: remainingBestUser.bestAura.rarity,
+            user: remainingBestUser.name,
+          }
+        : undefined;
     }
-
-    if (removedFromTable === 0) continue;
-
-    const remainingBestUser = Object.values(stats.users)
-      .filter((entry: any) => entry?.bestAura)
-      .sort(
-        (a: any, b: any) =>
-          b.bestAura.rarity - a.bestAura.rarity
-      )[0] as any;
-
-    stats.bestAura = remainingBestUser
-      ? {
-          name: remainingBestUser.bestAura.name,
-          rarity: remainingBestUser.bestAura.rarity,
-          user: remainingBestUser.name,
-        }
-      : undefined;
 
     stats.updatedAt = Date.now();
     writes[keys[index]] = stats;
-    changed += removedFromTable;
+    changed++;
   }
 
   if (Object.keys(writes).length > 0) await r.mset(writes);
@@ -1044,15 +909,6 @@ async function executePlan(
   }
 
   if (
-    profile &&
-    selected.has("leaderboard_channel_periods") &&
-    !deletes.has(keys.profile)
-  ) {
-    resetLeaderboardProfileFields(profile);
-    writes[keys.profile] = profile;
-  }
-
-  if (
     inventory &&
     INVENTORY_OPTIONS.some((option) => selected.has(option))
   ) {
@@ -1086,7 +942,8 @@ async function executePlan(
   }
 
   if (selected.has("profile_index")) {
-    sharedChanges += await removeProfileIndex(r, target);
+    await removeProfileIndex(r, target);
+    sharedChanges++;
   }
 
   if (selected.has("inventory_pending_grants") && target.username) {
@@ -1260,7 +1117,6 @@ async function executePlan(
   }
 
   if (selected.has("leaderboard_channel_periods")) {
-    sharedChanges += await removeProfileIndex(r, target);
     sharedChanges += await resetPeriodLeaderboards(r, target, false);
   }
 
