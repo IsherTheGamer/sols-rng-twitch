@@ -11,23 +11,6 @@ const INTEGER = 4;
 const BOOLEAN = 5;
 const USER = 6;
 
-const GUILD_INSTALL = 0;
-const USER_INSTALL = 1;
-const GUILD_CONTEXT = 0;
-const BOT_DM_CONTEXT = 1;
-const PRIVATE_CHANNEL_CONTEXT = 2;
-
-const GLOBAL_COMMAND_INTEGRATIONS = [
-  GUILD_INSTALL,
-  USER_INSTALL,
-] as const;
-
-const GLOBAL_COMMAND_CONTEXTS = [
-  GUILD_CONTEXT,
-  BOT_DM_CONTEXT,
-  PRIVATE_CHANNEL_CONTEXT,
-] as const;
-
 const categoryChoices = [
   { name: "All commands", value: "all" },
   { name: "Progression", value: "progression" },
@@ -43,8 +26,6 @@ const solsCommand = {
   description:
     "Sol's RNG command center, Twitch linking and administration",
   type: 1,
-  integration_types: [...GLOBAL_COMMAND_INTEGRATIONS],
-  contexts: [...GLOBAL_COMMAND_CONTEXTS],
   options: [
     {
       type: SUBCOMMAND,
@@ -274,6 +255,25 @@ const solsCommand = {
     },
     {
       type: SUBCOMMAND,
+      name: "firsts",
+      description:
+        "View first aura or biome discoveries",
+      options: [
+        {
+          type: STRING,
+          name: "mode",
+          description: "Discovery type",
+          required: false,
+          choices: [
+            { name: "Auras", value: "auras" },
+            { name: "Biomes", value: "biomes" },
+            { name: "Latest", value: "latest" },
+          ],
+        },
+      ],
+    },
+    {
+      type: SUBCOMMAND,
       name: "rollaccess",
       description:
         "Admin: manage the Twitch 10k-roll allowlist",
@@ -351,8 +351,6 @@ function directCommand(
       100
     ),
     type: 1,
-    integration_types: [...GLOBAL_COMMAND_INTEGRATIONS],
-    contexts: [...GLOBAL_COMMAND_CONTEXTS],
     options: [
       {
         type: STRING,
@@ -391,10 +389,10 @@ export default async function handler(
   const guildId = process.env.DISCORD_GUILD_ID;
   const botToken = process.env.DISCORD_BOT_TOKEN;
 
-  if (!applicationId || !botToken) {
+  if (!applicationId || !guildId || !botToken) {
     return text(
       res,
-      "❌ Missing DISCORD_APPLICATION_ID or DISCORD_BOT_TOKEN in Vercel."
+      "❌ Missing DISCORD_APPLICATION_ID, DISCORD_GUILD_ID, or DISCORD_BOT_TOKEN in Vercel."
     );
   }
 
@@ -448,72 +446,43 @@ export default async function handler(
   if (commands.length > 100) {
     return text(
       res,
-      `❌ Discord supports at most 100 global chat commands; generated ${commands.length}.`
+      `❌ Discord supports at most 100 guild commands; generated ${commands.length}.`
     );
   }
 
-  const globalUrl =
-    `https://discord.com/api/v10/applications/${applicationId}/commands`;
-
-  const headers = {
-    Authorization: `Bot ${botToken}`,
-    "Content-Type": "application/json",
-  };
+  const url =
+    `https://discord.com/api/v10/applications/${applicationId}` +
+    `/guilds/${guildId}/commands`;
 
   try {
-    const response = await fetch(globalUrl, {
+    const response = await fetch(url, {
       method: "PUT",
-      headers,
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(commands),
     });
 
     const body = await response.text();
 
     if (!response.ok) {
-      const installHint =
-        response.status === 400
-          ? " In Discord Developer Portal → Installation, enable both User Install and Guild Install before registering."
-          : "";
-
       return text(
         res,
-        `❌ Global Discord command registration failed: HTTP ${
+        `❌ Discord command registration failed: HTTP ${
           response.status
-        } ${body.slice(0, 300)}${installHint}`
+        } ${body.slice(0, 220)}`
       );
-    }
-
-    let cleanupMessage = "";
-
-    if (guildId) {
-      const legacyGuildUrl =
-        `https://discord.com/api/v10/applications/${applicationId}` +
-        `/guilds/${guildId}/commands`;
-
-      const cleanupResponse = await fetch(legacyGuildUrl, {
-        method: "PUT",
-        headers,
-        body: "[]",
-      });
-
-      if (cleanupResponse.ok) {
-        cleanupMessage =
-          " Legacy guild-only commands were cleared.";
-      } else {
-        const cleanupBody = await cleanupResponse.text();
-        cleanupMessage =
-          ` Warning: global commands registered, but legacy guild cleanup returned HTTP ${cleanupResponse.status}: ${cleanupBody.slice(0, 120)}`;
-      }
     }
 
     return text(
       res,
-      `✅ Registered /sols plus ${TWITCH_COMMANDS.length} direct commands globally for Guild Install + User Install (${commands.length} total).${cleanupMessage}`
+      `✅ Registered /sols plus ${TWITCH_COMMANDS.length} direct Twitch commands (${commands.length} total).`
     );
   } catch (error) {
     return text(
       res,
-      `❌ Global Discord command registration failed: ${
+      `❌ Discord command registration failed: ${
         error instanceof Error ? error.message : String(error)
       }`
     );

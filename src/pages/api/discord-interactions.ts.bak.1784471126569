@@ -8,6 +8,7 @@ import { formatObtainGuide } from "@/lib/progression-info";
 import { formatLeaderboard } from "@/lib/social-system";
 import {
   formatDcAlerts,
+  formatFirsts,
   formatRecords,
 } from "@/lib/mega-feature-system";
 import {
@@ -175,13 +176,6 @@ function adminIds(): Set<string> {
 function isDiscordAdmin(interaction: DiscordInteraction): boolean {
   const user = getUser(interaction);
   if (!user || !adminIds().has(user.id)) return false;
-
-  const guildOnly =
-    (process.env.DISCORD_ADMIN_GUILD_ONLY ?? "false")
-      .trim()
-      .toLowerCase() === "true";
-
-  if (!guildOnly) return true;
 
   const configuredGuild = process.env.DISCORD_GUILD_ID;
   return !configuredGuild || interaction.guild_id === configuredGuild;
@@ -679,6 +673,16 @@ export default async function handler(
 
     if (current.name === "records") {
       return respond(res, await formatRecords(channelId));
+    }
+
+    if (current.name === "firsts") {
+      return respond(
+        res,
+        await formatFirsts(
+          channelId,
+          optionValue(current.options, "mode", "auras")
+        )
+      );
     }
 
     if (current.name === "rollaccess") {

@@ -447,16 +447,19 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-function scopedLinkKey(
+function guildScope(guildId: string | undefined | null): string {
+  return (
+    String(guildId ?? "").trim() ||
+    String(process.env.DISCORD_GUILD_ID ?? "").trim() ||
+    "global"
+  );
+}
+
+function linkKey(
   guildId: string | undefined | null,
   discordUserId: string
 ): string {
-  const scope = String(guildId ?? "").trim() || "global";
-  return `discord:twitch-link:${scope}:${discordUserId}`;
-}
-
-function globalLinkKey(discordUserId: string): string {
-  return `discord:twitch-link:global:${discordUserId}`;
+  return `discord:twitch-link:${guildScope(guildId)}:${discordUserId}`;
 }
 
 function cleanDiscordId(raw: string): string {
@@ -475,25 +478,6 @@ function cleanTwitchUsername(raw: string): string {
     .replace(/[^a-z0-9_]/g, "");
 }
 
-function linkCandidateKeys(
-  guildId: string | undefined | null,
-  discordUserId: string
-): string[] {
-  const keys = [
-    globalLinkKey(discordUserId),
-    scopedLinkKey(guildId, discordUserId),
-  ];
-
-  const configuredGuild =
-    String(process.env.DISCORD_GUILD_ID ?? "").trim();
-
-  if (configuredGuild) {
-    keys.push(scopedLinkKey(configuredGuild, discordUserId));
-  }
-
-  return [...new Set(keys)];
-}
-
 export async function getDiscordTwitchLink(
   guildId: string | undefined | null,
   discordUserId: string
@@ -502,27 +486,7 @@ export async function getDiscordTwitchLink(
   const cleanDiscord = cleanDiscordId(discordUserId);
 
   if (!r || !cleanDiscord) return null;
-
-  const globalKey = globalLinkKey(cleanDiscord);
-
-  for (const key of linkCandidateKeys(guildId, cleanDiscord)) {
-    const link = await r.get<DiscordTwitchLink>(key);
-    if (!link) continue;
-
-    const portableLink: DiscordTwitchLink = {
-      ...link,
-      guildId: "global",
-      discordUserId: cleanDiscord,
-    };
-
-    if (key !== globalKey) {
-      await r.set(globalKey, portableLink);
-    }
-
-    return portableLink;
-  }
-
-  return null;
+  return r.get<DiscordTwitchLink>(linkKey(guildId, cleanDiscord));
 }
 
 export async function setDiscordTwitchLink(input: {
@@ -545,19 +509,17 @@ export async function setDiscordTwitchLink(input: {
   if (!twitchUsername) throw new Error("Enter the Twitch username.");
 
   const link: DiscordTwitchLink = {
-    guildId: "global",
+    guildId: guildScope(input.guildId),
     discordUserId,
     twitchUserId,
     twitchUsername,
     twitchDisplayName:
       input.twitchDisplayName?.trim() || input.twitchUsername.trim(),
     linkedAt: Date.now(),
-    linkedByDiscordUserId: cleanDiscordId(
-      input.linkedByDiscordUserId
-    ),
+    linkedByDiscordUserId: cleanDiscordId(input.linkedByDiscordUserId),
   };
 
-  await r.set(globalLinkKey(discordUserId), link);
+  await r.set(linkKey(input.guildId, discordUserId), link);
   return link;
 }
 
@@ -570,18 +532,11 @@ export async function removeDiscordTwitchLink(
 
   if (!r || !cleanDiscord) return false;
 
-  const keys = linkCandidateKeys(guildId, cleanDiscord);
-  let found = false;
+  const key = linkKey(guildId, cleanDiscord);
+  const existing = await r.get<DiscordTwitchLink>(key);
+  if (!existing) return false;
 
-  for (const key of keys) {
-    if (await r.get<DiscordTwitchLink>(key)) {
-      found = true;
-    }
-  }
-
-  if (!found) return false;
-
-  await r.del(...keys);
+  await r.del(key);
   return true;
 }
 
