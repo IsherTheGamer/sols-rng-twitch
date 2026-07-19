@@ -6,6 +6,11 @@ import devEventsData from "../../data/dev-events.json";
 import devicesData from "../../data/devices.json";
 import auraAnnouncementsData from "../../data/aura-announcements.json";
 import type { AuraDef, BiomeDef, PotionDef } from "../types/data";
+import {
+  resolveAlias,
+  type AliasCandidate,
+  type AliasResolution,
+} from "./fuzzy-alias";
 
 export const auras: AuraDef[] = aurasData.auras as AuraDef[];
 export const biomes: BiomeDef[] = biomesData.biomes as BiomeDef[];
@@ -36,72 +41,144 @@ export const POTION_COOLDOWN_TIERS = potionsData.cooldownTiers as Array<{
 export const biomeMap = new Map(biomes.map((b) => [b.id, b]));
 export const auraMap = new Map(auras.map((a) => [a.id, a]));
 
-export function findBiome(id: string): BiomeDef | undefined {
-  const norm = id.toLowerCase().replace(/\s+/g, "_");
+function candidates<T>(
+  items: readonly T[],
+  fields: (item: T) => {
+    id: string;
+    label: string;
+    aliases?: readonly string[];
+  }
+): AliasCandidate<T>[] {
+  return items.map((item) => {
+    const entry = fields(item);
+    return {
+      id: entry.id,
+      label: entry.label,
+      aliases: entry.aliases,
+      value: item,
+    };
+  });
+}
 
-  return (
-    biomeMap.get(norm) ??
-    biomes.find(
-      (b) => b.id === norm || b.name.toLowerCase() === id.toLowerCase()
-    )
-  );
+const BIOME_CANDIDATES = candidates(biomes, (biome) => ({
+  id: biome.id,
+  label: biome.name,
+  aliases: [biome.id.replace(/_/g, " ")],
+}));
+
+const AURA_CANDIDATES = candidates(auras, (aura) => ({
+  id: aura.id,
+  label: aura.name,
+  aliases: [
+    aura.id.replace(/_/g, " "),
+    aura.name.replace(/:/g, " "),
+  ],
+}));
+
+const POTION_CANDIDATES = candidates(potions, (potion) => ({
+  id: potion.id,
+  label: potion.name,
+  aliases: [potion.id.replace(/_/g, " "), ...(potion.aliases ?? [])],
+}));
+
+const EVENT_CANDIDATES = candidates(events, (event) => ({
+  id: event.id,
+  label: event.name,
+  aliases: [event.id.replace(/_/g, " "), ...((event.aliases ?? []) as string[])],
+}));
+
+const DEV_CANDIDATES = candidates(devEvents, (dev) => ({
+  id: dev.id,
+  label: (dev as { name?: string }).name ?? dev.id.replace(/_/g, " "),
+  aliases: [dev.id.replace(/_/g, " "), ...((dev.aliases ?? []) as string[])],
+}));
+
+const DEVICE_CANDIDATES = candidates(devices, (device) => ({
+  id: device.id,
+  label: device.name,
+  aliases: [device.id.replace(/_/g, " "), ...((device.aliases ?? []) as string[])],
+}));
+
+export function resolveBiome(query: string): AliasResolution<BiomeDef> {
+  return resolveAlias(query, BIOME_CANDIDATES, {
+    maxScore: 0.3,
+    ambiguityGap: 0.06,
+  });
+}
+
+export function resolveAuraByQuery(query: string): AliasResolution<AuraDef> {
+  return resolveAlias(query, AURA_CANDIDATES, {
+    maxScore: 0.27,
+    ambiguityGap: 0.075,
+  });
+}
+
+export function resolvePotion(query: string): AliasResolution<PotionDef> {
+  return resolveAlias(query, POTION_CANDIDATES, {
+    maxScore: 0.29,
+    ambiguityGap: 0.075,
+  });
+}
+
+export function resolveEvent(
+  query: string
+): AliasResolution<(typeof events)[number]> {
+  return resolveAlias(query, EVENT_CANDIDATES, {
+    maxScore: 0.28,
+    ambiguityGap: 0.075,
+  });
+}
+
+export function resolveDevBiome(
+  query: string
+): AliasResolution<(typeof devEvents)[number]> {
+  return resolveAlias(query, DEV_CANDIDATES, {
+    maxScore: 0.29,
+    ambiguityGap: 0.075,
+  });
+}
+
+export function resolveDevice(
+  query: string
+): AliasResolution<(typeof devices)[number]> {
+  return resolveAlias(query, DEVICE_CANDIDATES, {
+    maxScore: 0.3,
+    ambiguityGap: 0.075,
+  });
+}
+
+// Backward-compatible find helpers. Ambiguous input intentionally returns
+// undefined, preventing expensive or moderator actions from guessing.
+export function findBiome(query: string): BiomeDef | undefined {
+  const result = resolveBiome(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }
 
 export function findAuraByQuery(query: string): AuraDef | undefined {
-  const q = query.toLowerCase().trim();
-
-  const asId = q
-    .replace(/[:\s]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-
-  return auras.find(
-    (a) =>
-      a.id === asId ||
-      a.id === q.replace(/\s+/g, "_") ||
-      a.name.toLowerCase() === q ||
-      a.name.toLowerCase().replace(/[^a-z0-9]/gi, "") ===
-        q.replace(/[^a-z0-9]/gi, "")
-  );
+  const result = resolveAuraByQuery(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }
 
 export function findPotion(query: string): PotionDef | undefined {
-  const q = query.toLowerCase().trim();
-
-  return potions.find(
-    (p) =>
-      p.id === q ||
-      p.aliases.some((a) => a === q) ||
-      p.name.toLowerCase() === q
-  );
+  const result = resolvePotion(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }
 
-export function findEvent(query: string): typeof events[0] | undefined {
-  const q = query.toLowerCase().trim();
-
-  return events.find(
-    (e) =>
-      e.id === q ||
-      e.aliases.some((a) => a === q) ||
-      e.name.toLowerCase() === q
-  );
+export function findEvent(query: string): (typeof events)[number] | undefined {
+  const result = resolveEvent(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }
 
-export function findDevBiome(query: string): typeof devEvents[0] | undefined {
-  const q = query.toLowerCase().trim();
-
-  return devEvents.find(
-    (d) => d.id === q || d.aliases.some((a) => a === q)
-  );
+export function findDevBiome(
+  query: string
+): (typeof devEvents)[number] | undefined {
+  const result = resolveDevBiome(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }
 
-export function findDevice(query: string): typeof devices[0] | undefined {
-  const q = query.toLowerCase().trim();
-
-  return devices.find(
-    (d) =>
-      d.id === q ||
-      d.aliases.some((a) => a === q) ||
-      d.name.toLowerCase() === q
-  );
+export function findDevice(
+  query: string
+): (typeof devices)[number] | undefined {
+  const result = resolveDevice(query);
+  return result.status === "matched" ? result.match.value : undefined;
 }

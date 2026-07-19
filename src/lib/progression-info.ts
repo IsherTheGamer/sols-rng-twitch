@@ -1,4 +1,16 @@
 import { truncate } from "./format";
+import {
+  CORE_PATHS,
+  resolveBox,
+  resolveCorePath,
+  resolveCoreToken,
+  resolveCraftItem,
+} from "./command-aliases";
+import {
+  aliasSuggestionText,
+  resolveAlias,
+  type AliasCandidate,
+} from "./fuzzy-alias";
 
 interface GuideEntry {
   id: string;
@@ -23,7 +35,7 @@ const MATERIALS: GuideEntry[] = [
   { id:"stellar_ink", name:"Stellar Ink", aliases:["stellar","ink"], obtain:"Any 1/75,000,000+ aura.", use:"Biome, blueprint, and stellar crafting." },
   { id:"reality_thread", name:"Reality Thread", aliases:["reality","thread"], obtain:"Any 1/100,000,000+ aura; weekly rare quest; Reactor Boxes.", use:"Tier 8+ crafting and Core 130–219 path walls." },
   { id:"dimensional_seal", name:"Dimensional Seal", aliases:["seal","dimensional"], obtain:"Any 1/250,000,000+ aura; Anomaly Boxes.", use:"Late path-wall and dimensional recipes." },
-  { id:"anomaly_matter", name:"Anomaly Matter", aliases:["anomaly"], obtain:"Any 1/500,000,000+ aura; Anomaly Boxes; Dev Boxes.", use:"Core 170+ path walls and anomaly crafting." },
+  { id:"anomaly_matter", name:"Anomaly Matter", aliases:["anomaly","anomoly"], obtain:"Any 1/500,000,000+ aura; Anomaly Boxes; Dev Boxes.", use:"Core 170+ path walls and anomaly crafting." },
   { id:"singularity_shard", name:"Singularity Shard", aliases:["singularity","shard"], obtain:"Any 1/1,000,000,000+ aura.", use:"Core 170+ wall components and singularity recipes." },
   { id:"glitched_alloy", name:"Glitched Alloy", aliases:["glitched"], obtain:"Any 1/1,000,000,000+ aura.", use:"Final Core 220–250 path-wall components." },
   { id:"forbidden_circuit", name:"Forbidden Circuit", aliases:["forbidden"], obtain:"Any 1/5,000,000,000+ aura; Anomaly Boxes.", use:"Only final Core 220–250 wall components and Forbidden recipes." },
@@ -40,7 +52,7 @@ const TOKENS: GuideEntry[] = [
   { id:"crafting_token", name:"Crafting Token", aliases:["crafting","craft"], obtain:"Daily Crafting quest and Quest Boxes.", use:"Activate a 25% discount on your next successful component craft.", command:"!core token use crafting" },
   { id:"quest_token", name:"Quest Token", aliases:["quest"], obtain:"Daily Rolling, Starter/Quest Boxes, rare quests, and path bonuses.", use:"Instantly adds 25% progress to one unfinished daily/weekly Core quest.", command:"!core token use quest" },
   { id:"wall_token", name:"Wall Token", aliases:["wall"], obtain:"Weekly Core quest, Core achievements, Core/Anomaly/Dev Boxes.", use:"Consumed automatically by randomized wall Cores and Sub-Cores.", command:"!core token wall" },
-  { id:"anomaly_token", name:"Anomaly Token", aliases:["anomaly"], obtain:"Anomaly Boxes and late anomaly progression.", use:"Consumed automatically by Core 130+ Anomaly wall components.", command:"!core token anomaly" },
+  { id:"anomaly_token", name:"Anomaly Token", aliases:["anomaly","anomoly"], obtain:"Anomaly Boxes and late anomaly progression.", use:"Consumed automatically by Core 130+ Anomaly wall components.", command:"!core token anomaly" },
 ];
 
 const BOXES: GuideEntry[] = [
@@ -48,7 +60,7 @@ const BOXES: GuideEntry[] = [
   { id:"core_box", name:"Core Box", aliases:["core"], obtain:"Every 10th Core, weekly Core quests, and milestones.", use:"Refined Alloy, Stabilized Flux, Recipe Tokens, and possible Wall Tokens.", command:"!box open core" },
   { id:"quest_box", name:"Quest Box", aliases:["quest"], obtain:"Daily Rare Hunt, roll achievements, and quest rewards.", use:"Signal Fragments, Refined Alloy, Quest Tokens, and Crafting Tokens.", command:"!box open quest" },
   { id:"reactor_box", name:"Reactor Box", aliases:["reactor"], obtain:"Reactor story, achievement, and reactor rewards.", use:"Quantum Residue, Reality Thread, Reactor Tokens, and Recipe Tokens.", command:"!box open reactor" },
-  { id:"anomaly_box", name:"Anomaly Box", aliases:["anomaly"], obtain:"Core 100 rewards and late progression.", use:"Anomaly Matter, Dimensional Seals, Forbidden Circuits, and Anomaly Tokens.", command:"!box open anomaly" },
+  { id:"anomaly_box", name:"Anomaly Box", aliases:["anomaly","anomoly"], obtain:"Core 100 rewards and late progression.", use:"Anomaly Matter, Dimensional Seals, Forbidden Circuits, and Anomaly Tokens.", command:"!box open anomaly" },
   { id:"dev_box", name:"Dev Box", aliases:["dev"], obtain:"Developer/admin rewards only.", use:"Debug and late-game materials/tokens.", command:"!box open dev" },
 ];
 
@@ -70,25 +82,54 @@ const PATH_LADDERS: Record<string, string[]> = {
 };
 const PATH_RANGES = ["Core 16–49","Core 50–89","Core 90–129","Core 130–169","Core 170–219","Core 220–250"];
 
-function normalize(input:string|undefined|null){return(input??"").toLowerCase().trim().replace(/^!+/,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");}
 function titleCase(input:string){return input.split(/[_\-\s:]+/g).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(" ");}
-function findEntry(entries:GuideEntry[],raw:string){const q=normalize(raw);if(!q)return undefined;return entries.find(e=>[e.id,e.name,...(e.aliases??[])].map(normalize).some(v=>v===q||v.replace(/_/g,"")===q.replace(/_/g,"")));}
 function page(raw:string|undefined,total:number){const n=Number(String(raw??"1").replace(/,/g,""));return Math.max(1,Math.min(total,Number.isFinite(n)?Math.floor(n):1));}
 function entry(e:GuideEntry,icon:string){return truncate(`${icon} ${e.name} | Obtain: ${e.obtain} | Use: ${e.use}${e.command?` | Command: ${e.command}`:""}`,390);}
 function list(entries:GuideEntry[],raw:string|undefined,title:string){const size=3,total=Math.max(1,Math.ceil(entries.length/size)),p=page(raw,total),shown=entries.slice((p-1)*size,p*size);return truncate(`${title} ${p}/${total}: ${shown.map(e=>`${e.name} — ${e.obtain}`).join(" | ")}`,390);}
+function guideCandidates(entries:GuideEntry[]):AliasCandidate<GuideEntry>[] {return entries.map(e=>({id:e.id,label:e.name,aliases:[e.id.replace(/_/g," "),...(e.aliases??[])],value:e}));}
+function findGuide(entries:GuideEntry[],raw:string){return resolveAlias(raw,guideCandidates(entries),{maxScore:.3,ambiguityGap:.07});}
+function guideError(result:ReturnType<typeof findGuide>,subject:string){return result.status==="matched"?"":aliasSuggestionText(result,subject);}
 
-const PATH_COMPONENTS:GuideEntry[]=Object.entries(PATH_LADDERS).flatMap(([path,ids])=>ids.map((id,i)=>({id,name:titleCase(id),aliases:[`${path}_${i+1}`],obtain:`Crafted ${titleCase(path)} wall component for ${PATH_RANGES[i]}.`,use:`Required only by ${titleCase(path)} wall Cores/Sub-Cores in ${PATH_RANGES[i]}; one craft makes x2.`,command:`!craft recipe ${id}`})));
+const PATH_COMPONENTS:GuideEntry[]=Object.entries(PATH_LADDERS).flatMap(([path,ids])=>ids.map((id,i)=>({id,name:titleCase(id),aliases:[`${path}_${i+1}`,id.replace(/_/g," ")],obtain:`Crafted ${titleCase(path)} wall component for ${PATH_RANGES[i]}.`,use:`Required only by ${titleCase(path)} wall Cores/Sub-Cores in ${PATH_RANGES[i]}; one craft makes x2.`,command:`!craft recipe ${id}`})));
 
-export function formatMaterialGuide(query="",pageRaw="1"){const e=query&&!/^\d+$/.test(query)?findEntry(MATERIALS,query):undefined;return e?entry(e,"🧱"):query&&!/^\d+$/.test(query)?`Unknown material: ${query}. Try !info obtain <item>.`:list(MATERIALS,/^\d+$/.test(query)?query:pageRaw,"🧱 Material Sources");}
-export function formatTokenSourceGuide(query="",pageRaw="1"){const e=query&&!/^\d+$/.test(query)?findEntry(TOKENS,query):undefined;return e?entry(e,"🎟️"):query&&!/^\d+$/.test(query)?`Unknown Core token: ${query}. Try !info token sources.`:list(TOKENS,/^\d+$/.test(query)?query:pageRaw,"🎟️ Core Token Guide");}
-export function isKnownTokenGuide(query:string){return Boolean(findEntry(TOKENS,query));}
-export function formatBoxGuide(query="",pageRaw="1"){const e=query&&!/^\d+$/.test(query)?findEntry(BOXES,query):undefined;return e?entry(e,"📦"):query&&!/^\d+$/.test(query)?`Unknown box: ${query}. Try !info boxes.`:list(BOXES,/^\d+$/.test(query)?query:pageRaw,"📦 Box Guide");}
+export function formatMaterialGuide(query="",pageRaw="1"){
+  if(query&&!/^\d+$/.test(query)){const r=findGuide(MATERIALS,query);return r.status==="matched"?entry(r.match.value,"🧱"):`${guideError(r,"material")} Try !info obtain <item>.`;}
+  return list(MATERIALS,/^\d+$/.test(query)?query:pageRaw,"🧱 Material Sources");
+}
 
-function genericComponent(query:string){const id=normalize(query),match=id.match(/^(.+?)_(\d+)$/),raw=match?.[1]??id,family=COMPONENT_FAMILIES.find(x=>normalize(x)===normalize(raw)||normalize(titleCase(x))===normalize(raw));if(!family)return null;const tier=Math.max(1,Math.min(10,Number(match?.[2]??1)));return{id:`${family}_${tier}`,tier};}
+export function formatTokenSourceGuide(query="",pageRaw="1"){
+  if(query&&!/^\d+$/.test(query)){const r=findGuide(TOKENS,query);return r.status==="matched"?entry(r.match.value,"🎟️"):`${guideError(r,"Core token")} Try !info token sources.`;}
+  return list(TOKENS,/^\d+$/.test(query)?query:pageRaw,"🎟️ Core Token Guide");
+}
+
+export function isKnownTokenGuide(query:string){return Boolean(resolveCoreToken(query).value);}
+
+export function formatBoxGuide(query="",pageRaw="1"){
+  if(query&&!/^\d+$/.test(query)){const r=findGuide(BOXES,query);return r.status==="matched"?entry(r.match.value,"📦"):`${guideError(r,"box")} Try !info boxes.`;}
+  return list(BOXES,/^\d+$/.test(query)?query:pageRaw,"📦 Box Guide");
+}
+
 export function formatComponentGuide(query="",pageRaw="1"){
-  if(query&&!/^\d+$/.test(query)){const path=findEntry(PATH_COMPONENTS,query);if(path)return entry(path,"🧭");const c=genericComponent(query);if(!c)return`Unknown component: ${query}. Try !info components or !info paths.`;return truncate(`⚙️ ${titleCase(c.id)} | Craft: !craft recipe ${c.id} | Higher tiers use the previous tier plus rarity materials. ${c.tier<=5?"Makes x2 per batch.":c.tier<=7?"Makes x1 with duplicate chances.":"Late tier; may consume Recipe Tokens."}`,390);}
+  if(query&&!/^\d+$/.test(query)){
+    const path=findGuide(PATH_COMPONENTS,query);if(path.status==="matched")return entry(path.match.value,"🧭");
+    const component=resolveCraftItem(query);if(!component.value)return `${component.error??"Unknown component."} Try !info components or !info paths.`;
+    const match=component.value.match(/_(\d+)$/),tier=Math.max(1,Math.min(10,Number(match?.[1]??1)));
+    return truncate(`⚙️ ${titleCase(component.value)} | Craft: !craft recipe ${component.value} | Higher tiers use the previous tier plus rarity materials. ${tier<=5?"Makes x2 per batch.":tier<=7?"Makes x1 with duplicate chances.":"Late tier; may consume Recipe Tokens."}`,390);
+  }
   const entries=COMPONENT_FAMILIES.map(id=>({id,name:titleCase(id),obtain:`Craft !craft recipe ${id}_1; use _2 through _10.`,use:"Core, SHD, Reactor, and advanced recipes."}));
   return list(entries,/^\d+$/.test(query)?query:pageRaw,"⚙️ Component Families");
 }
-export function formatPathComponentGuide(path="",_pageRaw="1"){const p=normalize(path);if(p&&PATH_LADDERS[p])return truncate(`🧭 ${titleCase(p)} walls: ${PATH_LADDERS[p].map((id,i)=>`${PATH_RANGES[i]}=${titleCase(id)}`).join(" | ")} | Each craft makes x2.`,390);return truncate(`🧭 Paths: ${Object.keys(PATH_LADDERS).join(", ")} | Use !info path <name>.`,390);}
-export function formatObtainGuide(query="",pageRaw="1"){const q=query.trim();if(!q||/^\d+$/.test(q))return"🔎 Obtain | !info material <name> | component <name> | token <name> | box <name> | path <name>";const m=findEntry(MATERIALS,q);if(m)return entry(m,"🧱");const t=findEntry(TOKENS,q);if(t)return entry(t,"🎟️");const b=findEntry(BOXES,q);if(b)return entry(b,"📦");const p=findEntry(PATH_COMPONENTS,q);if(p)return entry(p,"🧭");if(genericComponent(q))return formatComponentGuide(q,pageRaw);return`No obtain guide found for ${q}.`;}
+
+export function formatPathComponentGuide(path="",_pageRaw="1"){
+  const resolved=resolveCorePath(path);
+  if(resolved.value&&PATH_LADDERS[resolved.value])return truncate(`🧭 ${titleCase(resolved.value)} walls: ${PATH_LADDERS[resolved.value].map((id,i)=>`${PATH_RANGES[i]}=${titleCase(id)}`).join(" | ")} | Each craft makes x2.`,390);
+  if(path)return resolved.error??"Unknown Core path.";
+  return truncate(`🧭 Paths: ${CORE_PATHS.map(x=>x.value).join(", ")} | Use !info path <name>.`,390);
+}
+
+export function formatObtainGuide(query="",pageRaw="1"){
+  const q=query.trim();if(!q||/^\d+$/.test(q))return"🔎 Obtain | !info material <name> | component <name> | token <name> | box <name> | path <name>";
+  for(const [entries,icon] of [[MATERIALS,"🧱"],[TOKENS,"🎟️"],[BOXES,"📦"],[PATH_COMPONENTS,"🧭"]] as const){const r=findGuide(entries as GuideEntry[],q);if(r.status==="matched")return entry(r.match.value,icon);}
+  const component=resolveCraftItem(q);if(component.value)return formatComponentGuide(component.value,pageRaw);
+  return `No obtain guide found for ${q}.`;
+}

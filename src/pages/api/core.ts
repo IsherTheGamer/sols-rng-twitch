@@ -11,53 +11,78 @@ import {
   switchCorePath,
   useCoreToken,
 } from "@/lib/core-system";
+import {
+  CORE_ACTIONS,
+  resolveCoreFocus,
+  resolveCorePath,
+  resolveCoreToken,
+  resolveTextAlias,
+} from "@/lib/command-aliases";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { channelId, user } = getChannelContext(req);
   const args = parseQuery(req).trim().split(/\s+/).filter(Boolean);
-  const action = (args[0] ?? "").toLowerCase();
 
+  if (args.length === 0) return text(res, await formatCoreStatus(channelId, user));
+
+  const actionResult = resolveTextAlias(args[0], CORE_ACTIONS, "Core action");
+  if (!actionResult.value) return text(res, actionResult.error ?? "Unknown Core action.");
+  const action = actionResult.value;
+
+  if (action === "status") return text(res, await formatCoreStatus(channelId, user));
   if (action === "upgrade") return text(res, await attemptCoreUpgrade(channelId, user));
   if (action === "recipe") return text(res, await formatCoreRecipe(channelId, user));
-  if (action === "focus") return text(res, await setCoreFocus(channelId, user, args[1] ?? ""));
-  if (action === "choose") return text(res, await chooseCorePath(channelId, user, args[1] ?? ""));
-  if (action === "switch") {
+
+  if (action === "focus") {
+    const focus = resolveCoreFocus(args.slice(1).join(" "));
+    if (!focus.value) return text(res, focus.error ?? "Unknown Core focus.");
+    return text(res, await setCoreFocus(channelId, user, focus.value));
+  }
+
+  if (action === "choose" || action === "switch") {
+    const path = resolveCorePath(args.slice(1).join(" "));
+    if (!path.value) return text(res, path.error ?? "Unknown Core path.");
     return text(
       res,
-      await switchCorePath(channelId, user, args[1] ?? "")
+      action === "choose"
+        ? await chooseCorePath(channelId, user, path.value)
+        : await switchCorePath(channelId, user, path.value)
     );
   }
 
   if (action === "tokens") {
-    return text(
-      res,
-      await formatCoreTokenGuide(
-        channelId,
-        user,
-        args.slice(1).join(" ")
-      )
-    );
+    const rawToken = args.slice(1).join(" ");
+    if (!rawToken) return text(res, await formatCoreTokenGuide(channelId, user, ""));
+    const token = resolveCoreToken(rawToken);
+    if (!token.value) return text(res, token.error ?? "Unknown Core token.");
+    return text(res, await formatCoreTokenGuide(channelId, user, token.value));
   }
 
   if (action === "token") {
-    if ((args[1] ?? "").toLowerCase() === "use") {
-      return text(
-        res,
-        await useCoreToken(
-          channelId,
-          user,
-          args.slice(2).join(" ")
-        )
-      );
+    const subAction = resolveTextAlias(
+      args[1] ?? "",
+      [
+        { id: "use", label: "use", aliases: ["activate", "consume"], value: "use" as const },
+        { id: "guide", label: "guide", aliases: ["info", "show", "help"], value: "guide" as const },
+      ],
+      "Core token action"
+    );
+
+    if (!subAction.value) {
+      // Preserve the convenient !core token quest shortcut.
+      const direct = resolveCoreToken(args.slice(1).join(" "));
+      if (!direct.value) return text(res, direct.error ?? subAction.error ?? "Unknown Core token.");
+      return text(res, await formatCoreTokenGuide(channelId, user, direct.value));
     }
+
+    const token = resolveCoreToken(args.slice(2).join(" "));
+    if (!token.value) return text(res, token.error ?? "Unknown Core token.");
 
     return text(
       res,
-      await formatCoreTokenGuide(
-        channelId,
-        user,
-        args.slice(1).join(" ")
-      )
+      subAction.value === "use"
+        ? await useCoreToken(channelId, user, token.value)
+        : await formatCoreTokenGuide(channelId, user, token.value)
     );
   }
 
