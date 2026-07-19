@@ -678,7 +678,6 @@ export async function executeTwitchCommand(options: {
 
   if (split.argumentsText) {
     url.searchParams.set("query", split.argumentsText);
-    url.searchParams.set("args", split.argumentsText);
   }
 
   const controller = new AbortController();
