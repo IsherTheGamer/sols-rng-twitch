@@ -1,6 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createPublicKey, verify as verifySignature } from "crypto";
 import { waitUntil } from "@vercel/functions";
+import type { NightbotUser } from "@/lib/nightbot";
+import { formatSolInfo } from "@/lib/sol-info";
+import { formatUpdateNotes } from "@/lib/update-notes";
+import { formatObtainGuide } from "@/lib/progression-info";
+import { formatLeaderboard } from "@/lib/social-system";
+import {
+  formatDcAlerts,
+  formatRecords,
+} from "@/lib/mega-feature-system";
+import {
+  addDynamicRollAccess,
+  clearDynamicRollAccess,
+  getDynamicRollAllowlist,
+  normalizeRollAccessName,
+  removeDynamicRollAccess,
+} from "@/lib/roll-access";
 import {
   autocompleteTwitchCommands,
   executeTwitchCommand,
@@ -41,20 +57,10 @@ interface DiscordInteraction {
   };
 }
 
-interface CachedInteractionTask {
-  expiresAt: number;
-  promise: Promise<string>;
-}
-
-const INTERACTION_TASKS = new Map<string, CachedInteractionTask>();
-const INTERACTION_TASK_TTL_MS = 2 * 60 * 1000;
-const INTERACTION_TASK_MAX = 500;
-
 export const config = {
   api: {
     bodyParser: false,
   },
-  maxDuration: 60,
 };
 
 async function readRawBody(req: NextApiRequest): Promise<Buffer> {
@@ -77,6 +83,7 @@ function verifyDiscordRequest(
   timestamp: string
 ): boolean {
   const rawPublicKey = process.env.DISCORD_PUBLIC_KEY;
+
   if (!rawPublicKey || !signature || !timestamp) return false;
 
   try {
@@ -88,9 +95,11 @@ function verifyDiscordRequest(
       type: "spki",
     });
 
+    const message = Buffer.concat([Buffer.from(timestamp), rawBody]);
+
     return verifySignature(
       null,
-      Buffer.concat([Buffer.from(timestamp), rawBody]),
+      message,
       publicKey,
       Buffer.from(signature, "hex")
     );
@@ -100,10 +109,7 @@ function verifyDiscordRequest(
 }
 
 function clean(content: string): string {
-  return (content.replace(/\s+/g, " ").trim() || "Command completed.").slice(
-    0,
-    1900
-  );
+  return content.replace(/\s+/g, " ").trim().slice(0, 1900);
 }
 
 function respond(
@@ -127,14 +133,21 @@ function autocomplete(
 ) {
   return res.status(200).json({
     type: 8,
-    data: { choices: choices.slice(0, 25) },
+    data: {
+      choices: choices.slice(0, 25),
+    },
   });
 }
 
-function defer(res: NextApiResponse, ephemeral = false) {
+function defer(
+  res: NextApiResponse,
+  ephemeral = false
+) {
   return res.status(200).json({
     type: 5,
-    data: { flags: ephemeral ? 64 : undefined },
+    data: {
+      flags: ephemeral ? 64 : undefined,
+    },
   });
 }
 
@@ -179,6 +192,7 @@ function subcommand(interaction: DiscordInteraction): {
   options: DiscordOption[];
 } {
   const option = interaction.data?.options?.[0];
+
   return {
     name: option?.name ?? "commands",
     options: option?.options ?? [],
@@ -191,7 +205,9 @@ function optionValue(
   fallback = ""
 ): string {
   const value = options.find((option) => option.name === name)?.value;
-  return value === undefined || value === null ? fallback : String(value);
+  return value === undefined || value === null
+    ? fallback
+    : String(value);
 }
 
 function optionBoolean(
@@ -203,47 +219,115 @@ function optionBoolean(
   return typeof value === "boolean" ? value : fallback;
 }
 
-function focusedOption(options: DiscordOption[]): DiscordOption | undefined {
+function focusedOption(
+  options: DiscordOption[]
+): DiscordOption | undefined {
   return options.find((option) => option.focused);
 }
 
-function pruneInteractionTasks(now = Date.now()): void {
-  for (const [key, entry] of INTERACTION_TASKS) {
-    if (entry.expiresAt <= now) INTERACTION_TASKS.delete(key);
-  }
+function discordAsNightbotUser(
+  interaction: DiscordInteraction
+): NightbotUser | null {
+  const user = getUser(interaction);
+  if (!user) return null;
 
-  while (INTERACTION_TASKS.size > INTERACTION_TASK_MAX) {
-    const oldest = INTERACTION_TASKS.keys().next().value;
-    if (!oldest) break;
-    INTERACTION_TASKS.delete(oldest);
-  }
+  return {
+    provider: "discord",
+    providerId: user.id,
+    name: user.username,
+    displayName: user.global_name ?? user.username,
+    userLevel: "admin",
+  };
 }
 
-function getOrCreateInteractionTask(
+function formatAllowlist(entries: Array<{ username: string }>): string {
+  if (entries.length === 0) return "none";
+
+  return entries
+    .slice(0, 30)
+    .map((entry) => entry.username)
+    .join(", ");
+}
+
+async function handleRollAccess(
   interaction: DiscordInteraction,
-  factory: () => Promise<string>
+  options: DiscordOption[]
 ): Promise<string> {
-  const id = interaction.id?.trim();
-  if (!id) return factory();
+  const channelId = process.env.DEFAULT_CHANNEL_ID ?? "904797805";
+  const action = optionValue(options, "action", "list").toLowerCase();
+  const username = normalizeRollAccessName(
+    optionValue(options, "username")
+  );
 
-  const now = Date.now();
-  const cached = INTERACTION_TASKS.get(id);
-
-  if (cached && cached.expiresAt > now) {
-    return cached.promise;
+  if (action === "list") {
+    const entries = await getDynamicRollAllowlist(channelId);
+    return `10k roll allowlist (${entries.length}): ${formatAllowlist(
+      entries
+    )}`;
   }
 
-  const promise = factory();
-  INTERACTION_TASKS.set(id, {
-    expiresAt: now + INTERACTION_TASK_TTL_MS,
-    promise,
-  });
-  pruneInteractionTasks(now);
-  return promise;
+  if (action === "add") {
+    if (!username) return "Enter a Twitch username.";
+
+    const result = await addDynamicRollAccess({
+      channelId,
+      username,
+      addedBy: discordAsNightbotUser(interaction),
+    });
+
+    return result.added
+      ? `✅ Added ${username} to the Twitch 10k-roll allowlist.`
+      : `${username} already has dynamic 10k access.`;
+  }
+
+  if (action === "remove") {
+    if (!username) return "Enter a Twitch username.";
+
+    const result = await removeDynamicRollAccess({
+      channelId,
+      username,
+    });
+
+    return result.removed
+      ? `✅ Removed ${username} from the Twitch 10k-roll allowlist.`
+      : `${username} was not in the dynamic allowlist.`;
+  }
+
+  if (action === "check") {
+    if (!username) return "Enter a Twitch username.";
+
+    const entries = await getDynamicRollAllowlist(channelId);
+
+    return entries.some((entry) => entry.username === username)
+      ? `✅ ${username} is in the dynamic 10k-roll allowlist.`
+      : `${username} is not in the dynamic allowlist.`;
+  }
+
+  if (action === "clear") {
+    const removed = await clearDynamicRollAccess(channelId);
+    return `✅ Cleared ${removed} dynamic roll-access entries.`;
+  }
+
+  return "Unknown rollaccess action.";
 }
 
-async function sleep(ms: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, ms));
+async function handleAlerts(
+  options: DiscordOption[]
+): Promise<string> {
+  const channelId = process.env.DEFAULT_CHANNEL_ID ?? "904797805";
+  const channelName =
+    process.env.DEFAULT_CHANNEL_NAME ?? "zipittt";
+  const action = optionValue(options, "action", "status").toLowerCase();
+  const value = optionValue(options, "value").trim();
+
+  let query = action;
+
+  if (action === "status") query = "";
+  if (action === "aura") query = `aura ${value || "100m"}`;
+  if (action === "biome-add") query = `biome ${value} on`;
+  if (action === "biome-remove") query = `biome ${value} off`;
+
+  return formatDcAlerts(channelId, channelName, query, true);
 }
 
 async function editOriginalResponse(
@@ -256,10 +340,7 @@ async function editOriginalResponse(
     "";
   const token = interaction.token ?? "";
 
-  if (!applicationId || !token) {
-    console.error("[discord] Missing application ID or interaction token.");
-    return;
-  }
+  if (!applicationId || !token) return;
 
   const url =
     `https://discord.com/api/v10/webhooks/${applicationId}/${token}` +
@@ -270,40 +351,24 @@ async function editOriginalResponse(
     allowed_mentions: { parse: [] },
   });
 
-  for (let attempt = 0; attempt < 4; attempt++) {
-    if (attempt > 0) await sleep(250 * attempt);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, 300 * attempt)
+      );
+    }
 
     const response = await fetch(url, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body,
     });
 
     if (response.ok) return;
-
-    if (response.status === 429) {
-      try {
-        const rateLimit = (await response.json()) as {
-          retry_after?: number;
-        };
-        await sleep(Math.max(250, (rateLimit.retry_after ?? 0.5) * 1000));
-        continue;
-      } catch {
-        continue;
-      }
-    }
-
-    if (response.status === 404) continue;
-
-    console.error(
-      `[discord] Failed to edit deferred reply: HTTP ${response.status} ${(
-        await response.text()
-      ).slice(0, 200)}`
-    );
-    return;
+    if (response.status !== 404) return;
   }
-
-  console.error("[discord] Deferred reply was not available after retries.");
 }
 
 function deferTwitchCommand(
@@ -320,30 +385,29 @@ function deferTwitchCommand(
     return respond(res, "Discord user information is missing.", true);
   }
 
-  const task = getOrCreateInteractionTask(interaction, () =>
-    executeTwitchCommand({
+  const task = (async () => {
+    const content = await executeTwitchCommand({
       req,
       guildId: interaction.guild_id,
       discordUser: bridgeUser(user),
       commandText,
       argumentsText,
       isAdmin: isDiscordAdmin(interaction),
-    })
-  );
+    });
 
-  waitUntil(
-    task
-      .then((content) => editOriginalResponse(interaction, content))
-      .catch((error) =>
-        editOriginalResponse(
-          interaction,
-          `❌ Discord bridge failed: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        )
-      )
-  );
+    // Give Discord a moment to create the deferred original message.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await editOriginalResponse(interaction, content);
+  })().catch(async (error) => {
+    await editOriginalResponse(
+      interaction,
+      `❌ Discord bridge failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  });
 
+  waitUntil(task);
   return defer(res, ephemeral);
 }
 
@@ -358,8 +422,12 @@ async function handleLink(
   const invoker = getUser(interaction);
   if (!invoker) return "Discord user information is missing.";
 
-  const targetId = optionValue(options, "target") || invoker.id;
-  const twitchUsername = optionValue(options, "twitch_username");
+  const targetId =
+    optionValue(options, "target") || invoker.id;
+  const twitchUsername = optionValue(
+    options,
+    "twitch_username"
+  );
   const twitchUserId = optionValue(options, "twitch_user_id");
 
   const link = await setDiscordTwitchLink({
@@ -385,7 +453,8 @@ async function handleUnlink(
   const invoker = getUser(interaction);
   if (!invoker) return "Discord user information is missing.";
 
-  const targetId = optionValue(options, "target") || invoker.id;
+  const targetId =
+    optionValue(options, "target") || invoker.id;
   const removed = await removeDiscordTwitchLink(
     interaction.guild_id,
     targetId
@@ -403,9 +472,13 @@ async function handleWhoAmI(
   const invoker = getUser(interaction);
   if (!invoker) return "Discord user information is missing.";
 
-  const targetId = optionValue(options, "target") || invoker.id;
+  const targetId =
+    optionValue(options, "target") || invoker.id;
 
-  if (targetId !== invoker.id && !isDiscordAdmin(interaction)) {
+  if (
+    targetId !== invoker.id &&
+    !isDiscordAdmin(interaction)
+  ) {
     return "❌ Only Discord admins can inspect another user's link.";
   }
 
@@ -426,8 +499,12 @@ export default async function handler(
   }
 
   const rawBody = await readRawBody(req);
-  const signature = firstHeader(req.headers["x-signature-ed25519"]);
-  const timestamp = firstHeader(req.headers["x-signature-timestamp"]);
+  const signature = firstHeader(
+    req.headers["x-signature-ed25519"]
+  );
+  const timestamp = firstHeader(
+    req.headers["x-signature-timestamp"]
+  );
 
   if (!verifyDiscordRequest(rawBody, signature, timestamp)) {
     return res.status(401).send("Invalid request signature");
@@ -453,13 +530,16 @@ export default async function handler(
     }
 
     const current = subcommand(interaction);
-    const focused = focusedOption(current.options);
 
-    if (current.name === "run" && focused?.name === "command") {
-      return autocomplete(
-        res,
-        autocompleteTwitchCommands(String(focused.value ?? ""))
-      );
+    if (current.name === "run") {
+      const focused = focusedOption(current.options);
+
+      if (focused?.name === "command") {
+        return autocomplete(
+          res,
+          autocompleteTwitchCommands(String(focused.value ?? ""))
+        );
+      }
     }
 
     return autocomplete(res, []);
@@ -469,7 +549,9 @@ export default async function handler(
     return respond(res, "Unsupported interaction.", true);
   }
 
-  const directCommand = getTwitchCommand(interaction.data?.name);
+  const directCommand = getTwitchCommand(
+    interaction.data?.name
+  );
 
   if (directCommand) {
     const options = interaction.data?.options ?? [];

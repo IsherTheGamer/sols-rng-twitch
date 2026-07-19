@@ -58,12 +58,6 @@ interface ServerBoost {
   expiresAt: number;
 }
 
-interface ServerBoostSummary {
-  percent: number;
-  validUntil: number;
-  updatedAt: number;
-}
-
 interface ChatActivityState {
   windowStartedAt: number;
   messages: number;
@@ -154,61 +148,6 @@ const UPDATE_NOTES = [
 function recentKey(channelId: string): string { return `social:recent:${channelId}`; }
 function titleKey(channelId: string, userId: string): string { return `social:titles:${channelId}:${userId}`; }
 function boostKey(channelId: string): string { return `social:boosts:${channelId}`; }
-function boostSummaryKey(channelId: string): string { return `social:boost-summary:${channelId}`; }
-
-const BOOST_SUMMARY_CACHE = new Map<
-  string,
-  {
-    expiresAt: number;
-    value: ServerBoostSummary;
-  }
->();
-
-function summarizeBoosts(boosts: ServerBoost[]): ServerBoostSummary {
-  const now = Date.now();
-  const active = boosts.filter((boost) => boost.expiresAt > now);
-  const percent = Math.min(
-    250,
-    active.reduce(
-      (sum, boost) => sum + Math.max(0, boost.percent),
-      0
-    )
-  );
-  const nextExpiry =
-    active.length > 0
-      ? Math.min(...active.map((boost) => boost.expiresAt))
-      : now + 30 * 1000;
-
-  return {
-    percent,
-    validUntil: nextExpiry,
-    updatedAt: now,
-  };
-}
-
-function cacheBoostSummary(
-  channelId: string,
-  summary: ServerBoostSummary
-): void {
-  BOOST_SUMMARY_CACHE.set(channelId, {
-    value: summary,
-    expiresAt: Math.min(
-      summary.validUntil,
-      Date.now() + 15 * 1000
-    ),
-  });
-
-  if (BOOST_SUMMARY_CACHE.size > 500) {
-    BOOST_SUMMARY_CACHE.clear();
-    BOOST_SUMMARY_CACHE.set(channelId, {
-      value: summary,
-      expiresAt: Math.min(
-        summary.validUntil,
-        Date.now() + 15 * 1000
-      ),
-    });
-  }
-}
 function chatKey(channelId: string): string { return `social:chat:${channelId}`; }
 function merchantKey(channelId: string): string { return `social:merchant:${channelId}`; }
 function npcKey(channelId: string): string { return `social:npc:${channelId}`; }
@@ -329,24 +268,10 @@ async function getBoosts(channelId: string): Promise<ServerBoost[]> {
   return boosts.filter((boost) => boost.expiresAt > Date.now());
 }
 
-async function setBoosts(
-  channelId: string,
-  boosts: ServerBoost[]
-): Promise<void> {
+async function setBoosts(channelId: string, boosts: ServerBoost[]): Promise<void> {
   const r = getRedis();
   if (!r) return;
-
-  const active = boosts
-    .filter((boost) => boost.expiresAt > Date.now())
-    .slice(0, 12);
-  const summary = summarizeBoosts(active);
-
-  await r.mset({
-    [boostKey(channelId)]: active,
-    [boostSummaryKey(channelId)]: summary,
-  });
-
-  cacheBoostSummary(channelId, summary);
+  await r.set(boostKey(channelId), boosts.filter((boost) => boost.expiresAt > Date.now()).slice(0, 12));
 }
 
 export async function addServerBoost(options: { channelId: string; name: string; percent: number; durationSeconds: number; source: string; }): Promise<void> {
@@ -356,59 +281,15 @@ export async function addServerBoost(options: { channelId: string; name: string;
   await setBoosts(options.channelId, boosts);
 }
 
-export async function getServerLuckMultiplier(
-  channelId: string
-): Promise<{
-  percent: number;
-  multiplier: number;
-  label: string;
-}> {
-  const now = Date.now();
-  const cached = BOOST_SUMMARY_CACHE.get(channelId);
-
-  if (cached && cached.expiresAt > now) {
-    const percent = cached.value.percent;
-    return {
-      percent,
-      multiplier: 1 + percent / 100,
-      label:
-        percent > 0
-          ? `+${formatAmount(percent)}% server luck`
-          : "No server boost",
-    };
-  }
-
-  const r = getRedis();
-  const stored = r
-    ? await r.get<ServerBoostSummary>(boostSummaryKey(channelId))
-    : null;
-
-  let summary = stored;
-
-  if (!summary || summary.validUntil <= now) {
-    const boosts = await getBoosts(channelId);
-    summary = summarizeBoosts(boosts);
-
-    if (r) {
-      await r.set(boostSummaryKey(channelId), summary);
-    }
-  }
-
-  cacheBoostSummary(channelId, summary);
-  const percent = summary.percent;
-
-  return {
-    percent,
-    multiplier: 1 + percent / 100,
-    label:
-      percent > 0
-        ? `+${formatAmount(percent)}% server luck`
-        : "No server boost",
-  };
+export async function getServerLuckMultiplier(channelId: string): Promise<{ percent: number; multiplier: number; label: string }> {
+  const boosts = await getBoosts(channelId);
+  const percent = Math.min(250, boosts.reduce((sum, boost) => sum + Math.max(0, boost.percent), 0));
+  return { percent, multiplier: 1 + percent / 100, label: percent > 0 ? `+${formatAmount(percent)}% server luck` : "No server boost" };
 }
 
 export async function formatBoostStatus(channelId: string): Promise<string> {
   const boosts = await getBoosts(channelId);
+  await setBoosts(channelId, boosts);
   if (boosts.length === 0) return "🌐 Server Boosts: none active.";
   const now = Date.now();
   const shown = boosts.slice(0, 5).map((boost) => {

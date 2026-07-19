@@ -12,10 +12,7 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-const DEFAULT_STATE = (
-  channelId: string,
-  channelName: string
-): ChannelState => ({
+const DEFAULT_STATE = (channelId: string, channelName: string): ChannelState => ({
   channelId,
   channelName,
   biomeId: "normal",
@@ -45,9 +42,7 @@ export async function getChannelState(
   return data;
 }
 
-export async function setChannelState(
-  state: ChannelState
-): Promise<void> {
+export async function setChannelState(state: ChannelState): Promise<void> {
   const r = getRedis();
   if (!r) return;
   await r.set(`channel:${state.channelId}:state`, state);
@@ -56,65 +51,15 @@ export async function setChannelState(
 export async function getCooldown(key: string): Promise<number> {
   const r = getRedis();
   if (!r) return 0;
-  const value = await r.get<number>(key);
-  return value ?? 0;
+  const v = await r.get<number>(key);
+  return v ?? 0;
 }
 
-export async function setCooldown(
-  key: string,
-  until: number
-): Promise<void> {
+export async function setCooldown(key: string, until: number): Promise<void> {
   const r = getRedis();
   if (!r) return;
   const ttl = Math.max(1, Math.ceil((until - Date.now()) / 1000));
   await r.set(key, until, { ex: ttl });
-}
-
-/**
- * Acquires a cooldown atomically.
- *
- * Successful requests use one Redis command. A blocked request performs one
- * extra read only so the user can see the remaining time.
- */
-export async function acquireCooldown(
-  key: string,
-  cooldownMs: number
-): Promise<{ allowed: boolean; remainingMs: number }> {
-  const r = getRedis();
-  if (!r) return { allowed: true, remainingMs: 0 };
-
-  const safeMs = Math.max(1, Math.floor(cooldownMs));
-  const now = Date.now();
-  const until = now + safeMs;
-
-  const acquired = await r.set(key, until, {
-    nx: true,
-    px: safeMs,
-  });
-
-  if (acquired) {
-    return { allowed: true, remainingMs: 0 };
-  }
-
-  const existing = (await r.get<number>(key)) ?? 0;
-
-  if (existing <= Date.now()) {
-    const retryNow = Date.now();
-    const retryUntil = retryNow + safeMs;
-    const retried = await r.set(key, retryUntil, {
-      nx: true,
-      px: safeMs,
-    });
-
-    if (retried) {
-      return { allowed: true, remainingMs: 0 };
-    }
-  }
-
-  return {
-    allowed: false,
-    remainingMs: Math.max(1, existing - Date.now()),
-  };
 }
 
 export function cooldownKey(
@@ -129,7 +74,7 @@ export function cooldownKey(
 export function formatRemaining(until: number): string {
   const sec = Math.max(0, Math.ceil((until - Date.now()) / 1000));
   if (sec < 60) return `${sec}s`;
-  const minutes = Math.floor(sec / 60);
-  const seconds = sec % 60;
-  return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }

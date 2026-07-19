@@ -438,18 +438,6 @@ export interface DiscordTwitchLink {
 
 let redis: Redis | null | undefined;
 
-const DISCORD_LINK_CACHE_TTL_MS = 5 * 60 * 1000;
-const DISCORD_LINK_NEGATIVE_TTL_MS = 30 * 1000;
-const DISCORD_LINK_CACHE_MAX = 2000;
-
-const DISCORD_LINK_CACHE = new Map<
-  string,
-  {
-    expiresAt: number;
-    value: DiscordTwitchLink | null;
-  }
->();
-
 function getRedis(): Redis | null {
   if (redis !== undefined) return redis;
 
@@ -506,33 +494,6 @@ function linkCandidateKeys(
   return [...new Set(keys)];
 }
 
-function pruneDiscordLinkCache(now = Date.now()): void {
-  for (const [key, entry] of DISCORD_LINK_CACHE) {
-    if (entry.expiresAt <= now) DISCORD_LINK_CACHE.delete(key);
-  }
-
-  while (DISCORD_LINK_CACHE.size > DISCORD_LINK_CACHE_MAX) {
-    const oldest = DISCORD_LINK_CACHE.keys().next().value;
-    if (!oldest) break;
-    DISCORD_LINK_CACHE.delete(oldest);
-  }
-}
-
-function cacheDiscordLink(
-  discordUserId: string,
-  value: DiscordTwitchLink | null
-): void {
-  DISCORD_LINK_CACHE.set(discordUserId, {
-    value,
-    expiresAt:
-      Date.now() +
-      (value
-        ? DISCORD_LINK_CACHE_TTL_MS
-        : DISCORD_LINK_NEGATIVE_TTL_MS),
-  });
-  pruneDiscordLinkCache();
-}
-
 export async function getDiscordTwitchLink(
   guildId: string | undefined | null,
   discordUserId: string
@@ -542,37 +503,26 @@ export async function getDiscordTwitchLink(
 
   if (!r || !cleanDiscord) return null;
 
-  const cached = DISCORD_LINK_CACHE.get(cleanDiscord);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.value;
-  }
-
-  const keys = linkCandidateKeys(guildId, cleanDiscord);
-  const links = (await r.mget(...keys)) as Array<
-    DiscordTwitchLink | null
-  >;
-  const index = links.findIndex(Boolean);
-  const found = index >= 0 ? links[index] : null;
-
-  if (!found) {
-    cacheDiscordLink(cleanDiscord, null);
-    return null;
-  }
-
-  const portableLink: DiscordTwitchLink = {
-    ...found,
-    guildId: "global",
-    discordUserId: cleanDiscord,
-  };
-
   const globalKey = globalLinkKey(cleanDiscord);
 
-  if (keys[index] !== globalKey) {
-    await r.set(globalKey, portableLink);
+  for (const key of linkCandidateKeys(guildId, cleanDiscord)) {
+    const link = await r.get<DiscordTwitchLink>(key);
+    if (!link) continue;
+
+    const portableLink: DiscordTwitchLink = {
+      ...link,
+      guildId: "global",
+      discordUserId: cleanDiscord,
+    };
+
+    if (key !== globalKey) {
+      await r.set(globalKey, portableLink);
+    }
+
+    return portableLink;
   }
 
-  cacheDiscordLink(cleanDiscord, portableLink);
-  return portableLink;
+  return null;
 }
 
 export async function setDiscordTwitchLink(input: {
@@ -608,7 +558,6 @@ export async function setDiscordTwitchLink(input: {
   };
 
   await r.set(globalLinkKey(discordUserId), link);
-  cacheDiscordLink(discordUserId, link);
   return link;
 }
 
@@ -621,12 +570,19 @@ export async function removeDiscordTwitchLink(
 
   if (!r || !cleanDiscord) return false;
 
-  const removed = await r.del(
-    ...linkCandidateKeys(guildId, cleanDiscord)
-  );
+  const keys = linkCandidateKeys(guildId, cleanDiscord);
+  let found = false;
 
-  DISCORD_LINK_CACHE.delete(cleanDiscord);
-  return Number(removed) > 0;
+  for (const key of keys) {
+    if (await r.get<DiscordTwitchLink>(key)) {
+      found = true;
+    }
+  }
+
+  if (!found) return false;
+
+  await r.del(...keys);
+  return true;
 }
 
 export function formatDiscordTwitchLink(

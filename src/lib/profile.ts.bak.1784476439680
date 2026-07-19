@@ -121,7 +121,6 @@ export interface ViewerProfile {
   channelId: string;
   userId: string;
   displayName: string;
-  indexVersion: number;
 
   rolls: number;
   tokenRolls: number;
@@ -213,7 +212,6 @@ export function createDefaultViewerProfile(
     channelId,
     userId,
     displayName,
-    indexVersion: 0,
 
     rolls: 0,
     tokenRolls: 0,
@@ -257,10 +255,6 @@ export function normalizeViewerProfile(
     channelId: input.channelId ?? channelId,
     userId: input.userId ?? userId,
     displayName: displayName || input.displayName || base.displayName,
-    indexVersion: Math.max(
-      0,
-      Math.floor(input.indexVersion ?? 0)
-    ),
 
     rolls: input.rolls ?? 0,
     tokenRolls: legacyTokenRolls,
@@ -287,53 +281,33 @@ export function normalizeViewerProfile(
   };
 }
 
-const PROFILE_INDEX_VERSION = 2;
 const PROFILE_REGISTRATION_CACHE = new Set<string>();
-
-function profileIndexSetKey(channelId: string): string {
-  return `profiles:${channelId}:members:v2`;
-}
 
 async function registerProfileKey(
   channelId: string,
   key: string
 ): Promise<void> {
   const cacheKey = `${channelId}:${key}`;
+
   if (PROFILE_REGISTRATION_CACHE.has(cacheKey)) return;
 
   const r = getRedis();
   if (!r) return;
 
-  await r.sadd(profileIndexSetKey(channelId), key);
+  const indexKey = profileIndexKey(channelId);
+  const keys = (await r.get<string[]>(indexKey)) ?? [];
+
+  if (!keys.includes(key)) {
+    keys.push(key);
+    await r.set(indexKey, keys);
+  }
+
   PROFILE_REGISTRATION_CACHE.add(cacheKey);
 
   if (PROFILE_REGISTRATION_CACHE.size > 5000) {
     PROFILE_REGISTRATION_CACHE.clear();
     PROFILE_REGISTRATION_CACHE.add(cacheKey);
   }
-}
-
-async function getIndexedProfileKeys(
-  channelId: string
-): Promise<string[]> {
-  const r = getRedis();
-  if (!r) return [];
-
-  const setKey = profileIndexSetKey(channelId);
-  const current = (await r.smembers(setKey)) as string[];
-
-  if (current.length > 0) return current;
-
-  const legacy =
-    (await r.get<string[]>(profileIndexKey(channelId))) ?? [];
-
-  if (legacy.length > 0) {
-    for (let index = 0; index < legacy.length; index += 500) {
-      await r.sadd(setKey, ...legacy.slice(index, index + 500));
-    }
-  }
-
-  return legacy;
 }
 
 export async function getViewerProfile(
@@ -356,17 +330,11 @@ export async function getViewerProfile(
   // Makes !profile create/register the user so other people can view them later.
   // Avoid saving anonymous browser/test profiles.
   if (user) {
-    let shouldSave = !data;
-
-    if (profile.indexVersion < PROFILE_INDEX_VERSION) {
-      await registerProfileKey(channelId, key);
-      profile.indexVersion = PROFILE_INDEX_VERSION;
-      shouldSave = true;
-    }
-
-    if (shouldSave) {
+    if (!data) {
       await r.set(key, profile);
     }
+
+    await registerProfileKey(channelId, key);
   }
 
   return profile;
@@ -377,20 +345,18 @@ export async function setViewerProfile(
   options?: { register?: boolean }
 ): Promise<void> {
   const r = getRedis();
+
   if (!r) return;
 
   const key = profileKey(profile.channelId, profile.userId);
+
   profile.updatedAt = Date.now();
 
-  if (
-    options?.register !== false &&
-    profile.indexVersion < PROFILE_INDEX_VERSION
-  ) {
-    await registerProfileKey(profile.channelId, key);
-    profile.indexVersion = PROFILE_INDEX_VERSION;
-  }
-
   await r.set(key, profile);
+
+  if (options?.register !== false) {
+    await registerProfileKey(profile.channelId, key);
+  }
 }
 
 export function getProfileTierId(
@@ -486,11 +452,9 @@ export async function recordViewerRolls(
   channelId: string,
   user: NightbotUser | null,
   rolls: Array<{ aura: AuraDef; effectiveRarity: number }>,
-  source: "roll" | "token" | "potion",
-  existingProfile?: ViewerProfile
+  source: "roll" | "token" | "potion"
 ): Promise<ViewerProfile> {
-  const profile =
-    existingProfile ?? (await getViewerProfile(channelId, user));
+  const profile = await getViewerProfile(channelId, user);
   const isTokenRoll = source === "token" || source === "potion";
 
   for (const roll of rolls) {
@@ -580,7 +544,8 @@ export async function listViewerProfiles(
   const r = getRedis();
   if (!r) return [];
 
-  const keys = await getIndexedProfileKeys(channelId);
+  const indexKey = profileIndexKey(channelId);
+  const keys = (await r.get<string[]>(indexKey)) ?? [];
 
   if (keys.length === 0) return [];
 
@@ -745,12 +710,11 @@ export async function resetViewerProfiles(channelId: string): Promise<void> {
   if (!r) return;
 
   const indexKey = profileIndexKey(channelId);
-  const setKey = profileIndexSetKey(channelId);
-  const keys = await getIndexedProfileKeys(channelId);
+  const keys = (await r.get<string[]>(indexKey)) ?? [];
 
   if (keys.length > 0) {
     await r.del(...keys);
   }
 
-  await r.del(indexKey, setKey);
+  await r.del(indexKey);
 }

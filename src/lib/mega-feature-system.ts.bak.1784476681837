@@ -11,23 +11,6 @@ import { getChannelState, setChannelState } from "./state";
 import { getGlobalRolls, getGlobalLuck, getNextLuckMilestone } from "./global-stats";
 
 let redis: Redis | null = null;
-
-const MEGA_DISCORD_SETTINGS_CACHE = new Map<
-  string,
-  {
-    expiresAt: number;
-    value: DiscordSettings;
-  }
->();
-
-const CHANNEL_EVENT_CACHE = new Map<
-  string,
-  {
-    expiresAt: number;
-    value: ChannelEvent | null;
-  }
->();
-
 function getRedis(): Redis | null {
   if (redis) return redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -200,53 +183,24 @@ function defaultDiscordSettings(): DiscordSettings {
   };
 }
 
-export async function getMegaDiscordSettings(
-  channelId: string
-): Promise<DiscordSettings> {
-  const cached = MEGA_DISCORD_SETTINGS_CACHE.get(channelId);
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.value;
-  }
-
+export async function getMegaDiscordSettings(channelId: string): Promise<DiscordSettings> {
   const r = getRedis();
   const base = defaultDiscordSettings();
   if (!r) return base;
-
-  const data =
-    await r.get<Partial<DiscordSettings>>(kDiscord(channelId));
-  const value: DiscordSettings = {
+  const data = await r.get<Partial<DiscordSettings>>(kDiscord(channelId));
+  return {
     ...base,
     ...data,
-    rareBiomes:
-      Array.isArray(data?.rareBiomes) &&
-      data.rareBiomes.length > 0
-        ? data.rareBiomes.map(norm).filter(Boolean)
-        : base.rareBiomes,
-    minAuraRarity: Math.max(
-      1,
-      Number(data?.minAuraRarity ?? base.minAuraRarity)
-    ),
+    rareBiomes: Array.isArray(data?.rareBiomes) && data.rareBiomes.length > 0 ? data.rareBiomes.map(norm).filter(Boolean) : base.rareBiomes,
+    minAuraRarity: Math.max(1, Number(data?.minAuraRarity ?? base.minAuraRarity)),
     webhookUrl: data?.webhookUrl ?? base.webhookUrl,
   };
-
-  MEGA_DISCORD_SETTINGS_CACHE.set(channelId, {
-    value,
-    expiresAt: Date.now() + 30 * 1000,
-  });
-
-  return value;
 }
 
 async function saveDiscordSettings(channelId: string, settings: DiscordSettings): Promise<void> {
   const r = getRedis();
   if (!r) return;
-  const value = { ...settings, updatedAt: Date.now() };
-  await r.set(kDiscord(channelId), value);
-  MEGA_DISCORD_SETTINGS_CACHE.set(channelId, {
-    value,
-    expiresAt: Date.now() + 30 * 1000,
-  });
+  await r.set(kDiscord(channelId), { ...settings, updatedAt: Date.now() });
 }
 
 async function postDiscord(
@@ -607,99 +561,27 @@ export async function sendMegaDiscordAuraAlert(options: { channelId: string; cha
   );
 }
 
-export async function recordMegaBiome(options: {
-  channelId: string;
-  channelName?: string | null;
-  biomeId: string;
-  timeOfDay?: string | null;
-  expiresAt?: number;
-}): Promise<void> {
+export async function recordMegaBiome(options: { channelId: string; channelName?: string | null; biomeId: string; timeOfDay?: string | null; expiresAt?: number; }): Promise<void> {
   const r = getRedis();
   if (!r) return;
-
   const settings = await getMegaDiscordSettings(options.channelId);
   const biomeId = norm(options.biomeId);
-
   if (!settings.rareBiomes.includes(biomeId)) return;
-
   const dupKey = `mega:lastbiome:${options.channelId}`;
   const marker = `${biomeId}:${options.expiresAt ?? 0}`;
-  const unique = await r.set(dupKey, marker, {
-    nx: true,
-    ex: 60 * 60 * 6,
-  });
+  if ((await r.get<string>(dupKey)) === marker) return;
+  await r.set(dupKey, marker, { ex: 60 * 60 * 6 });
 
-  if (!unique) return;
-
-  const firstKey = kFirsts(options.channelId);
-  const recordKey = kRecords(options.channelId);
-  const [firstRaw, recordRaw] = (await r.mget(
-    firstKey,
-    recordKey
-  )) as [FirstState | null, RecordsState | null];
-
-  const firsts =
-    firstRaw ?? { auras: {}, biomes: {} };
-  const records =
-    recordRaw ?? {
-      totalRarePulls: 0,
-      rareBiomes: {},
-      updatedAt: Date.now(),
-    };
-
-  if (!firsts.biomes[biomeId]) {
-    firsts.biomes[biomeId] = {
-      biomeId,
-      biomeName: titleCase(biomeId),
-      channelName:
-        norm(options.channelName) || options.channelId,
-      createdAt: Date.now(),
-    };
-  }
-
-  records.rareBiomes[biomeId] =
-    (records.rareBiomes[biomeId] ?? 0) + 1;
+  const firsts = (await r.get<FirstState>(kFirsts(options.channelId))) ?? { auras: {}, biomes: {} };
+  if (!firsts.biomes[biomeId]) firsts.biomes[biomeId] = { biomeId, biomeName: titleCase(biomeId), channelName: norm(options.channelName) || options.channelId, createdAt: Date.now() };
+  await r.set(kFirsts(options.channelId), firsts);
+  const records = (await r.get<RecordsState>(kRecords(options.channelId))) ?? { totalRarePulls: 0, rareBiomes: {}, updatedAt: Date.now() };
+  records.rareBiomes[biomeId] = (records.rareBiomes[biomeId] ?? 0) + 1;
   records.updatedAt = Date.now();
+  await r.set(kRecords(options.channelId), records);
 
-  await r.mset({
-    [firstKey]: firsts,
-    [recordKey]: records,
-  });
-
-  const channel =
-    norm(options.channelName) || options.channelId;
-
-  await postDiscord(options.channelId, {
-    embeds: [
-      {
-        title: "🌍 Rare Biome Spawned!",
-        description: `**${titleCase(
-          biomeId
-        )}** spawned in **${channel}**`,
-        color: 0x2ecc71,
-        fields: [
-          {
-            name: "Biome",
-            value: titleCase(biomeId),
-            inline: true,
-          },
-          {
-            name: "Time",
-            value: options.timeOfDay
-              ? titleCase(options.timeOfDay)
-              : "Unknown",
-            inline: true,
-          },
-          {
-            name: "Twitch Channel",
-            value: `${channel}\n${channelUrl(channel)}`,
-            inline: false,
-          },
-        ],
-        timestamp: new Date().toISOString(),
-      },
-    ],
-  });
+  const channel = norm(options.channelName) || options.channelId;
+  await postDiscord(options.channelId, { embeds: [{ title: "🌍 Rare Biome Spawned!", description: `**${titleCase(biomeId)}** spawned in **${channel}**`, color: 0x2ecc71, fields: [ { name: "Biome", value: titleCase(biomeId), inline: true }, { name: "Time", value: options.timeOfDay ? titleCase(options.timeOfDay) : "Unknown", inline: true }, { name: "Twitch Channel", value: `${channel}\n${channelUrl(channel)}`, inline: false } ], timestamp: new Date().toISOString() }] });
 }
 
 function questsFor(period: QuestPeriod, scope: "player" | "global"): Array<{ id: string; name: string; metric: QuestMetric; target: number; reward: string }> {
@@ -1119,13 +1001,6 @@ export async function formatChannelEvent(channelId: string, user: NightbotUser |
     const percent = kind === "luckstorm" ? 25 : kind === "festival" ? 15 : 10;
     const event: ChannelEvent = { id: `${kind}:${Date.now()}`, name: titleCase(kind), kind, percent, createdAt: Date.now(), expiresAt: Date.now() + mins * 60 * 1000, createdBy: getDisplayName(user) };
     await r.set(kEvent(channelId), event);
-    CHANNEL_EVENT_CACHE.set(channelId, {
-      value: event,
-      expiresAt: Math.min(
-        event.expiresAt,
-        Date.now() + 5000
-      ),
-    });
     return `🎉 Event started: ${event.name} +${event.percent}% for ${mins}m.`;
   }
 
@@ -1145,10 +1020,6 @@ export async function formatChannelEvent(channelId: string, user: NightbotUser |
     }
 
     await r.del(kEvent(channelId));
-    CHANNEL_EVENT_CACHE.set(channelId, {
-      value: null,
-      expiresAt: Date.now() + 5000,
-    });
     return "🎉 Channel event stopped.";
   }
 
@@ -1164,30 +1035,11 @@ export async function formatChannelEvent(channelId: string, user: NightbotUser |
   return truncate(`🎉 Boost Event: ${event.name} +${event.percent}% | ${Math.floor(left / 60)}m${left % 60}s left | ${seasonalText}`, 390);
 }
 
-export async function getActiveChannelEvent(
-  channelId: string
-): Promise<ChannelEvent | null> {
-  const now = Date.now();
-  const cached = CHANNEL_EVENT_CACHE.get(channelId);
-
-  if (cached && cached.expiresAt > now) {
-    return cached.value;
-  }
-
+export async function getActiveChannelEvent(channelId: string): Promise<ChannelEvent | null> {
   const r = getRedis();
   if (!r) return null;
-
-  const stored = await r.get<ChannelEvent>(kEvent(channelId));
-  const event =
-    stored && stored.expiresAt > now ? stored : null;
-
-  CHANNEL_EVENT_CACHE.set(channelId, {
-    value: event,
-    expiresAt: event
-      ? Math.min(event.expiresAt, now + 5000)
-      : now + 5000,
-  });
-
+  const event = await r.get<ChannelEvent>(kEvent(channelId));
+  if (!event || event.expiresAt <= Date.now()) return null;
   return event;
 }
 

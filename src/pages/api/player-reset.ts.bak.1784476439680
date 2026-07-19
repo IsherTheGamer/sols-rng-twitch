@@ -239,12 +239,7 @@ async function resolveTarget(
   if (!username) return null;
 
   const indexKey = `profiles:${channelId}:keys`;
-  const indexSetKey = `profiles:${channelId}:members:v2`;
-  const setKeys = (await r.smembers(indexSetKey)) as string[];
-  const indexedKeys =
-    setKeys.length > 0
-      ? setKeys
-      : (await r.get<string[]>(indexKey)) ?? [];
+  const indexedKeys = (await r.get<string[]>(indexKey)) ?? [];
   const values = await mgetValues(r, indexedKeys.slice(0, 5000));
 
   for (let index = 0; index < values.length; index++) {
@@ -653,7 +648,6 @@ async function buildPlan(
     aokChannel: `aok:channel:${channelId}`,
     access: `roll-access:${channelId}`,
     profileIndex: `profiles:${channelId}:keys`,
-    profileIndexSet: `profiles:${channelId}:members:v2`,
     luck: `mega:luck:${channelId}:${target.userId}`,
   };
 
@@ -680,22 +674,13 @@ async function buildPlan(
     sharedKeys.map((key, index) => [key, values[index]])
   );
 
-  const legacyProfileIndexMatches = (
+  const profileIndexMatches = (
     (valueByKey.get(keys.profileIndex) as string[] | null) ?? []
   ).filter(
     (entry) =>
       entry === target.profileKey ||
       entry.endsWith(`:${target.userId}`)
   ).length;
-
-  const profileIndexSetMatch = await r.sismember(
-    keys.profileIndexSet,
-    target.profileKey
-  );
-
-  const profileIndexMatches =
-    legacyProfileIndexMatches +
-    (profileIndexSetMatch ? 1 : 0);
 
   const [channelLeaderboardMatches, globalLeaderboardMatches] =
     await Promise.all([
@@ -718,9 +703,11 @@ async function buildPlan(
     else if (option.startsWith("profile_")) key = keys.profile;
 
     if (option === "profile_index") {
-      key = `${keys.profileIndex} + ${keys.profileIndexSet}`;
+      key = keys.profileIndex;
       kind = "shared";
-      matches = profileIndexMatches;
+      matches = ((valueByKey.get(key) as string[] | null) ?? []).filter(
+        (entry) => entry === target.profileKey
+      ).length;
     }
 
     if (option === "inventory_pending_grants") {
@@ -877,7 +864,6 @@ async function removeProfileIndex(
   target: TargetPlayer
 ): Promise<number> {
   const key = `profiles:${target.channelId}:keys`;
-  const setKey = `profiles:${target.channelId}:members:v2`;
   const list = (await r.get<string[]>(key)) ?? [];
   const values = await mgetValues(r, list);
 
@@ -891,18 +877,12 @@ async function removeProfileIndex(
       entry === target.profileKey ||
       entryUserId === target.userId ||
       profileUserId === target.userId ||
-      (Boolean(target.username) &&
-        profileUsername === target.username)
+      (Boolean(target.username) && profileUsername === target.username)
     );
   });
 
-  let removed = list.length - next.length;
-
-  if (removed > 0) {
-    await r.set(key, next);
-  }
-
-  removed += Number(await r.srem(setKey, target.profileKey));
+  const removed = list.length - next.length;
+  if (removed > 0) await r.set(key, next);
   return removed;
 }
 

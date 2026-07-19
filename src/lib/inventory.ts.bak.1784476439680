@@ -546,15 +546,12 @@ function removeToken(
   return true;
 }
 
-function removeExpiredBuffs(inventory: ViewerInventory): boolean {
+function removeExpiredBuffs(inventory: ViewerInventory): void {
   const now = Date.now();
-  const before = inventory.activeBuffs.length;
 
   inventory.activeBuffs = inventory.activeBuffs.filter(
     (buff) => !buff.expiresAt || buff.expiresAt > now
   );
-
-  return inventory.activeBuffs.length !== before;
 }
 
 async function claimPendingGrants(
@@ -600,10 +597,7 @@ async function claimPendingGrants(
 
 export async function getViewerInventory(
   channelId: string,
-  user: NightbotUser | null,
-  options?: {
-    claimPendingGrants?: boolean;
-  }
+  user: NightbotUser | null
 ): Promise<ViewerInventory> {
   const userId = getUserId(user);
   const displayName = getDisplayName(user);
@@ -618,13 +612,11 @@ export async function getViewerInventory(
   const data = await r.get<ViewerInventory>(key);
 
   const inventory = normalizeInventory(data, channelId, userId, displayName);
-  const expiredChanged = removeExpiredBuffs(inventory);
-  const claimed =
-    options?.claimPendingGrants === false
-      ? false
-      : await claimPendingGrants(inventory, user);
+  removeExpiredBuffs(inventory);
 
-  if (claimed || expiredChanged) {
+  const claimed = await claimPendingGrants(inventory, user);
+
+  if (claimed) {
     await setViewerInventory(inventory);
   }
 
@@ -1041,15 +1033,12 @@ export async function consumeRollTokenBuffsForRolls(options: {
   user: NightbotUser | null;
   rolls: number;
 }): Promise<RollTokenPlan> {
-  const inventory = await getViewerInventory(
-    options.channelId,
-    options.user,
-    { claimPendingGrants: false }
-  );
+  const inventory = await getViewerInventory(options.channelId, options.user);
   const rolls = Math.max(0, Math.floor(options.rolls));
 
   removeExpiredBuffs(inventory);
 
+  const originalBuffs = JSON.stringify(inventory.activeBuffs);
   const effects: RollTokenEffect[] = [];
   let activeBuffs = inventory.activeBuffs;
 
@@ -1062,11 +1051,7 @@ export async function consumeRollTokenBuffsForRolls(options: {
 
   inventory.activeBuffs = activeBuffs;
 
-  const consumed = effects.some((effect) =>
-    effect.used.some((buff) => buff.consumeOnRoll)
-  );
-
-  if (consumed) {
+  if (JSON.stringify(activeBuffs) !== originalBuffs) {
     await setViewerInventory(inventory);
   }
 

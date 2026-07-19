@@ -114,17 +114,6 @@ export async function getAchievementState(): Promise<AchievementState> {
   return normalizeAchievementState(data);
 }
 
-export async function getAchievementSnapshot(): Promise<{
-  state: AchievementState;
-  bonuses: ReturnType<typeof calculateAchievementBonuses>;
-}> {
-  const state = await getAchievementState();
-  return {
-    state,
-    bonuses: calculateAchievementBonuses(state),
-  };
-}
-
 export async function setAchievementState(
   state: AchievementState
 ): Promise<void> {
@@ -136,10 +125,9 @@ export async function setAchievementState(
 }
 
 export async function recordAuraRolls(
-  rolls: Array<{ aura: AuraDef; effectiveRarity: number }>,
-  existingState?: AchievementState
+  rolls: Array<{ aura: AuraDef; effectiveRarity: number }>
 ): Promise<AchievementDef[]> {
-  const state = existingState ?? (await getAchievementState());
+  const state = await getAchievementState();
 
   for (const roll of rolls) {
     recordAuraRollInState(state, roll.aura);
@@ -174,7 +162,8 @@ export async function recordBiomeVisit(
 }
 
 export async function getAchievementBonuses() {
-  return (await getAchievementSnapshot()).bonuses;
+  const state = await getAchievementState();
+  return calculateAchievementBonuses(state);
 }
 
 function parsePage(raw: string | undefined, fallback = 1): number {

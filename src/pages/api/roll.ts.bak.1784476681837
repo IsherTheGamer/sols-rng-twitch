@@ -5,7 +5,7 @@ import {
   addGlobalRolls,
   getGlobalRolls,
   getGlobalLuck,
-  getAchievementSnapshot,
+  getAchievementBonuses,
   recordAuraRolls,
 } from "@/lib/global-stats";
 import { formatAchievementUnlocks } from "@/lib/achievements";
@@ -13,7 +13,8 @@ import { getChannelContext } from "@/lib/nightbot";
 import { cooldownKey, formatRemaining, getChannelState } from "@/lib/state";
 import { rollOnce, topRarest, type RollHitResult } from "@/lib/roll-engine";
 import {
-  acquireCooldown,
+  applyCooldown,
+  checkCooldown,
   ROLL_COOLDOWN_MS,
 } from "@/lib/cooldowns";
 import { text, error } from "@/lib/api-helpers";
@@ -28,10 +29,7 @@ import {
   type RollTokenPlan,
 } from "@/lib/inventory";
 import type { ChannelState } from "@/types/data";
-import {
-  getViewerCoreLuckSnapshot,
-  recordCoreRolls,
-} from "@/lib/core-system";
+import { getViewerCoreLuck, recordCoreRolls } from "@/lib/core-system";
 import { getServerLuckMultiplier, recordSocialRolls } from "@/lib/social-system";
 import { getMegaLuckMultiplier, recordMegaRolls } from "@/lib/mega-feature-system";
 import { recordActivityRolls } from "@/lib/activity-of-knowledge-system";
@@ -240,9 +238,9 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
 
   const [allowlisted, preloadedViewerProfile] = await Promise.all([
     isRollMultiAllowlisted(user, channelLoginName, channelId),
-    user
-      ? getViewerProfile(channelId, user)
-      : Promise.resolve(null),
+    broadcaster || !user
+      ? Promise.resolve(null)
+      : getViewerProfile(channelId, user),
   ]);
 
   const trustedMultiroll = broadcaster || allowlisted;
@@ -300,19 +298,16 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
     : 1;
 
   const [
-    achievementSnapshot,
-    coreSnapshot,
+    achievementBonuses,
+    coreLuck,
     serverLuck,
     megaLuck,
   ] = await Promise.all([
-    getAchievementSnapshot(),
-    getViewerCoreLuckSnapshot(channelId, user),
+    getAchievementBonuses(),
+    getViewerCoreLuck(channelId, user),
     getServerLuckMultiplier(channelId),
     getMegaLuckMultiplier(channelId),
   ]);
-
-  const achievementBonuses = achievementSnapshot.bonuses;
-  const coreLuck = coreSnapshot.luck;
 
   const cooldownMs = Math.max(
     1000,
@@ -321,16 +316,13 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
 
   if (!safeSimulation && !isMod && !trustedMultiroll) {
     const key = cooldownKey("roll", channelId, user?.providerId ?? "anon");
-    const cooldown = await acquireCooldown(key, cooldownMs);
+    const cd = await checkCooldown(key, cooldownMs);
 
-    if (!cooldown.allowed) {
-      return text(
-        res,
-        `Roll cooldown: ${formatRemaining(
-          Date.now() + cooldown.remainingMs
-        )}`
-      );
+    if (!cd.allowed) {
+      return text(res, `Roll cooldown: ${formatRemaining(Date.now() + cd.remainingMs)}`);
     }
+
+    await applyCooldown(key, cooldownMs);
   }
 
   const baseRollCount = amount > 1 ? Math.min(amount, maxAllowed) : 1;
@@ -433,18 +425,10 @@ async function handleRoll(req: NextApiRequest, res: NextApiResponse) {
           channelId,
           user,
           results,
-          oneTimeTokenAssisted ? "token" : "roll",
-          preloadedViewerProfile ?? undefined
+          oneTimeTokenAssisted ? "token" : "roll"
         ),
-        recordCoreRolls(channelId, user, results, {
-          state: coreSnapshot.state,
-          globalRolls: globalRollsAfter,
-          profileLevel: preloadedViewerProfile?.level,
-        }),
-        recordAuraRolls(
-          results,
-          achievementSnapshot.state
-        ),
+        recordCoreRolls(channelId, user, results),
+        recordAuraRolls(results),
       ] as const);
 
       const persistence = await waitForPersistence(

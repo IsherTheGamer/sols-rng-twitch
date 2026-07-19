@@ -542,10 +542,8 @@ export async function saveCoreState(state: CoreSystemState): Promise<void> {
   state.updatedAt = now;
   state.lastActiveAt = now;
 
-  await r.mset({
-    [stateKey(state.channelId, state.userId)]: state,
-    [channelActivityKey(state.channelId)]: now,
-  });
+  await r.set(stateKey(state.channelId, state.userId), state);
+  await r.set(channelActivityKey(state.channelId), now);
 }
 
 export async function touchCoreState(
@@ -692,14 +690,6 @@ const LEVEL_MATERIAL_BONUS_PER_STEP = 0.001;
 const GLOBAL_QUEST_MATERIAL_BONUS_STEP = 100;
 const GLOBAL_QUEST_MATERIAL_BONUS_PER_STEP = 0.001;
 const GLOBAL_QUEST_COMPLETIONS_KEY = "mega:gquest-completions";
-const GLOBAL_QUEST_CACHE_MS = 15 * 1000;
-
-let globalQuestCache:
-  | {
-      expiresAt: number;
-      value: number;
-    }
-  | undefined;
 
 const MECHANICAL_SCRAP_ROLL_INTERVAL = 5;
 
@@ -743,28 +733,10 @@ function getGlobalQuestMaterialMultiplier(completed: number): number {
 }
 
 async function getGlobalQuestCompletions(): Promise<number> {
-  const now = Date.now();
-
-  if (globalQuestCache && globalQuestCache.expiresAt > now) {
-    return globalQuestCache.value;
-  }
-
   const r = getRedis();
   if (!r) return 0;
-
-  const value = Math.max(
-    0,
-    Math.floor(
-      (await r.get<number>(GLOBAL_QUEST_COMPLETIONS_KEY)) ?? 0
-    )
-  );
-
-  globalQuestCache = {
-    value,
-    expiresAt: now + GLOBAL_QUEST_CACHE_MS,
-  };
-
-  return value;
+  const value = await r.get<number>(GLOBAL_QUEST_COMPLETIONS_KEY);
+  return Math.max(0, Math.floor(value ?? 0));
 }
 
 function getMaterialComponentDuplicateChance(
@@ -2337,41 +2309,14 @@ function shdUnlockText(level: number): string {
 export async function recordCoreRolls(
   channelId: string,
   user: NightbotUser | null,
-  rolls: RollHitForCore[],
-  options?: {
-    state?: CoreSystemState;
-    globalRolls?: number;
-    profileLevel?: number;
-    globalQuestCompletions?: number;
-  }
+  rolls: RollHitForCore[]
 ): Promise<CoreSystemState> {
-  const state =
-    options?.state ?? (await getCoreState(channelId, user));
-
-  const [globalRolls, profileLevel, globalQuestCompletions] =
-    await Promise.all([
-      options?.globalRolls !== undefined
-        ? Promise.resolve(options.globalRolls)
-        : getGlobalRolls(),
-      options?.profileLevel !== undefined
-        ? Promise.resolve(options.profileLevel)
-        : user
-        ? getViewerProfile(channelId, user).then(
-            (profile) => profile.level
-          )
-        : Promise.resolve(0),
-      options?.globalQuestCompletions !== undefined
-        ? Promise.resolve(options.globalQuestCompletions)
-        : getGlobalQuestCompletions(),
-    ]);
-
-  const materialDuplicateChance =
-    getMaterialComponentDuplicateChance(state, globalRolls);
-  const materialMultiplier = materialDropMultiplier(
-    state,
-    profileLevel,
-    globalQuestCompletions
-  );
+  const state = await getCoreState(channelId, user);
+  const globalRolls = await getGlobalRolls();
+  const profile = user ? await getViewerProfile(channelId, user) : null;
+  const globalQuestCompletions = await getGlobalQuestCompletions();
+  const materialDuplicateChance = getMaterialComponentDuplicateChance(state, globalRolls);
+  const materialMultiplier = materialDropMultiplier(state, profile?.level ?? 0, globalQuestCompletions);
 
   if (state.coreFocus === "main") {
     const nextTier = state.coreTier + 1;
@@ -2488,39 +2433,18 @@ export async function getCoreGuideSnapshot(
   };
 }
 
-export async function getViewerCoreLuckSnapshot(
+export async function getViewerCoreLuck(
   channelId: string,
   user: NightbotUser | null
-): Promise<{
-  state: CoreSystemState;
-  luck: {
-    bonusPercent: number;
-    multiplier: number;
-    label: string;
-  };
-}> {
+): Promise<{ bonusPercent: number; multiplier: number; label: string }> {
   const state = await touchCoreState(channelId, user);
   const bonusPercent = getCoreLuckBonusPercent(state);
 
   return {
-    state,
-    luck: {
-      bonusPercent,
-      multiplier: 1 + bonusPercent / 100,
-      label: `${formatPercent(bonusPercent)} luck`,
-    },
+    bonusPercent,
+    multiplier: 1 + bonusPercent / 100,
+    label: `${formatPercent(bonusPercent)} luck`,
   };
-}
-
-export async function getViewerCoreLuck(
-  channelId: string,
-  user: NightbotUser | null
-): Promise<{
-  bonusPercent: number;
-  multiplier: number;
-  label: string;
-}> {
-  return (await getViewerCoreLuckSnapshot(channelId, user)).luck;
 }
 
 export async function craftByIdAmount(
