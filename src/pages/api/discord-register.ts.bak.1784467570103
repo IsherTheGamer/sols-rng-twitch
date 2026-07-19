@@ -100,6 +100,13 @@ const solsCommand = {
         "Admin: link a Discord account to its Twitch save",
       options: [
         {
+          type: USER,
+          name: "target",
+          description:
+            "Discord user to link; defaults to yourself",
+          required: false,
+        },
+        {
           type: STRING,
           name: "twitch_username",
           description: "Exact Twitch username",
@@ -111,13 +118,6 @@ const solsCommand = {
           description:
             "Numeric Twitch user ID shown by !ids",
           required: true,
-        },
-        {
-          type: USER,
-          name: "target",
-          description:
-            "Discord user to link; defaults to yourself",
-          required: false,
         },
       ],
     },
@@ -400,48 +400,6 @@ export default async function handler(
     solsCommand,
     ...TWITCH_COMMANDS.map(directCommand),
   ];
-
-  function validateRequiredOptionOrder(
-    options: Array<Record<string, any>> | undefined,
-    location: string
-  ): string | null {
-    if (!options) return null;
-
-    let optionalSeen = false;
-
-    for (const option of options) {
-      const required = option.required === true;
-
-      if (!required) optionalSeen = true;
-
-      if (required && optionalSeen) {
-        return `${location} > ${option.name}: required options must come before optional options.`;
-      }
-
-      const nested = validateRequiredOptionOrder(
-        option.options,
-        `${location} > ${option.name}`
-      );
-
-      if (nested) return nested;
-    }
-
-    return null;
-  }
-
-  for (const command of commands) {
-    const schemaError = validateRequiredOptionOrder(
-      command.options,
-      `/${command.name}`
-    );
-
-    if (schemaError) {
-      return text(
-        res,
-        `❌ Discord command schema invalid: ${schemaError}`
-      );
-    }
-  }
 
   if (commands.length > 100) {
     return text(
