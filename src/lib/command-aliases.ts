@@ -5,6 +5,11 @@ import {
   type AliasCandidate,
   type AliasResolution,
 } from "./fuzzy-alias";
+import {
+  addUniqueAbbreviationAliases,
+  componentAbbreviation,
+  tokenAbbreviation,
+} from "./abbreviations";
 
 export type CorePathName =
   | "safe"
@@ -30,8 +35,16 @@ export const CORE_ACTIONS = [
   textCandidate("focus", "focus", ["fokus", "target"]),
   textCandidate("choose", "choose", ["chooze", "chose", "select", "pick"]),
   textCandidate("switch", "switch", ["swap", "change path", "realign"]),
-  textCandidate("tokens", "tokens", ["token list", "token guide"]),
-  textCandidate("token", "token", ["tokn", "use token"]),
+  // Singular/plural are one logical action so typos cannot become a fake tie.
+  textCandidate("token", "token", [
+    "tokens",
+    "tokn",
+    "tokns",
+    "tokene",
+    "token list",
+    "token guide",
+    "use token",
+  ]),
 ] as const;
 
 export const CORE_PATHS: AliasCandidate<CorePathName>[] = [
@@ -50,22 +63,22 @@ export const CORE_FOCUS = [
 ] as const;
 
 export const CORE_TOKENS = [
-  textCandidate("recipe", "Recipe Token", ["recipe_token", "recipe tokens"]),
-  textCandidate("path", "Path Token", ["path_token", "path tokens"]),
-  textCandidate("reactor", "Reactor Token", ["reactor_token", "reactor tokens"]),
-  textCandidate("crafting", "Crafting Token", ["craft", "crafting_token", "discount token"]),
-  textCandidate("quest", "Quest Token", ["quest_token", "quest tokens"]),
-  textCandidate("wall", "Wall Token", ["wall_token", "wall tokens"]),
-  textCandidate("anomaly", "Anomaly Token", ["anomoly", "anomaly_token"]),
+  textCandidate("recipe", "Recipe Token", ["recipe_token", "recipe tokens", tokenAbbreviation("recipe_token")]),
+  textCandidate("path", "Path Token", ["path_token", "path tokens", tokenAbbreviation("path_token")]),
+  textCandidate("reactor", "Reactor Token", ["reactor_token", "reactor tokens", tokenAbbreviation("reactor_token")]),
+  textCandidate("crafting", "Crafting Token", ["craft", "crafting_token", "discount token", tokenAbbreviation("crafting_token")]),
+  textCandidate("quest", "Quest Token", ["quest_token", "quest tokens", tokenAbbreviation("quest_token")]),
+  textCandidate("wall", "Wall Token", ["wall_token", "wall tokens", tokenAbbreviation("wall_token")]),
+  textCandidate("anomaly", "Anomaly Token", ["anomoly", "anomaly_token", tokenAbbreviation("anomaly_token")]),
 ] as const;
 
 export const BOXES = [
-  textCandidate("starter_box", "Starter Box", ["starter", "start", "beginner box"]),
-  textCandidate("core_box", "Core Box", ["core", "cores box"]),
-  textCandidate("quest_box", "Quest Box", ["quest", "daily box", "weekly box"]),
-  textCandidate("reactor_box", "Reactor Box", ["reactor"]),
-  textCandidate("anomaly_box", "Anomaly Box", ["anomaly", "anomoly box"]),
-  textCandidate("dev_box", "Dev Box", ["dev", "developer box", "admin box"]),
+  textCandidate("starter_box", "Starter Box", ["starter", "start", "beginner box", "sb"]),
+  textCandidate("core_box", "Core Box", ["core", "cores box", "cb"]),
+  textCandidate("quest_box", "Quest Box", ["quest", "daily box", "weekly box", "qb"]),
+  textCandidate("reactor_box", "Reactor Box", ["reactor", "rb"]),
+  textCandidate("anomaly_box", "Anomaly Box", ["anomaly", "anomoly box", "ab"]),
+  textCandidate("dev_box", "Dev Box", ["dev", "developer box", "admin box", "db"]),
 ] as const;
 
 export const TOKEN_ACTIONS = [
@@ -115,7 +128,19 @@ export const RELIC_ACTIONS = [
 ] as const;
 
 export const BOSS_ACTIONS = [
-  textCandidate("status", "status", ["show", "info"]),
+  textCandidate("status", "status", [
+    "show",
+    "info",
+    "stat",
+    "stats",
+    "state",
+    "check",
+    "current",
+    "statu",
+    "statue",
+    "staus",
+    "statsu",
+  ]),
   textCandidate("start", "start", ["spawn", "begin", "summon"]),
   textCandidate("beacon", "beacon", ["becon", "boss beacon", "signal"]),
 ] as const;
@@ -303,10 +328,21 @@ function buildCraftCandidates(): AliasCandidate<string>[] {
     value: id,
   }));
 
-  return [...generated, ...path, ...special];
+  const all = [...generated, ...path, ...special];
+  return addUniqueAbbreviationAliases(all, (item) =>
+    componentAbbreviation(item.id, item.label)
+  );
 }
 
 export const CRAFT_ITEMS = buildCraftCandidates();
+
+export function getCraftLabel(id: string): string {
+  return CRAFT_ITEMS.find((candidate) => candidate.id === id)?.label ?? titleCase(id);
+}
+
+export function getCraftAbbreviation(id: string): string {
+  return componentAbbreviation(id, getCraftLabel(id));
+}
 
 export function resolveTextAlias<T extends string>(
   raw: string,

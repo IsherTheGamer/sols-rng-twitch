@@ -3,6 +3,7 @@ import type { NightbotUser } from "./nightbot";
 import { formatRarity, truncate } from "./format";
 import { getGlobalRolls } from "./global-stats";
 import { getViewerProfile } from "./profile";
+import { componentAbbreviation, labelWithAbbreviation, materialAbbreviation, tokenAbbreviation } from "./abbreviations";
 
 let redis: Redis | null = null;
 
@@ -769,11 +770,17 @@ function rollBonusBatches(batches: number, chance: number): number {
 
 function formatUsedCosts(costs: CraftCosts): string {
   const parts: string[] = [];
-  if (costs.stardust) parts.push(`${formatAmount(costs.stardust)} Stardust`);
-  for (const [id, amount] of Object.entries(costs.materials ?? {})) parts.push(`${formatAmount(amount)} ${materialName(id)}`);
-  for (const [id, amount] of Object.entries(costs.components ?? {})) parts.push(`${formatAmount(amount)} ${componentName(id)}`);
+  if (costs.stardust) parts.push(`${formatAmount(costs.stardust)} Stardust [SD]`);
+  for (const [id, amount] of Object.entries(costs.materials ?? {})) {
+    parts.push(`${formatAmount(amount)} ${labelWithAbbreviation(materialName(id), materialAbbreviation(id))}`);
+  }
+  for (const [id, amount] of Object.entries(costs.components ?? {})) {
+    parts.push(`${formatAmount(amount)} ${labelWithAbbreviation(componentName(id), componentAbbreviation(id, componentName(id)))}`);
+  }
   for (const [id, amount] of Object.entries(costs.frames ?? {})) parts.push(`${formatAmount(amount)} ${frameName(id)}`);
-  for (const [id, amount] of Object.entries(costs.tokens ?? {})) parts.push(`${formatAmount(amount)} ${tokenName(id)}`);
+  for (const [id, amount] of Object.entries(costs.tokens ?? {})) {
+    parts.push(`${formatAmount(amount)} ${labelWithAbbreviation(tokenName(id), tokenAbbreviation(id))}`);
+  }
   return parts.length > 0 ? parts.join(", ") : "Free";
 }
 
@@ -2511,28 +2518,21 @@ export async function craftByIdAmount(
 
   await saveCoreState(state);
 
-  const bonusText =
-    bonusBatches > 0
-      ? ` + ${formatAmount(bonusBatches)} duplicate batch(es)`
-      : "";
-  const chanceText =
-    doubleChance > 0
-      ? ` | Double chance ${(doubleChance * 100).toFixed(1)}%`
-      : "";
+  const abbreviation = componentAbbreviation(recipe.id, recipe.name);
+  const paidBatchLabel = batches === 1 ? "batch" : "batches";
+  const bonusBatchLabel = bonusBatches === 1 ? "bonus batch" : "bonus batches";
+  const sourceText = bonusBatches > 0
+    ? `${formatAmount(batches)} paid ${paidBatchLabel} + ${formatAmount(bonusBatches)} ${bonusBatchLabel}`
+    : `${formatAmount(batches)} ${paidBatchLabel}`;
+  const chanceText = doubleChance > 0
+    ? ` | Extra-batch chance: ${(doubleChance * 100).toFixed(1)}%`
+    : "";
   const discountText = craftingTokenActive
-    ? " | Crafting Token: -25% costs"
+    ? " | Crafting Token applied: 25% cheaper"
     : "";
 
   return truncate(
-    `✅ Crafted ${recipe.name}: ${formatAmount(
-      batches
-    )} batch(es) x${formatAmount(
-      baseOutputPerBatch
-    )}${bonusText} = ${formatAmount(
-      outputAmount
-    )} total. Used: ${formatUsedCosts(
-      scaledCosts
-    )}.${chanceText}${discountText}`
+    `✅ Crafted ${formatAmount(outputAmount)}x ${labelWithAbbreviation(recipe.name, abbreviation)} from ${sourceText} (${formatAmount(baseOutputPerBatch)} per batch). Cost: ${formatUsedCosts(scaledCosts)}.${chanceText}${discountText}`
   );
 }
 

@@ -5,12 +5,19 @@ import {
   resolveCorePath,
   resolveCoreToken,
   resolveCraftItem,
+  getCraftAbbreviation,
+  getCraftLabel,
 } from "./command-aliases";
 import {
   aliasSuggestionText,
   resolveAlias,
   type AliasCandidate,
 } from "./fuzzy-alias";
+import {
+  labelWithAbbreviation,
+  materialAbbreviation,
+  tokenAbbreviation,
+} from "./abbreviations";
 
 interface GuideEntry {
   id: string;
@@ -22,27 +29,27 @@ interface GuideEntry {
 }
 
 const MATERIALS: GuideEntry[] = [
-  { id:"scrap", name:"Scrap", obtain:"Every successful aura roll; Starter Boxes; quests; Activity Market Scrap Packs.", use:"Basic components, chassis, frames, and early wall components." },
-  { id:"metal_bits", name:"Metal Bits", aliases:["metal","bits"], obtain:"Every successful aura roll; Activity Market Scrap Packs.", use:"Basic components, chassis, and frames." },
-  { id:"mechanical_scrap", name:"Mechanical Scrap", aliases:["mechanical"], obtain:"Guaranteed 1 every 5 successful aura rolls; Activity Market Scrap Packs.", use:"Early components, chassis, and frames." },
-  { id:"circuit_scrap", name:"Circuit Scrap", aliases:["circuit"], obtain:"Any 1/450+ aura; Daily Crafting; Starter Boxes; Activity Market Circuit Packs.", use:"Electronics and Core 16–49 path-wall components." },
-  { id:"signal_fragment", name:"Signal Fragment", aliases:["signal"], obtain:"Any 1/10,000+ aura; quests; boxes; Activity Market Circuit Packs.", use:"Mid-tier electronics, SHD, and early path walls." },
-  { id:"refined_alloy", name:"Refined Alloy", aliases:["refined"], obtain:"Any 1/50,000+ aura; quests; Core/Quest Boxes; Activity Market packs.", use:"Tier 5+ crafting and Core 16–89 path walls." },
-  { id:"stabilized_flux", name:"Stabilized Flux", aliases:["flux"], obtain:"Any 1/1,000,000+ aura; weekly quests; Core Boxes; Activity Market advanced packs.", use:"Tier 6+ crafting and Core 50–129 path walls." },
-  { id:"chrono_dust", name:"Chrono Dust", aliases:["chrono"], obtain:"Any 1/5,000,000+ aura.", use:"Core 90–129 path-wall components and time recipes." },
-  { id:"quantum_residue", name:"Quantum Residue", aliases:["quantum"], obtain:"Any 1/10,000,000+ aura; weekly rare quest; Reactor Boxes.", use:"Tier 7+ crafting and Core 90–169 path walls." },
-  { id:"void_glass", name:"Void Glass", aliases:["void"], obtain:"Any 1/25,000,000+ aura.", use:"Biome and dimensional crafting." },
-  { id:"stellar_ink", name:"Stellar Ink", aliases:["stellar","ink"], obtain:"Any 1/75,000,000+ aura.", use:"Biome, blueprint, and stellar crafting." },
-  { id:"reality_thread", name:"Reality Thread", aliases:["reality","thread"], obtain:"Any 1/100,000,000+ aura; weekly rare quest; Reactor Boxes.", use:"Tier 8+ crafting and Core 130–219 path walls." },
-  { id:"dimensional_seal", name:"Dimensional Seal", aliases:["seal","dimensional"], obtain:"Any 1/250,000,000+ aura; Anomaly Boxes.", use:"Late path-wall and dimensional recipes." },
-  { id:"anomaly_matter", name:"Anomaly Matter", aliases:["anomaly","anomoly"], obtain:"Any 1/500,000,000+ aura; Anomaly Boxes; Dev Boxes.", use:"Core 170+ path walls and anomaly crafting." },
-  { id:"singularity_shard", name:"Singularity Shard", aliases:["singularity","shard"], obtain:"Any 1/1,000,000,000+ aura.", use:"Core 170+ wall components and singularity recipes." },
-  { id:"glitched_alloy", name:"Glitched Alloy", aliases:["glitched"], obtain:"Any 1/1,000,000,000+ aura.", use:"Final Core 220–250 path-wall components." },
-  { id:"forbidden_circuit", name:"Forbidden Circuit", aliases:["forbidden"], obtain:"Any 1/5,000,000,000+ aura; Anomaly Boxes.", use:"Only final Core 220–250 wall components and Forbidden recipes." },
-  { id:"thermal_paste", name:"Thermal Paste", aliases:["thermal","paste"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional advanced electronics; not required by early Core walls." },
-  { id:"conductive_gel", name:"Conductive Gel", aliases:["conductive","gel"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional support electronics; not required by early Core walls." },
-  { id:"energy_cell", name:"Energy Cell", aliases:["energy"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional power recipes; not required by early Core walls." },
-  { id:"debug_fragment", name:"Debug Fragment", aliases:["debug"], obtain:"Developer/admin rewards only.", use:"Developer-exclusive recipes." },
+  { id:"scrap", name:"Scrap", aliases:["sc"], obtain:"Every successful aura roll; Starter Boxes; quests; Activity Market Scrap Packs.", use:"Basic components, chassis, frames, and early wall components." },
+  { id:"metal_bits", name:"Metal Bits", aliases:["metal","bits","mb"], obtain:"Every successful aura roll; Activity Market Scrap Packs.", use:"Basic components, chassis, and frames." },
+  { id:"mechanical_scrap", name:"Mechanical Scrap", aliases:["mechanical","ms"], obtain:"Guaranteed 1 every 5 successful aura rolls; Activity Market Scrap Packs.", use:"Early components, chassis, and frames." },
+  { id:"circuit_scrap", name:"Circuit Scrap", aliases:["circuit","cs"], obtain:"Any 1/450+ aura; Daily Crafting; Starter Boxes; Activity Market Circuit Packs.", use:"Electronics and Core 16–49 path-wall components." },
+  { id:"signal_fragment", name:"Signal Fragment", aliases:["signal","sig"], obtain:"Any 1/10,000+ aura; quests; boxes; Activity Market Circuit Packs.", use:"Mid-tier electronics, SHD, and early path walls." },
+  { id:"refined_alloy", name:"Refined Alloy", aliases:["refined","ra"], obtain:"Any 1/50,000+ aura; quests; Core/Quest Boxes; Activity Market packs.", use:"Tier 5+ crafting and Core 16–89 path walls." },
+  { id:"stabilized_flux", name:"Stabilized Flux", aliases:["flux","stf"], obtain:"Any 1/1,000,000+ aura; weekly quests; Core Boxes; Activity Market advanced packs.", use:"Tier 6+ crafting and Core 50–129 path walls." },
+  { id:"chrono_dust", name:"Chrono Dust", aliases:["chrono","cd"], obtain:"Any 1/5,000,000+ aura.", use:"Core 90–129 path-wall components and time recipes." },
+  { id:"quantum_residue", name:"Quantum Residue", aliases:["quantum","qr"], obtain:"Any 1/10,000,000+ aura; weekly rare quest; Reactor Boxes.", use:"Tier 7+ crafting and Core 90–169 path walls." },
+  { id:"void_glass", name:"Void Glass", aliases:["void","vg"], obtain:"Any 1/25,000,000+ aura.", use:"Biome and dimensional crafting." },
+  { id:"stellar_ink", name:"Stellar Ink", aliases:["stellar","ink","si"], obtain:"Any 1/75,000,000+ aura.", use:"Biome, blueprint, and stellar crafting." },
+  { id:"reality_thread", name:"Reality Thread", aliases:["reality","thread","rt"], obtain:"Any 1/100,000,000+ aura; weekly rare quest; Reactor Boxes.", use:"Tier 8+ crafting and Core 130–219 path walls." },
+  { id:"dimensional_seal", name:"Dimensional Seal", aliases:["seal","dimensional","ds"], obtain:"Any 1/250,000,000+ aura; Anomaly Boxes.", use:"Late path-wall and dimensional recipes." },
+  { id:"anomaly_matter", name:"Anomaly Matter", aliases:["anomaly","anomoly","am"], obtain:"Any 1/500,000,000+ aura; Anomaly Boxes; Dev Boxes.", use:"Core 170+ path walls and anomaly crafting." },
+  { id:"singularity_shard", name:"Singularity Shard", aliases:["singularity","shard","ss"], obtain:"Any 1/1,000,000,000+ aura.", use:"Core 170+ wall components and singularity recipes." },
+  { id:"glitched_alloy", name:"Glitched Alloy", aliases:["glitched","ga"], obtain:"Any 1/1,000,000,000+ aura.", use:"Final Core 220–250 path-wall components." },
+  { id:"forbidden_circuit", name:"Forbidden Circuit", aliases:["forbidden","fc"], obtain:"Any 1/5,000,000,000+ aura; Anomaly Boxes.", use:"Only final Core 220–250 wall components and Forbidden recipes." },
+  { id:"thermal_paste", name:"Thermal Paste", aliases:["thermal","paste","tp"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional advanced electronics; not required by early Core walls." },
+  { id:"conductive_gel", name:"Conductive Gel", aliases:["conductive","gel","cg"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional support electronics; not required by early Core walls." },
+  { id:"energy_cell", name:"Energy Cell", aliases:["energy","ec"], obtain:"Special event, market, blueprint, or future reward rotations.", use:"Optional power recipes; not required by early Core walls." },
+  { id:"debug_fragment", name:"Debug Fragment", aliases:["debug","df"], obtain:"Developer/admin rewards only.", use:"Developer-exclusive recipes." },
 ];
 
 const TOKENS: GuideEntry[] = [
@@ -84,9 +91,28 @@ const PATH_RANGES = ["Core 16–49","Core 50–89","Core 90–129","Core 130–1
 
 function titleCase(input:string){return input.split(/[_\-\s:]+/g).filter(Boolean).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(" ");}
 function page(raw:string|undefined,total:number){const n=Number(String(raw??"1").replace(/,/g,""));return Math.max(1,Math.min(total,Number.isFinite(n)?Math.floor(n):1));}
-function entry(e:GuideEntry,icon:string){return truncate(`${icon} ${e.name} | Obtain: ${e.obtain} | Use: ${e.use}${e.command?` | Command: ${e.command}`:""}`,390);}
+function entry(e:GuideEntry,icon:string){
+  const abbreviation = MATERIALS.includes(e)
+    ? materialAbbreviation(e.id)
+    : TOKENS.includes(e)
+    ? tokenAbbreviation(e.id)
+    : "";
+  return truncate(`${icon} ${labelWithAbbreviation(e.name, abbreviation)} | Obtain: ${e.obtain} | Use: ${e.use}${e.command?` | Command: ${e.command}`:""}`,390);
+}
 function list(entries:GuideEntry[],raw:string|undefined,title:string){const size=3,total=Math.max(1,Math.ceil(entries.length/size)),p=page(raw,total),shown=entries.slice((p-1)*size,p*size);return truncate(`${title} ${p}/${total}: ${shown.map(e=>`${e.name} — ${e.obtain}`).join(" | ")}`,390);}
-function guideCandidates(entries:GuideEntry[]):AliasCandidate<GuideEntry>[] {return entries.map(e=>({id:e.id,label:e.name,aliases:[e.id.replace(/_/g," "),...(e.aliases??[])],value:e}));}
+function guideCandidates(entries:GuideEntry[]):AliasCandidate<GuideEntry>[] {
+  return entries.map(e=>({
+    id:e.id,
+    label:e.name,
+    aliases:[
+      e.id.replace(/_/g," "),
+      ...(e.aliases??[]),
+      ...(MATERIALS.includes(e)?[materialAbbreviation(e.id)]:[]),
+      ...(TOKENS.includes(e)?[tokenAbbreviation(e.id)]:[]),
+    ],
+    value:e,
+  }));
+}
 function findGuide(entries:GuideEntry[],raw:string){return resolveAlias(raw,guideCandidates(entries),{maxScore:.3,ambiguityGap:.07});}
 function guideError(result:ReturnType<typeof findGuide>,subject:string){return result.status==="matched"?"":aliasSuggestionText(result,subject);}
 
@@ -114,7 +140,7 @@ export function formatComponentGuide(query="",pageRaw="1"){
     const path=findGuide(PATH_COMPONENTS,query);if(path.status==="matched")return entry(path.match.value,"🧭");
     const component=resolveCraftItem(query);if(!component.value)return `${component.error??"Unknown component."} Try !info components or !info paths.`;
     const match=component.value.match(/_(\d+)$/),tier=Math.max(1,Math.min(10,Number(match?.[1]??1)));
-    return truncate(`⚙️ ${titleCase(component.value)} | Craft: !craft recipe ${component.value} | Higher tiers use the previous tier plus rarity materials. ${tier<=5?"Makes x2 per batch.":tier<=7?"Makes x1 with duplicate chances.":"Late tier; may consume Recipe Tokens."}`,390);
+    return truncate(`⚙️ ${labelWithAbbreviation(getCraftLabel(component.value), getCraftAbbreviation(component.value))} | Craft: !craft recipe ${component.value} | Higher tiers use the previous tier plus rarity materials. ${tier<=5?"Makes x2 per batch.":tier<=7?"Makes x1 with duplicate chances.":"Late tier; may consume Recipe Tokens."}`,390);
   }
   const entries=COMPONENT_FAMILIES.map(id=>({id,name:titleCase(id),obtain:`Craft !craft recipe ${id}_1; use _2 through _10.`,use:"Core, SHD, Reactor, and advanced recipes."}));
   return list(entries,/^\d+$/.test(query)?query:pageRaw,"⚙️ Component Families");

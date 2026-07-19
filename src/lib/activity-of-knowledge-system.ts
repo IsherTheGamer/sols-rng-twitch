@@ -6,7 +6,14 @@ import {
   getCoreGuideSnapshot,
   getCoreState,
   grantCoreMaterials,
+  saveCoreState,
 } from "./core-system";
+import {
+  aliasSuggestionText,
+  resolveAlias,
+  type AliasCandidate,
+} from "./fuzzy-alias";
+import { initialism } from "./abbreviations";
 
 let redis: Redis | null = null;
 
@@ -76,11 +83,29 @@ type Forecast = {
   generatedAt: number;
 };
 
+type MarketReward = {
+  materials?: Record<string, number>;
+  tokens?: Record<string, number>;
+  lootboxes?: Record<string, number>;
+  knowledge?: number;
+  relicShards?: number;
+  blueprintFragments?: number;
+};
+
+type MarketLootEntry = {
+  weight: number;
+  label: string;
+  reward: MarketReward;
+};
+
 type MarketItem = {
   id: string;
   name: string;
+  aliases: string[];
   baseCost: number;
-  reward: string;
+  description: string;
+  pulls: number;
+  pool: MarketLootEntry[];
   research?: string;
 };
 
@@ -91,6 +116,8 @@ type ChannelState = {
   worldEvent: WorldEvent | null;
   forecast: Forecast | null;
   marketDate: string | null;
+  marketRotationId: string;
+  marketRerollsAt: number;
   marketItems: MarketItem[];
   stats: {
     bossesDefeated: number;
@@ -140,6 +167,8 @@ type PlayerState = {
   unlockedResearch: Record<string, boolean>;
   blueprints: Record<string, boolean>;
   relics: Relic[];
+  marketRotationId: string;
+  marketPurchases: Record<string, boolean>;
   stats: {
     bossDamage: number;
     bossKills: number;
@@ -166,6 +195,7 @@ const CCACHE = new Map<string, { expiresAt: number; value: ChannelState }>();
 const CACHE_MS = 3500;
 const EVENT_CHANCE = 1 / 250;
 const EVENT_MIN_MS = 25 * 60 * 1000;
+const MARKET_ROTATION_MS = 6 * 60 * 60 * 1000;
 
 const BRANCHES: Branch[] = [
   "archive",
@@ -314,11 +344,12 @@ function uname(u:NightbotUser|null){ return u?.displayName ?? u?.name ?? "Player
 function amt(v:number){ return Math.floor(v).toLocaleString("en-US"); }
 function clamp(v:number,min:number,max:number){ return Math.max(min,Math.min(max,Math.floor(v||0))); }
 function norm(raw:string|undefined|null){ return (raw??"").toLowerCase().trim().replace(/^!+/,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,""); }
+function titleCase(raw:string){return raw.split(/[_\-\s:]+/g).filter(Boolean).map(part=>part.charAt(0).toUpperCase()+part.slice(1)).join(" ");}
 function pick<T>(items:readonly T[]):T{ return items[Math.floor(Math.random()*items.length)]; }
 function left(ms:number){ const m=Math.floor(Math.max(0,ms)/60000),h=Math.floor(m/60); return h>0?`${h}h ${m%60}m`:`${m}m`; }
 
 function defaultP(c:string,u:NightbotUser|null):PlayerState{
-  return {channelId:c,userId:uid(u),displayName:uname(u),knowledge:0,merchantMarks:0,relicShards:0,blueprintFragments:0,scannerLevel:0,unlockedResearch:{},blueprints:{},relics:[],stats:{bossDamage:0,bossKills:0,knowledgeEarned:0,worldEventsSeen:0,relicRerolls:0},updatedAt:n()};
+  return {channelId:c,userId:uid(u),displayName:uname(u),knowledge:0,merchantMarks:0,relicShards:0,blueprintFragments:0,scannerLevel:0,unlockedResearch:{},blueprints:{},relics:[],marketRotationId:"",marketPurchases:{},stats:{bossDamage:0,bossKills:0,knowledgeEarned:0,worldEventsSeen:0,relicRerolls:0},updatedAt:n()};
 }
 function inferEffect(r:Partial<Relic>):RelicEffect{
   if(r.effect)return r.effect;
@@ -326,14 +357,14 @@ function inferEffect(r:Partial<Relic>):RelicEffect{
 }
 function normP(x:Partial<PlayerState>|null|undefined,c:string,u:NightbotUser|null):PlayerState{
   const b=defaultP(c,u); if(!x)return b;
-  return {...b,...x,channelId:c,userId:x.userId??b.userId,displayName:uname(u)||x.displayName||b.displayName,knowledge:clamp(x.knowledge??0,0,Number.MAX_SAFE_INTEGER),merchantMarks:clamp(x.merchantMarks??0,0,Number.MAX_SAFE_INTEGER),relicShards:clamp(x.relicShards??0,0,Number.MAX_SAFE_INTEGER),blueprintFragments:clamp(x.blueprintFragments??0,0,Number.MAX_SAFE_INTEGER),scannerLevel:clamp(x.scannerLevel??0,0,10),unlockedResearch:x.unlockedResearch??{},blueprints:x.blueprints??{},relics:(x.relics??[]).slice(0,50).map((r,i)=>({id:String(r.id??`legacy_${i}`),name:String(r.name??`Relic ${i+1}`),rarity:RARITIES.includes(r.rarity as RelicRarity)?r.rarity as RelicRarity:"common",level:clamp(r.level??1,1,10),equipped:Boolean(r.equipped),effect:inferEffect(r)})),stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
+  return {...b,...x,channelId:c,userId:x.userId??b.userId,displayName:uname(u)||x.displayName||b.displayName,knowledge:clamp(x.knowledge??0,0,Number.MAX_SAFE_INTEGER),merchantMarks:clamp(x.merchantMarks??0,0,Number.MAX_SAFE_INTEGER),relicShards:clamp(x.relicShards??0,0,Number.MAX_SAFE_INTEGER),blueprintFragments:clamp(x.blueprintFragments??0,0,Number.MAX_SAFE_INTEGER),scannerLevel:clamp(x.scannerLevel??0,0,10),unlockedResearch:x.unlockedResearch??{},blueprints:x.blueprints??{},relics:(x.relics??[]).slice(0,50).map((r,i)=>({id:String(r.id??`legacy_${i}`),name:String(r.name??`Relic ${i+1}`),rarity:RARITIES.includes(r.rarity as RelicRarity)?r.rarity as RelicRarity:"common",level:clamp(r.level??1,1,10),equipped:Boolean(r.equipped),effect:inferEffect(r)})),marketRotationId:String(x.marketRotationId??""),marketPurchases:x.marketPurchases??{},stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
 }
 function defaultC(c:string,name:string):ChannelState{
-  return {channelId:c,channelName:name,boss:null,worldEvent:null,forecast:null,marketDate:null,marketItems:[],stats:{bossesDefeated:0,worldEventsStarted:0,globalQuestCompletions:0},updatedAt:n()};
+  return {channelId:c,channelName:name,boss:null,worldEvent:null,forecast:null,marketDate:null,marketRotationId:"",marketRerollsAt:0,marketItems:[],stats:{bossesDefeated:0,worldEventsStarted:0,globalQuestCompletions:0},updatedAt:n()};
 }
 function normC(x:Partial<ChannelState>|null|undefined,c:string,name:string):ChannelState{
   const b=defaultC(c,name); if(!x)return b;
-  return {...b,...x,channelId:c,channelName:name||x.channelName||c,boss:x.boss??null,worldEvent:x.worldEvent??null,forecast:x.forecast??null,marketItems:x.marketItems??[],stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
+  return {...b,...x,channelId:c,channelName:name||x.channelName||c,boss:x.boss??null,worldEvent:x.worldEvent??null,forecast:x.forecast??null,marketRotationId:String(x.marketRotationId??""),marketRerollsAt:Math.max(0,Number(x.marketRerollsAt??0)),marketItems:Array.isArray(x.marketItems)?x.marketItems:[],stats:{...b.stats,...(x.stats??{})},updatedAt:n()};
 }
 async function getP(c:string,u:NightbotUser|null){ const key=pk(c,uid(u)),cached=PCACHE.get(key); if(cached&&cached.expiresAt>n())return cached.value; const r=getRedis(); if(!r)return defaultP(c,u); const state=normP(await r.get<PlayerState>(key),c,u); PCACHE.set(key,{expiresAt:n()+CACHE_MS,value:state}); return state; }
 async function saveP(p:PlayerState){ p.updatedAt=n(); PCACHE.set(pk(p.channelId,p.userId),{expiresAt:n()+CACHE_MS,value:p}); const r=getRedis(); if(r)await r.set(pk(p.channelId,p.userId),p); }
@@ -384,16 +415,87 @@ function effectText(p:PlayerState,r:Relic){ return `+${relicPct(p,r).toFixed(1)}
 function newRelic():Relic{ const theme=pick(THEMES); return {id:`relic_${n()}_${Math.random().toString(36).slice(2,8)}`,name:`${theme} ${pick(TYPES)}`,rarity:Math.random()<.01?"epic":Math.random()<.08?"rare":Math.random()<.3?"uncommon":"common",level:1,equipped:false,effect:THEME_EFFECT[theme]}; }
 function nextRarity(r:RelicRarity){ const i=RARITIES.indexOf(r),roll=Math.random(); return RARITIES[clamp(i+(roll<.03?2:roll<.53?1:roll>.92?-1:0),0,RARITIES.length-1)]; }
 
-function marketItems(p:PlayerState):MarketItem[]{
-  return [
-    {id:"scrap_pack",name:"Scrap Supply Pack",baseCost:8,reward:"100 Scrap, 50 Metal Bits, 10 Mechanical Scrap"},
-    {id:"circuit_pack",name:"Circuit Supply Pack",baseCost:20,reward:"50 Circuit Scrap, 5 Signal Fragments"},
-    {id:"knowledge_note",name:"Knowledge Note",baseCost:35,reward:"25 Knowledge"},
-    {id:"relic_shards",name:"Relic Shard Bundle",baseCost:50,reward:"5 Relic Shards",research:"market_contacts_1"},
-    {id:"blueprint_fragment",name:"Blueprint Fragment",baseCost:60,reward:"1 Blueprint Fragment",research:"market_contacts_1"},
-    {id:"stabilized_pack",name:"Stabilized Supply Pack",baseCost:95,reward:"30 Refined Alloy, 3 Stabilized Flux",research:"market_contacts_2"},
-  ].filter(x=>!x.research||p.unlockedResearch[x.research]);
+function marketReward(label:string,reward:MarketReward,weight=1):MarketLootEntry{return{label,reward,weight};}
+
+const MARKET_CATALOG:MarketItem[]=[
+  {id:"salvage_grab_bag",name:"Salvage Grab Bag",aliases:["salvage","scrap pack","sgb"],baseCost:8,description:"3 random basic-material pulls",pulls:3,pool:[
+    marketReward("Scrap",{materials:{scrap:80}},50),marketReward("Metal Bits",{materials:{metal_bits:45}},35),marketReward("Mechanical Scrap",{materials:{mechanical_scrap:12}},15),
+  ]},
+  {id:"circuit_crate",name:"Circuit Crate",aliases:["circuit pack","electronics crate","cc"],baseCost:20,description:"2 random electronics pulls",pulls:2,pool:[
+    marketReward("Circuit Scrap",{materials:{circuit_scrap:35}},55),marketReward("Signal Fragments",{materials:{signal_fragment:5}},32),marketReward("Refined Alloy",{materials:{refined_alloy:3}},13),
+  ]},
+  {id:"workshop_mystery_pack",name:"Workshop Mystery Pack",aliases:["workshop pack","mystery materials","wmp"],baseCost:28,description:"2 mixed crafting pulls",pulls:2,pool:[
+    marketReward("Mechanical Bundle",{materials:{mechanical_scrap:15,circuit_scrap:20}},35),marketReward("Signal Bundle",{materials:{signal_fragment:6,refined_alloy:2}},30),marketReward("Flux Sample",{materials:{stabilized_flux:2}},12),marketReward("Crafting Token",{tokens:{crafting_token:1}},13),marketReward("Quest Box",{lootboxes:{quest_box:1}},10),
+  ]},
+  {id:"knowledge_capsule",name:"Knowledge Capsule",aliases:["knowledge note","knowledge","kc"],baseCost:35,description:"1 random Knowledge pull",pulls:1,pool:[
+    marketReward("20 Knowledge",{knowledge:20},40),marketReward("35 Knowledge",{knowledge:35},35),marketReward("55 Knowledge",{knowledge:55},20),marketReward("90 Knowledge",{knowledge:90},5),
+  ]},
+  {id:"quest_supply_drop",name:"Quest Supply Drop",aliases:["quest supply","quest pack","qsd"],baseCost:42,description:"2 quest/token/box pulls",pulls:2,pool:[
+    marketReward("Quest Tokens",{tokens:{quest_token:2}},40),marketReward("Crafting Token",{tokens:{crafting_token:1}},25),marketReward("Quest Box",{lootboxes:{quest_box:1}},22),marketReward("Core Box",{lootboxes:{core_box:1}},8),marketReward("Recipe Token",{tokens:{recipe_token:1}},5),
+  ]},
+  {id:"stardust_workshop_cache",name:"Stardust Workshop Cache",aliases:["workshop cache","supply cache","swc"],baseCost:48,description:"3 broad material pulls",pulls:3,pool:[
+    marketReward("Scrap Stack",{materials:{scrap:120,metal_bits:55}},30),marketReward("Circuit Stack",{materials:{circuit_scrap:45,signal_fragment:5}},30),marketReward("Alloy Stack",{materials:{refined_alloy:7}},22),marketReward("Flux Stack",{materials:{stabilized_flux:3}},13),marketReward("Lucky Recipe Token",{tokens:{recipe_token:1}},5),
+  ]},
+  {id:"relic_cache",name:"Relic Cache",aliases:["relic shards","shard cache","rc"],baseCost:50,description:"1 random Relic Shard pull",pulls:1,research:"market_contacts_1",pool:[
+    marketReward("3 Relic Shards",{relicShards:3},45),marketReward("5 Relic Shards",{relicShards:5},35),marketReward("8 Relic Shards",{relicShards:8},16),marketReward("12 Relic Shards",{relicShards:12},4),
+  ]},
+  {id:"blueprint_cache",name:"Blueprint Cache",aliases:["blueprint fragment","fragment cache","bcache"],baseCost:60,description:"1 random Blueprint Fragment pull",pulls:1,research:"market_contacts_1",pool:[
+    marketReward("1 Blueprint Fragment",{blueprintFragments:1},65),marketReward("2 Blueprint Fragments",{blueprintFragments:2},28),marketReward("3 Blueprint Fragments",{blueprintFragments:3},7),
+  ]},
+  {id:"merchant_combo_crate",name:"Merchant Combo Crate",aliases:["combo crate","merchant crate","mcc"],baseCost:72,description:"2 mixed Activity pulls",pulls:2,research:"market_contacts_1",pool:[
+    marketReward("Knowledge",{knowledge:40},30),marketReward("Relic Shards",{relicShards:4},22),marketReward("Blueprint Fragment",{blueprintFragments:1},18),marketReward("Quest Box",{lootboxes:{quest_box:1}},17),marketReward("Refined Materials",{materials:{refined_alloy:10,stabilized_flux:2}},13),
+  ]},
+  {id:"stabilized_supply_crate",name:"Stabilized Supply Crate",aliases:["stabilized pack","advanced pack","ssc"],baseCost:95,description:"2 advanced-material pulls",pulls:2,research:"market_contacts_2",pool:[
+    marketReward("Refined Alloy",{materials:{refined_alloy:18}},36),marketReward("Stabilized Flux",{materials:{stabilized_flux:6}},30),marketReward("Quantum Residue",{materials:{quantum_residue:2}},18),marketReward("Reality Thread",{materials:{reality_thread:1}},9),marketReward("Recipe Token",{tokens:{recipe_token:1}},7),
+  ]},
+  {id:"reactor_parts_crate",name:"Reactor Parts Crate",aliases:["reactor crate","reactor parts","rpc"],baseCost:120,description:"2 reactor-grade pulls",pulls:2,research:"market_contacts_2",pool:[
+    marketReward("Quantum Residue",{materials:{quantum_residue:4}},32),marketReward("Reality Thread",{materials:{reality_thread:2}},25),marketReward("Reactor Token",{tokens:{reactor_token:1}},10),marketReward("Reactor Box",{lootboxes:{reactor_box:1}},14),marketReward("Dimensional Seal",{materials:{dimensional_seal:1}},19),
+  ]},
+  {id:"merchant_jackpot",name:"Merchant Jackpot",aliases:["jackpot","mega pack","mj"],baseCost:160,description:"3 high-variance pulls",pulls:3,research:"market_contacts_2",pool:[
+    marketReward("Knowledge Jackpot",{knowledge:120},25),marketReward("Relic Jackpot",{relicShards:10},20),marketReward("Blueprint Jackpot",{blueprintFragments:3},14),marketReward("Advanced Materials",{materials:{stabilized_flux:8,quantum_residue:3}},22),marketReward("Token Jackpot",{tokens:{recipe_token:1,quest_token:3}},14),marketReward("Anomaly Box",{lootboxes:{anomaly_box:1}},5),
+  ]},
+];
+
+function hashSeed(raw:string):number{let h=2166136261;for(const ch of raw){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function seededRandom(seed:number):()=>number{let x=seed||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296;};}
+function marketRotation(now=n()){const startedAt=Math.floor(now/MARKET_ROTATION_MS)*MARKET_ROTATION_MS;return{id:String(startedAt),startedAt,rerollsAt:startedAt+MARKET_ROTATION_MS};}
+function marketItems(p:PlayerState,channelId:string,rotationId:string):MarketItem[]{
+  const available=MARKET_CATALOG.filter(x=>!x.research||p.unlockedResearch[x.research]);
+  const rng=seededRandom(hashSeed(`${channelId}:${rotationId}`));
+  return [...available].sort(()=>rng()-.5).slice(0,6);
 }
+function marketCandidates(items:MarketItem[]):AliasCandidate<string>[] {
+  const abbreviationCounts=new Map<string,number>();
+  for(const item of items){const abbr=initialism(item.name).toLowerCase();abbreviationCounts.set(abbr,(abbreviationCounts.get(abbr)??0)+1);}
+  return items.map((item,index)=>{const abbr=initialism(item.name);return{id:item.id,label:item.name,aliases:[item.id.replace(/_/g," "),...item.aliases,String(index+1),...(abbreviationCounts.get(abbr.toLowerCase())===1?[abbr]:[])],value:item.id};});
+}
+function resolveMarketItem(raw:string,items:MarketItem[]){return resolveAlias(raw,marketCandidates(items),{maxScore:.3,ambiguityGap:.075});}
+function pullMarketLoot(item:MarketItem):MarketReward{
+  const total=item.pool.reduce((sum,entry)=>sum+entry.weight,0);let roll=Math.random()*total;
+  for(const entry of item.pool){roll-=entry.weight;if(roll<=0)return entry.reward;}
+  return item.pool[item.pool.length-1]?.reward??{};
+}
+function mergeMarketReward(target:MarketReward,next:MarketReward){
+  target.knowledge=(target.knowledge??0)+(next.knowledge??0);target.relicShards=(target.relicShards??0)+(next.relicShards??0);target.blueprintFragments=(target.blueprintFragments??0)+(next.blueprintFragments??0);
+  for(const [id,value] of Object.entries(next.materials??{}))(target.materials??={})[id]=((target.materials??{})[id]??0)+value;
+  for(const [id,value] of Object.entries(next.tokens??{}))(target.tokens??={})[id]=((target.tokens??{})[id]??0)+value;
+  for(const [id,value] of Object.entries(next.lootboxes??{}))(target.lootboxes??={})[id]=((target.lootboxes??{})[id]??0)+value;
+}
+function marketRewardText(reward:MarketReward):string{
+  const parts:string[]=[];
+  if(reward.knowledge)parts.push(`${amt(reward.knowledge)} Knowledge`);if(reward.relicShards)parts.push(`${amt(reward.relicShards)} Relic Shards`);if(reward.blueprintFragments)parts.push(`${amt(reward.blueprintFragments)} Blueprint Fragments`);
+  for(const [id,value] of Object.entries(reward.materials??{}))parts.push(`${amt(value)} ${titleCase(id)}`);
+  for(const [id,value] of Object.entries(reward.tokens??{}))parts.push(`${amt(value)} ${titleCase(id)}`);
+  for(const [id,value] of Object.entries(reward.lootboxes??{}))parts.push(`${amt(value)} ${titleCase(id)}`);
+  return parts.join(", ")||"Nothing";
+}
+function normalizeMarketRotation(c:ChannelState,p:PlayerState,channelId:string){
+  const rotation=marketRotation();
+  if(c.marketRotationId!==rotation.id){c.marketRotationId=rotation.id;c.marketDate=rotation.id;c.marketRerollsAt=rotation.rerollsAt;c.marketItems=[];}
+  if(p.marketRotationId!==rotation.id){p.marketRotationId=rotation.id;p.marketPurchases={};}
+  const items=marketItems(p,channelId,rotation.id);c.marketItems=items;return{rotation,items};
+}
+
 
 export async function formatKnowledge(channelId:string,user:NightbotUser|null){
   const p=await getP(channelId,user),next=nextNode(p);
@@ -459,12 +561,36 @@ export async function recordActivityRolls(o:{channelId:string;channelName:string
   await Promise.all([sp?saveP(p):Promise.resolve(),sc?saveC(c):Promise.resolve()]);
 }
 
-export async function formatMarket(channelId:string,channelName:string,user:NightbotUser|null=null){const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),items=marketItems(p);c.marketDate=today();c.marketItems=items;await saveC(c);return truncate(`🏪 Market | Marks ${amt(p.merchantMarks)} | ${items.map(x=>`${x.id} ${discounted(x.baseCost,discount(p))}`).join(" | ")} | !market buy <id>`);}
-export async function buyMarketItem(channelId:string,channelName:string,user:NightbotUser|null,itemId:string){
-  const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),item=marketItems(p).find(x=>x.id===norm(itemId));if(!item)return"Unknown/locked item. Use !market.";const cost=discounted(item.baseCost,discount(p));if(p.merchantMarks<cost)return`${item.name} costs ${cost} Marks. You have ${amt(p.merchantMarks)}.`;p.merchantMarks-=cost;let reward="";
-  if(item.id==="knowledge_note"){p.knowledge+=25;reward="25 Knowledge";}else if(item.id==="relic_shards"){p.relicShards+=5;reward="5 Relic Shards";}else if(item.id==="blueprint_fragment"){p.blueprintFragments+=1;reward="1 Blueprint Fragment";}else{const m=workshop(p),materials:Record<string,number>=item.id==="scrap_pack"?{scrap:Math.floor(100*m),metal_bits:Math.floor(50*m),mechanical_scrap:Math.floor(10*m)}:item.id==="circuit_pack"?{circuit_scrap:Math.floor(50*m),signal_fragment:Math.floor(5*m)}:{refined_alloy:Math.floor(30*m),stabilized_flux:Math.floor(3*m)};await grantCoreMaterials(channelId,user,materials);reward=Object.entries(materials).map(([id,v])=>`${amt(v)} ${id.replace(/_/g," ")}`).join(", ");}
-  c.marketDate=today();c.marketItems=marketItems(p);await Promise.all([saveP(p),saveC(c)]);return`✅ Bought ${item.name} for ${cost} Marks. Received ${reward}.`;
+export async function formatMarket(channelId:string,channelName:string,user:NightbotUser|null=null,rawPage="1"){
+  const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),{rotation,items}=normalizeMarketRotation(c,p,channelId);
+  const page=Math.max(1,Math.min(2,Number(String(rawPage||"1").replace(/[^0-9]/g,""))||1)),shown=items.slice((page-1)*3,page*3);
+  await Promise.all([saveC(c),saveP(p)]);
+  const offerText=shown.map((item,index)=>{const bought=Boolean(p.marketPurchases[item.id]),number=(page-1)*3+index+1,cost=discounted(item.baseCost,discount(p));return`${number}) ${item.name} [${initialism(item.name)}] ${cost} Marks ${bought?"✅BOUGHT":"🟢"} — ${item.description}`;}).join(" | ");
+  return truncate(`🏪 Market ${page}/2 | Marks ${amt(p.merchantMarks)} | Rerolls in ${left(rotation.rerollsAt-n())} | ${offerText} | Buy once: !market buy <name/#>`);
 }
+
+export async function buyMarketItem(channelId:string,channelName:string,user:NightbotUser|null,itemQuery:string){
+  if(!user)return"Market purchases only work from Twitch chat.";
+  const r=getRedis();if(!r)return"Market database is not connected.";
+  const rotation=marketRotation(),lockKey=`aok:market-lock:${channelId}:${uid(user)}:${rotation.id}`,lockToken=`${n()}:${Math.random()}`;
+  const locked=await r.set(lockKey,lockToken,{nx:true,px:5000});if(!locked)return"Market purchase already processing. Try again in a moment.";
+  try{
+    PCACHE.delete(pk(channelId,uid(user)));CCACHE.delete(ck(channelId));
+    const [c,p]=await Promise.all([getC(channelId,channelName),getP(channelId,user)]),normalized=normalizeMarketRotation(c,p,channelId),items=normalized.items;
+    const resolved=resolveMarketItem(itemQuery,items);if(resolved.status!=="matched")return aliasSuggestionText(resolved,"Market offer");
+    const item=items.find(x=>x.id===resolved.match.value);if(!item)return"That Market offer is not in this rotation.";
+    if(p.marketPurchases[item.id])return`${item.name} was already bought by you this rotation. Rerolls in ${left(normalized.rotation.rerollsAt-n())}.`;
+    const cost=discounted(item.baseCost,discount(p));if(p.merchantMarks<cost)return`${item.name} costs ${cost} Marks. You have ${amt(p.merchantMarks)}.`;
+    const reward:MarketReward={};for(let i=0;i<item.pulls;i++)mergeMarketReward(reward,pullMarketLoot(item));
+    const materialMult=workshop(p);if(reward.materials)for(const id of Object.keys(reward.materials))reward.materials[id]=Math.max(1,Math.floor(reward.materials[id]*materialMult));
+    p.merchantMarks-=cost;p.marketPurchases[item.id]=true;p.knowledge+=reward.knowledge??0;p.relicShards+=reward.relicShards??0;p.blueprintFragments+=reward.blueprintFragments??0;
+    if(reward.materials&&Object.keys(reward.materials).length)await grantCoreMaterials(channelId,user,reward.materials);
+    if((reward.tokens&&Object.keys(reward.tokens).length)||(reward.lootboxes&&Object.keys(reward.lootboxes).length)){const core=await getCoreState(channelId,user);for(const [id,value] of Object.entries(reward.tokens??{}))core.tokens[id]=(core.tokens[id]??0)+value;for(const [id,value] of Object.entries(reward.lootboxes??{}))core.lootboxes[id]=(core.lootboxes[id]??0)+value;await saveCoreState(core);}
+    await Promise.all([saveP(p),saveC(c)]);
+    return truncate(`✅ Bought ${item.name} for ${cost} Marks — ${item.pulls} random pull${item.pulls===1?"":"s"}: ${marketRewardText(reward)} | One-time purchase complete; rerolls in ${left(normalized.rotation.rerollsAt-n())}.`);
+  }finally{if(await r.get<string>(lockKey)===lockToken)await r.del(lockKey);}
+}
+
 
 export async function formatBlueprints(channelId:string,user:NightbotUser|null,raw=""){
   const p=await getP(channelId,user),parts=raw.trim().split(/\s+/).filter(Boolean),mode=norm(parts[0]??"");

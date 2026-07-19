@@ -50,40 +50,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
   }
 
-  if (action === "tokens") {
-    const rawToken = args.slice(1).join(" ");
-    if (!rawToken) return text(res, await formatCoreTokenGuide(channelId, user, ""));
-    const token = resolveCoreToken(rawToken);
-    if (!token.value) return text(res, token.error ?? "Unknown Core token.");
-    return text(res, await formatCoreTokenGuide(channelId, user, token.value));
-  }
-
   if (action === "token") {
+    const rest = args.slice(1);
+
+    // Empty/singular/plural token commands all show the complete inventory guide.
+    if (rest.length === 0 || ["token", "tokens", "list", "guide", "help", "show"].includes(rest.join(" ").toLowerCase())) {
+      return text(res, await formatCoreTokenGuide(channelId, user, ""));
+    }
+
     const subAction = resolveTextAlias(
-      args[1] ?? "",
+      rest[0] ?? "",
       [
         { id: "use", label: "use", aliases: ["activate", "consume"], value: "use" as const },
-        { id: "guide", label: "guide", aliases: ["info", "show", "help"], value: "guide" as const },
+        { id: "guide", label: "guide", aliases: ["info", "show", "help", "list"], value: "guide" as const },
       ],
       "Core token action"
     );
 
-    if (!subAction.value) {
-      // Preserve the convenient !core token quest shortcut.
-      const direct = resolveCoreToken(args.slice(1).join(" "));
-      if (!direct.value) return text(res, direct.error ?? subAction.error ?? "Unknown Core token.");
-      return text(res, await formatCoreTokenGuide(channelId, user, direct.value));
+    if (subAction.value) {
+      const rawToken = rest.slice(1).join(" ");
+      if (!rawToken) return text(res, await formatCoreTokenGuide(channelId, user, ""));
+      const token = resolveCoreToken(rawToken);
+      if (!token.value) return text(res, token.error ?? "Unknown Core token.");
+      return text(
+        res,
+        subAction.value === "use"
+          ? await useCoreToken(channelId, user, token.value)
+          : await formatCoreTokenGuide(channelId, user, token.value)
+      );
     }
 
-    const token = resolveCoreToken(args.slice(2).join(" "));
-    if (!token.value) return text(res, token.error ?? "Unknown Core token.");
-
-    return text(
-      res,
-      subAction.value === "use"
-        ? await useCoreToken(channelId, user, token.value)
-        : await formatCoreTokenGuide(channelId, user, token.value)
-    );
+    // Convenient shortcut: !core token quest / !core token qt
+    const direct = resolveCoreToken(rest.join(" "));
+    if (!direct.value) return text(res, direct.error ?? "Unknown Core token.");
+    return text(res, await formatCoreTokenGuide(channelId, user, direct.value));
   }
 
   return text(res, await formatCoreStatus(channelId, user));

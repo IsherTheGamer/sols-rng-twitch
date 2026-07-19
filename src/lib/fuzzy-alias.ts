@@ -159,6 +159,28 @@ function autoThreshold(normalizedQuery: string): number {
   return 0.34;
 }
 
+function unorderedTokenCoverage(query: string, alias: string): number {
+  const queryTokens = query.split(" ").filter(Boolean);
+  const aliasTokens = alias.split(" ").filter(Boolean);
+  if (queryTokens.length === 0 || aliasTokens.length === 0) return 1;
+
+  const queryToAlias =
+    queryTokens.reduce(
+      (sum, token) =>
+        sum + Math.min(...aliasTokens.map((candidate) => ratio(token, candidate))),
+      0
+    ) / queryTokens.length;
+
+  const aliasToQuery =
+    aliasTokens.reduce(
+      (sum, token) =>
+        sum + Math.min(...queryTokens.map((candidate) => ratio(token, candidate))),
+      0
+    ) / aliasTokens.length;
+
+  return queryToAlias * 0.65 + aliasToQuery * 0.35;
+}
+
 function scoreAlias(query: string, alias: string, allowSubstring: boolean): number {
   const q = normalizeAlias(query);
   const a = normalizeAlias(alias);
@@ -169,10 +191,23 @@ function scoreAlias(query: string, alias: string, allowSubstring: boolean): numb
   if (q === a || qc === ac) return 0;
 
   let score = Math.min(ratio(q, a), ratio(qc, ac), tokenRatio(q, a));
+  const queryTokens = q.split(" ").filter(Boolean);
+  const aliasTokens = a.split(" ").filter(Boolean);
 
   if (allowSubstring && Math.min(qc.length, ac.length) >= 5) {
     if (ac.startsWith(qc) || qc.startsWith(ac)) score = Math.min(score, 0.12);
     else if (ac.includes(qc) || qc.includes(ac)) score = Math.min(score, 0.18);
+  }
+
+  // Apply phrase coverage last so a generic one-word substring cannot erase
+  // the penalty for ignoring the user's other words.
+  if (queryTokens.length > 1 || aliasTokens.length > 1) {
+    const coverage = unorderedTokenCoverage(q, a);
+    score = Math.max(score, coverage * 0.88);
+
+    if (queryTokens.length > 1 && aliasTokens.length === 1) {
+      score = Math.min(1, score + 0.09);
+    }
   }
 
   return score;

@@ -1045,7 +1045,9 @@ export async function getActiveChannelEvent(channelId: string): Promise<ChannelE
 
 export async function getMegaLuckMultiplier(channelId: string): Promise<{ percent: number; multiplier: number; label: string }> {
   const event = await getActiveChannelEvent(channelId);
-  if (!event || event.kind !== "luckstorm" && event.kind !== "festival") return { percent: 0, multiplier: 1, label: "No mega event luck" };
+  if (!event || !["luckstorm", "biome_frenzy", "festival"].includes(event.kind)) {
+    return { percent: 0, multiplier: 1, label: "No mega event luck" };
+  }
   return { percent: event.percent, multiplier: 1 + event.percent / 100, label: `${event.name} +${event.percent}%` };
 }
 
