@@ -21,6 +21,12 @@ export function error(res: NextApiResponse, message: string, _status = 400) {
 }
 
 export function parseQuery(req: NextApiRequest): string {
+  const biome = req.query.biome;
+
+  if (typeof biome === "string") {
+    return biome.trim();
+  }
+
   const q = req.query.query;
 
   if (typeof q === "string") {
@@ -42,7 +48,9 @@ export function parseQuery(req: NextApiRequest): string {
       key === "action" ||
       key === "token" ||
       key === "channel" ||
-      key === "secret"
+      key === "channelId" ||
+      key === "secret" ||
+      key === "biome"
     ) {
       continue;
     }
