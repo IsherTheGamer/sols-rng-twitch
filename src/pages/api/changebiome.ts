@@ -7,7 +7,7 @@ export default function handler(
 ) {
   const token = req.query.token;
 
-  if (token !== process.env.CRON_TOKEN) {
+  if (token !== process.env.CRON_SECRET) {
     return res.status(403).json({
       error: "Invalid token"
     });
