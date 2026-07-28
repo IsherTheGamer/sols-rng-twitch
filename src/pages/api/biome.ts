@@ -11,7 +11,20 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { channelId, channelName, isMod } = getChannelContext(req);
+ const context = getChannelContext(req);
+
+const channelId =
+  (req.query.channelId as string) ??
+  context.channelId;
+
+const channelName =
+  (req.query.channel as string) ??
+  context.channelName;
+
+const isApi =
+  req.query.token === process.env.API_SECRET_TOKEN;
+
+const isMod = context.isMod || isApi;
   const action = req.query.action;
 
   let state = await getChannelState(channelId, channelName);
