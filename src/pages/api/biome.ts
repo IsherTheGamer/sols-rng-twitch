@@ -22,7 +22,7 @@ const channelName =
   context.channelName;
 
 const isApi =
-  req.query.token === process.env.API_SECRET_TOKEN;
+  req.query.token === process.env.CRON_SECRET;
 
 const isMod = context.isMod || isApi;
   const action = req.query.action;
